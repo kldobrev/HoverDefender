@@ -1,8 +1,8 @@
 /*
 
- PLAYERSPRITETILES.H
+ MISCTILES.C
 
- Include File.
+ Tile Source File.
 
  Info:
   Form                 : All tiles as one unit.
@@ -10,7 +10,7 @@
   Compression          : None.
   Counter              : None.
   Tile size            : 8 x 8
-  Tiles                : 0 to 15
+  Tiles                : 0 to 0
 
   Palette colors       : None.
   SGB Palette          : None.
@@ -22,14 +22,11 @@
 
 */
 
-#ifndef __playerspritetiles_h_INCLUDE
-#define __playerspritetiles_h_INCLUDE
-
-/* Bank of tiles. */
-#define playerspritetilesBank 0
 /* Start of tile array. */
-extern const unsigned char playerspritetiles[];
+const unsigned char misctiles[] =
+{
+  0x03,0x03,0x07,0x05,0x0E,0x0A,0x1E,0x12,
+  0x3E,0x22,0x7C,0x44,0xFC,0x84,0x00,0x00
+};
 
-#endif
-
-/* End of PLAYERSPRITETILES.H */
+/* End of MISCTILES.C */
