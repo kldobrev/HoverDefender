@@ -1,9 +1,10 @@
 #include <gb/gb.h>
 
-typedef struct Machine {
+typedef struct Machine {    // Used for player and enemy sprites
 
-    UINT8 x, y, hboffx, hboffy, width, height, explcnt;
-    INT8 gunoffx, gunoffy, shield;
+    UBYTE groundflg;
+    UINT8 x, y, hboffx, hboffy, width, height, explcount, cyccount;
+    INT8 gunoffx, gunoffy, shield, type;
     UINT8 oamtilenums[4];
 
 } Machine;

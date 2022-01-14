@@ -1,6 +1,6 @@
 /*
 
- ROADTILES.H
+ HUDTILES.H
 
  Include File.
 
@@ -10,7 +10,7 @@
   Compression          : None.
   Counter              : None.
   Tile size            : 8 x 8
-  Tiles                : 0 to 24
+  Tiles                : 0 to 16
 
   Palette colors       : None.
   SGB Palette          : None.
@@ -22,14 +22,14 @@
 
 */
 
-#ifndef __roadtiles_h_INCLUDE
-#define __roadtiles_h_INCLUDE
+#ifndef __hudtiles_h_INCLUDE
+#define __hudtiles_h_INCLUDE
 
 /* Bank of tiles. */
-#define roadtilesBank 0
+#define hudtilesBank 0
 /* Start of tile array. */
-extern const unsigned char roadtiles[];
+extern const unsigned char hudtiles[];
 
 #endif
 
-/* End of ROADTILES.H */
+/* End of HUDTILES.H */

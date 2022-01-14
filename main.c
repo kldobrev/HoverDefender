@@ -15,17 +15,13 @@
 #include "enemyspritetiles.c"
 #include "placement.c"
 #include "misctiles.c"
+#include "hudtiles.c"
+#include "hudmap.c"
 //#include "hUGEDriver.h"
 
 #include <stdio.h>
 
 //extern const hUGESong_t road1;
-
-// Level data
-const UINT8 level1road[] = {54, 50, 12, 50, 128};  // 20 road, 8 hole, 12 road etc.
-const UINT8 level1roadlen = 5;
-const Placement level1objs[] = {{1, 0, 159, 98, 1}, {3, 3, 159, 130, 1}};
-const UINT8 level1objsnum = 2;
 
 // Commmon level processing vars
 UINT8 levelidx; // For the level arrays
@@ -33,6 +29,17 @@ UBYTE holeflg;  // Flag indicating if currently rendered area is a hole or a roa
 UINT8 levelclearflg; // Level completed flag
 UINT8 lvlobjscnt; // Level placement objects array counter
 const Placement * lvlplacptr; // Level placement objects array pointer
+const enum asset {enrider = 1};
+const UINT8 roadlanesy[] = {98, 114, 130};
+
+
+
+// Level data
+const UINT8 level1road[] = {150, 50, 100, 40, 128};  // 20 road, 8 hole, 12 road etc.
+const UINT8 level1roadlen = 5;
+const Placement level1objs[] = {{0, 30, 159, 98, enrider}, {2, 20, 159, 130, enrider}};
+const UINT8 level1objsnum = 2;
+
 
 UINT8 roadbuildidx; // index for the level road array
 UINT8 camtileidx, nextcamtileidx; // current tile index of the right camera border, index of area where 
@@ -59,6 +66,7 @@ UINT8 abtncnt; // Counts cycles after A button press
 const UINT8 abtncooldown = 24; // Cycles to wait until A button becomes active
 Machine machines[5];
 Machine * pl; // Pointer to the player element in the machines array
+UINT8 pllives;
 UINT8 enidx, enemycount;
 const UINT8 machlimit = 5;
 const UINT8 pliframeprd = 16; // Iframe duration
@@ -85,7 +93,9 @@ UINT8 get_tile_idx(UINT8 newidxnum);
 void init_level_bgk(const unsigned char * lvltiles, const unsigned char * lvlmap);
 void init_level_road();
 void set_machine_sprite_tiles(Machine * mch, UINT8 fsttile);
+void place_machine(Machine * mch, UINT8 x, UINT8 y);
 void init_player();
+void respawn_player();
 void init_enemy_rider(UINT8 x, UINT8 y);
 UBYTE collides_with_sidewalk(INT8 vspeed);
 UBYTE is_inside_x_bounds(UINT8 posx);
@@ -94,7 +104,6 @@ void move_player(INT8 speedx, INT8 speedy);
 void move_enemy(Machine * en, INT8 speedx, INT8 speedy);
 void scroll_level_bkg();
 void place_level_obj(UINT8 type, UINT8 x, UINT8 y);
-void place_ramp(UINT8 x, UINT8 y);
 void build_level();
 void build_road();
 void build_hole();
@@ -102,14 +111,21 @@ void fire_bullet(Machine * mch, INT8 speedx, INT8 speedy);
 UBYTE is_obj_inside_screen(UINT8 x, UINT8 y, UINT8 width, UINT8 height);
 void destroy_projectile(Projectile * pr);
 void move_projectile(Projectile * pr);
+void init_explosion(Machine * mch);
 void explode_machine(Machine * mch);
 void take_damage(Machine * mch, UINT8 dmgamt);
+void add_to_pleyer_shield(UINT8 amt);
 void check_iframes();
 void destroy_machine(Machine * mch);
 void check_projectile_collsn(Machine * mch, Projectile * prj);
 void check_player_machine_collsn(Machine * mch);
 void animate_hole_fall();
 void animate_jump();
+void exec_machine_pattern(Machine * mch);
+void exec_rider_pattern(Machine * mch);
+void init_hud();
+void upd_hud_shield(INT8 hpbef, INT8 hpaft);
+void upd_hud_lives();
 //void play_song(const hUGESong_t * song);
 //void stop_song();
 
@@ -164,17 +180,17 @@ UINT8 get_tile_idx(UINT8 newidxnum) {   // Recalculate tile index according to t
 
 
 void init_level_bgk(const unsigned char * lvltiles, const unsigned char * lvlmap) {
-    set_bkg_data(24, 7, cloudtiles);
+    set_bkg_data(42, 7, cloudtiles);
     set_bkg_tiles(0, 0, 20, 1, cloudmap);
     set_bkg_tiles(20, 0, 20, 1, cloudmap);
-    set_bkg_data(31, 6, lvltiles);
+    set_bkg_data(49, 6, lvltiles);
     set_bkg_tiles(0, 1, 20, 9, lvlmap);
     set_bkg_tiles(20, 1, 20, 9, lvlmap);
 }
 
 
 void init_level_road() { // Layount initial road tiles to start the level
-    set_bkg_data(0, 24, roadtiles);
+    set_bkg_data(0, 25, roadtiles);
     for(roadbuildidx = 0; roadbuildidx < 7; roadbuildidx++) {
         set_bkg_tiles(roadbuildidx * 3, 10, 3, 7, goodroadmap);
     }
@@ -191,18 +207,28 @@ void set_machine_sprite_tiles(Machine * mch, UINT8 fsttile) {
 }
 
 
+void place_machine(Machine * mch, UINT8 x, UINT8 y) {
+    mch->x = x;
+    mch->y = y;
+    move_sprite(mch->oamtilenums[0], x, y);
+    move_sprite(mch->oamtilenums[1], x + 8, y);
+    move_sprite(mch->oamtilenums[2], x, y + 8);
+    move_sprite(mch->oamtilenums[3], x + 8, y + 8);
+}
+
+
 void init_player() {
     pl = machines; // First element of the array is the player
-    pl->shield = 10;
-    pl->x = 16;
-    pl->y = 106; // 114
+    pl->shield = 4;
+    pl->groundflg = 1;
     pl->hboffx = 3;
     pl->hboffy = 1;
     pl->width = 13;
     pl->height = 15;
     pl->gunoffx = 17;
     pl->gunoffy = 12;
-    pl->explcnt = 0;
+    pl->explcount = 0;
+    pl->cyccount = 0;
     pl->oamtilenums[0] = 0;
     pl->oamtilenums[1] = 1;
     pl->oamtilenums[2] = 2;
@@ -210,36 +236,51 @@ void init_player() {
 
     set_machine_sprite_tiles(pl, 1);
     incr_oam_sprite_tile_idx(4);
+    place_machine(pl, 16, roadlanesy[1]);
+}
 
-    move_sprite(pl->oamtilenums[0], pl->x, pl->y);
-    move_sprite(pl->oamtilenums[1], pl->x + 8, pl->y);
-    move_sprite(pl->oamtilenums[2], pl->x, pl->y + 8);
-    move_sprite(pl->oamtilenums[3], pl->x + 8, pl->y + 8);
+
+void respawn_player() {
+    pl->shield = 4;
+    pl->hboffx = 3;
+    pl->hboffy = 1;
+    pl->groundflg = 0;
+    ascendflg = 1;
+    upd_hud_shield(0, 4);
+    if(fallinholeflg /*&& holeendx > 16*/) {
+        fallinholeflg = 0;
+        set_machine_sprite_tiles(pl, 13);
+        place_machine(pl, 16, 64);
+        lockmvmnt = 2;
+        jumpstarty = roadlanesy[1];
+    } else {
+        set_machine_sprite_tiles(pl, 1);
+        place_machine(pl, 16, roadlanesy[1]);
+        lockmvmnt = 0;
+    }
+    iframeflg = 1;
 }
 
 
 void init_enemy_rider(UINT8 x, UINT8 y) {
+    machines[enidx].groundflg = 1;
     machines[enidx].shield = 2;
-    machines[enidx].x = x;
-    machines[enidx].y = y;
     machines[enidx].hboffx = 0;
     machines[enidx].hboffy = 1;
     machines[enidx].width = 13;
     machines[enidx].height = 15;
-    machines[enidx].gunoffx = -1;
+    machines[enidx].gunoffx = -bulletdimswh;    // Avoiding collision with fired bullet
     machines[enidx].gunoffy = 12;
-    machines[enidx].explcnt = 0;
+    machines[enidx].explcount = 0;
+    machines[enidx].cyccount = 0;
+    machines[enidx].type = enrider;
     for(k = 0; k < 4; k++) {
         machines[enidx].oamtilenums[k] = oamidx;
         incr_oam_sprite_tile_idx(1);
     }
 
     set_machine_sprite_tiles(machines + enidx, 22);
-
-    move_sprite(machines[enidx].oamtilenums[0], x, y);
-    move_sprite(machines[enidx].oamtilenums[1], x + 8, y);
-    move_sprite(machines[enidx].oamtilenums[2], x, y + 8);
-    move_sprite(machines[enidx].oamtilenums[3], x + 8, y + 8);
+    place_machine(machines + enidx, x, y);
     itr_enemies_idx();
 }
 
@@ -300,7 +341,7 @@ void scroll_level_bkg() {
 
 void place_level_obj(UINT8 type, UINT8 x, UINT8 y) {
     switch (type) {
-    case 1:
+    case enrider:
         init_enemy_rider(x, y);
         break;
     default:
@@ -396,6 +437,13 @@ void destroy_projectile(Projectile * pr) {
 }
 
 
+void init_explosion(Machine * mch) {
+    mch->explcount = 1;
+    mch->hboffx = -(mch->x + mch->width);   // x + offx + width == 0
+    mch->hboffy = -(mch->y + mch->height);   // Avoiding damage dealing to player while exploding
+}
+
+
 void move_projectile(Projectile * pr) {
     if(pr->oam != NULL && is_obj_inside_screen(pr->oam->x, pr->oam->y, pr->width, pr->height)) {
         pr->oam->x += pr->speedx;
@@ -407,15 +455,15 @@ void move_projectile(Projectile * pr) {
 
 
 void explode_machine(Machine * mch) {
-    if(mch->explcnt % 8 != 0) {
+    if(mch->explcount % 8 != 0) {
         if(shadow_OAM[mch->oamtilenums[0]].tile != 5) {
             set_machine_sprite_tiles(mch, 5);
         } else {
             set_machine_sprite_tiles(mch, 9);
         }
     }
-    mch->explcnt++;
-    if(mch->explcnt == explodeprd) {
+    mch->explcount++;
+    if(mch->explcount == explodeprd) {
         destroy_machine(mch);
     }
 }
@@ -430,19 +478,35 @@ void destroy_machine(Machine * mch) {
     move_sprite(mch->oamtilenums[1], 0, 0);
     move_sprite(mch->oamtilenums[2], 0, 0);
     move_sprite(mch->oamtilenums[3], 0, 0);
-    mch->explcnt = mch->x = mch->y = 0;
+    mch->explcount = mch->x = mch->y = 0;
 }
 
 
 void take_damage(Machine * mch, UINT8 dmgamt) {
     mch->shield -= dmgamt;
-    if(pl == mch && pl->shield > 0) {
-        iframeflg = 1; // Starting iframe period
-    } else if(mch->shield < 1) {
-        mch->explcnt = 1; // Initiate explosion
-        if(pl == mch) {
+    if(pl == mch) {
+        upd_hud_shield(pl->shield + dmgamt, pl->shield);
+        if(pl->shield > 0) {
+            iframeflg = 1; // Starting iframe period
+        } else {
             lockmvmnt = 3;
+            pllives--;
+            upd_hud_lives();
         }
+    }
+    if(mch->shield < 1) {
+        init_explosion(mch);
+    }
+}
+
+
+void add_to_pleyer_shield(UINT8 amt) {  // Used for increasing player shield value
+    if(pl->shield + amt > 4) {
+        upd_hud_shield(pl->shield, 4);
+        pl->shield = 4; // Shield max capacity is always 4
+    } else {
+        upd_hud_shield(pl->shield, pl->shield + amt);
+        pl->shield += amt;
     }
 }
 
@@ -477,8 +541,8 @@ void check_projectile_collsn(Machine * mch, Projectile * prj) {
 void check_player_machine_collsn(Machine * mch) {
     if ((mch->x + mch->hboffx < pl->x + pl->hboffx + pl->width && mch->y + mch->hboffy < pl->y + pl->hboffy + pl->height) 
     && (pl->x + pl->hboffx <  mch->x + mch->hboffx + mch->width && pl->y + pl->hboffy <  mch->y + mch->hboffy + mch->height)) {
-        take_damage(pl, 5); // Half health down 
-        mch->explcnt = 1;
+        take_damage(pl, pl->shield);    // Take all health away
+        init_explosion(mch);
     }
 }
 
@@ -500,11 +564,69 @@ void animate_jump() {
     } else {    // Descending
         move_machine(pl, 0, jumpspeed);
         if(pl->y >= jumpstarty) {    // Back on ground / stop jump animmation
+            pl->groundflg = 1;
             ascendflg = 1;  // Reverting flag for next jump
             set_machine_sprite_tiles(pl, 1);
             lockmvmnt = 0;  // Allowing free movement
         }
     }
+}
+
+
+// ENEMY AI
+
+
+void exec_machine_pattern(Machine * mch) {
+    switch(mch->type) {
+        case enrider:
+            exec_rider_pattern(mch);
+            break;
+    }
+}
+
+
+void exec_rider_pattern(Machine * mch) {
+    if(mch->x > 130 && lockmvmnt != 2) {
+        move_enemy(mch, -1, pl->y > mch->y ? 1 : -1);
+    } else if(mch->cyccount != 100) {
+        if(mch->cyccount == 50) {
+            fire_bullet(mch, -2, 0);
+        }
+        mch->cyccount++;
+    } else {
+        move_enemy(mch, -1, 0);
+    }
+}
+
+
+// HUD
+
+void init_hud() {
+    set_win_data(25, 17, hudtiles);
+    set_win_tiles(0, 0, 18, 1, hudmap);
+    move_win(15, 134);
+    SHOW_WIN;
+}
+
+
+void upd_hud_shield(INT8 hpbef, INT8 hpaft) {
+    UINT8 hptiletresh = hpaft + 2;
+    if(hpbef > hpaft) { // Has taken damage
+        hptiletresh = hpaft < 0 ? 2 : hpaft + 2;  // HP bar lower tile boundary
+        for(UINT8 hpcnt = hpbef + 2; hpcnt > hptiletresh; hpcnt--) {
+            set_win_tile_xy(hpcnt, 0, 0x28);
+        }
+    } else {    // Gotten a powerup or respawns after lost live
+        hptiletresh = hpaft + 3;
+        for(UINT8 hpcnt = hpbef + 3; hpcnt < hptiletresh; hpcnt++) {
+            set_win_tile_xy(hpcnt, 0, 0x29);
+        }
+    }
+}
+
+
+void upd_hud_lives() {
+    set_win_tile_xy(17, 0, pllives + 26);       // tile offset
 }
 
 
@@ -530,6 +652,7 @@ void main() {
     roadposx = sceneryposx = cloudposx = iframeflg = 0;
     speedincr = 2;
     plspeed = plgroundspeed;
+    pllives = 3;
     prjcnt = prjidx = abtncnt = enemycount = 0;
     enidx = 1;
     ascendflg = 1;
@@ -574,9 +697,11 @@ void main() {
     }
 
     for(i = 1; i < machlimit; i++) { // Initialization of enemies' important attributes
-        machines[i].shield = machines[i].explcnt = 0;
+        machines[i].shield = machines[i].explcount = 0;
         machines[i].x = machines[i].y = machines[i].width = machines[i].height = 0;
     }
+
+    init_hud();
 
     //play_song(&road1);
 
@@ -608,6 +733,9 @@ void main() {
                 move_projectile(projectiles + i);
                 for(j = 0; j < machlimit; j++) {
                     if(machines[j].shield > 0) {
+                        if(pl == (machines + j) && (iframeflg || (!pl->groundflg && projectiles[i].oam->y > 95))) {
+                            continue;   // Avoid hit during iframes or when player jumps and a bullet is above him on the road
+                        }
                         check_projectile_collsn(machines + j, projectiles + i); // Check collision for all machines on screen
                     }
                 }
@@ -617,11 +745,13 @@ void main() {
         for(i = 0; i < machlimit; i++) {    // Player and enemies handling
             if(i > 0 && machines[i].y != 0) {
                 if(!iframeflg) {
-                    check_player_machine_collsn(machines + i);
+                    if(pl->explcount == 0 && pl->groundflg == machines[i].groundflg) {    // Player hasn't exploded
+                        check_player_machine_collsn(machines + i);
+                    }
+                    exec_machine_pattern(machines + i);
                 }
-                move_enemy(machines + i, -1, 0);
             }
-            if(machines[i].explcnt != 0) {
+            if(machines[i].explcount != 0) {
                 explode_machine(machines + i);
             }
         }
@@ -633,7 +763,7 @@ void main() {
         }
 
         if(lockmvmnt != 2) {
-            if(pl->x + pl->width > holestartx) { // Hole on the road and player has passed it
+            if(pl->x + pl->width > holestartx) { // Hole in the road and player is inside
                 fallinholeflg = 1;
                 lockmvmnt = 3;
             }
@@ -643,16 +773,21 @@ void main() {
 
         if(fallinholeflg) {
             animate_hole_fall();
-            if(pl->y > 144) {
-                break; // Game over
+            if(pl->y > 144 && pl->explcount == 0) {
+                take_damage(pl, pl->shield);
             }
         }
 
-        if(pl->shield < 1 && pl->explcnt == 0) {    // Game over
+        if(pl->shield < 1 && pllives != 0 && pl->explcount == 0) {
+            respawn_player();
+        }
+
+        if(pllives == 0) {
             fill_bkg_rect(0, 0, 40, 36, 0);
             HIDE_SPRITES;
-            break;
+            break;  // Game over
         }
+        
 
         if(lockmvmnt != 1 && lockmvmnt != 3) { // Check horizontal lock
             if(joypad() & J_LEFT) {
@@ -679,6 +814,7 @@ void main() {
         if(joypad() & J_A) { 
             if(lockmvmnt == 0) {
                 lockmvmnt = 2;  // Lock vert movement during jump
+                pl->groundflg = 0;
                 jumpstarty = pl->y; // Keeping player y position for landing
                 set_machine_sprite_tiles(pl, 13);
             }
