@@ -1,6 +1,6 @@
 /*
 
- PROJECTILES.H
+ DESERTTILES.H
 
  Include File.
 
@@ -10,7 +10,7 @@
   Compression          : None.
   Counter              : None.
   Tile size            : 8 x 8
-  Tiles                : 0 to 0
+  Tiles                : 0 to 39
 
   Palette colors       : None.
   SGB Palette          : None.
@@ -22,14 +22,14 @@
 
 */
 
-#ifndef __projectiles_h_INCLUDE
-#define __projectiles_h_INCLUDE
+#ifndef __deserttiles_h_INCLUDE
+#define __deserttiles_h_INCLUDE
 
 /* Bank of tiles. */
-#define projectilesBank 0
+#define deserttilesBank 0
 /* Start of tile array. */
-extern const unsigned char projectiles[];
+extern const unsigned char deserttiles[];
 
 #endif
 
-/* End of PROJECTILES.H */
+/* End of DESERTTILES.H */

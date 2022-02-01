@@ -4,8 +4,8 @@
 #include "holestartmap.c"
 #include "holemap.c"
 #include "holeendmap.c"
-#include "volcaniclvltiles.c"
-#include "volcaniclvlmap.c"
+#include "deserttiles.c"
+#include "desertmap.c"
 #include "cloudtiles.c"
 #include "cloudmap.c"
 #include "machine.c"
@@ -29,22 +29,25 @@ UBYTE holeflg;  // Flag indicating if currently rendered area is a hole or a roa
 UINT8 levelclearflg; // Level completed flag
 UINT8 lvlobjscnt; // Level placement objects array counter
 const Placement * lvlplacptr; // Level placement objects array pointer
-const enum asset {enrider = 1};
+const enum asset {enrider = 1, endrone = 2, enmissile = 3, enturret = 4, enbomber = 5, enmine = 6};
 const UINT8 roadlanesy[] = {98, 114, 130};
 
 
 
 // Level data
-const UINT8 level1road[] = {150, 50, 100, 40, 128};  // 20 road, 8 hole, 12 road etc.
-const UINT8 level1roadlen = 5;
-const Placement level1objs[] = {{0, 30, 159, 98, enrider}, {2, 20, 159, 130, enrider}};
-const UINT8 level1objsnum = 2;
+//const UINT8 level1road[] = {150, 50, 100, 40, 128};  // 20 road, 8 hole, 12 road etc.
+const UINT8 level1road[] = {150, 50, 150};  // 20 road, 8 hole, 12 road etc.
+const UINT8 level1roadlen = 3;
+//const UINT8 level1roadlen = 5;
+const Placement level1objs[] = {{0, 50, 167, 40, enbomber}, {1, 24, 167, 133, enturret}, {2, 20, 167, 130, enrider}};
+const UINT8 level1objsnum = 3;
 
 
 UINT8 roadbuildidx; // index for the level road array
 UINT8 camtileidx, nextcamtileidx; // current tile index of the right camera border, index of area where 
 // the next part of the level should be drawn
 UINT8 i, j, k, citr; // iterators for whenever
+INT8 sitr;  // signed iterator for whenever
 UINT8 roadposx, sceneryposx, cloudposx, speedincr;
 const UINT8 roadscrspeed = 5; // Road scrolling speed
 UINT8 plspeed;
@@ -56,7 +59,6 @@ unsigned char checktile[1]; // Tile for performing positional checks
 const UINT8 lockedoamtiles = 4; // Number of locked tiles in the OAM (currently reserved for player tiles)
 const unsigned char blanktile[] = {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
 const UINT8 machinedimswh = 16; // Machine width and height
-const UINT8 bulletdimswh = 3; // Bullet width and height
 Projectile projectiles[8]; // Array of all the projectiles
 const UINT8 projectilelimit = 8;
 UINT8 prjcnt, prjidx;  // Projectile counter, index
@@ -69,7 +71,7 @@ Machine * pl; // Pointer to the player element in the machines array
 UINT8 pllives;
 UINT8 enidx, enemycount;
 const UINT8 machlimit = 5;
-const UINT8 pliframeprd = 16; // Iframe duration
+const UINT8 pliframeprd = 120; // Iframe duration
 const UINT8 explodeprd = 32; // Explosion duration
 UINT8 lockmvmnt; // 0 - no locking, 1 - horizontal, 2 - vertical, 3 - both
 UINT8 iframecnt;
@@ -96,7 +98,13 @@ void set_machine_sprite_tiles(Machine * mch, UINT8 fsttile);
 void place_machine(Machine * mch, UINT8 x, UINT8 y);
 void init_player();
 void respawn_player();
+void init_common_enemy_props(UINT8 x, UINT8 y, UINT8 fsttile);
 void init_enemy_rider(UINT8 x, UINT8 y);
+void init_enemy_drone(UINT8 x, UINT8 y);
+void init_enemy_missile(UINT8 x, UINT8 y);
+void init_enemy_turret(UINT8 x, UINT8 y);
+void init_enemy_bomber(UINT8 x, UINT8 y);
+void init_enemy_mine(UINT8 x, UINT8 y);
 UBYTE collides_with_sidewalk(INT8 vspeed);
 UBYTE is_inside_x_bounds(UINT8 posx);
 void move_machine(Machine * mch, INT8 speedx, INT8 speedy);
@@ -107,7 +115,12 @@ void place_level_obj(UINT8 type, UINT8 x, UINT8 y);
 void build_level();
 void build_road();
 void build_hole();
+void set_projctl_comm_prop(Machine * mch, INT8 speedx, INT8 speedy);
 void fire_bullet(Machine * mch, INT8 speedx, INT8 speedy);
+void fire_bigbullet(Machine * mch, INT8 speedx, INT8 speedy);
+void fire_laser(Machine * mch, INT8 speedx, INT8 speedy);
+void drop_bomb(Machine * mch);
+INT8 get_prjctl_x_aimed();
 UBYTE is_obj_inside_screen(UINT8 x, UINT8 y, UINT8 width, UINT8 height);
 void destroy_projectile(Projectile * pr);
 void move_projectile(Projectile * pr);
@@ -121,11 +134,21 @@ void check_projectile_collsn(Machine * mch, Projectile * prj);
 void check_player_machine_collsn(Machine * mch);
 void animate_hole_fall();
 void animate_jump();
-void exec_machine_pattern(Machine * mch);
+void exec_enemy_pattern(Machine * mch);
 void exec_rider_pattern(Machine * mch);
+void exec_drone_pattern(Machine * mch);
+void exec_missile_pattern(Machine * mch);
+void exec_turret_pattern(Machine * mch);
+void exec_bomber_pattern(Machine * mch);
+void exec_mine_pattern(Machine * mch);
 void init_hud();
 void upd_hud_shield(INT8 hpbef, INT8 hpaft);
 void upd_hud_lives();
+void init_level();
+void level_loop();
+void animate_level_start();
+void animate_level_end();
+void animate_blackout(UINT8 indictr);
 //void play_song(const hUGESong_t * song);
 //void stop_song();
 
@@ -180,17 +203,15 @@ UINT8 get_tile_idx(UINT8 newidxnum) {   // Recalculate tile index according to t
 
 
 void init_level_bgk(const unsigned char * lvltiles, const unsigned char * lvlmap) {
-    set_bkg_data(42, 7, cloudtiles);
-    set_bkg_tiles(0, 0, 20, 1, cloudmap);
-    set_bkg_tiles(20, 0, 20, 1, cloudmap);
-    set_bkg_data(49, 6, lvltiles);
-    set_bkg_tiles(0, 1, 20, 9, lvlmap);
-    set_bkg_tiles(20, 1, 20, 9, lvlmap);
+    set_bkg_data(47, 13, cloudtiles);
+    set_bkg_tiles(0, 0, 32, 1, cloudmap);
+    set_bkg_data(60, 40, lvltiles);
+    set_bkg_tiles(0, 1, 32, 9, lvlmap);
 }
 
 
 void init_level_road() { // Layount initial road tiles to start the level
-    set_bkg_data(0, 25, roadtiles);
+    set_bkg_data(0, 29, roadtiles);
     for(roadbuildidx = 0; roadbuildidx < 7; roadbuildidx++) {
         set_bkg_tiles(roadbuildidx * 3, 10, 3, 7, goodroadmap);
     }
@@ -236,7 +257,7 @@ void init_player() {
 
     set_machine_sprite_tiles(pl, 1);
     incr_oam_sprite_tile_idx(4);
-    place_machine(pl, 16, roadlanesy[1]);
+    place_machine(pl, 248, roadlanesy[1]);
 }
 
 
@@ -247,7 +268,7 @@ void respawn_player() {
     pl->groundflg = 0;
     ascendflg = 1;
     upd_hud_shield(0, 4);
-    if(fallinholeflg /*&& holeendx > 16*/) {
+    if(fallinholeflg) {
         fallinholeflg = 0;
         set_machine_sprite_tiles(pl, 13);
         place_machine(pl, 16, 64);
@@ -262,6 +283,22 @@ void respawn_player() {
 }
 
 
+// ENEMIES INITIALIZATION
+
+
+void init_common_enemy_props(UINT8 x, UINT8 y, UINT8 fsttile) {
+    machines[enidx].explcount = 0;
+    machines[enidx].cyccount = 0;
+    for(k = 0; k < 4; k++) {
+        machines[enidx].oamtilenums[k] = oamidx;
+        incr_oam_sprite_tile_idx(1);
+    }
+    set_machine_sprite_tiles(machines + enidx, fsttile);
+    place_machine(machines + enidx, x, y);
+    itr_enemies_idx();
+}
+
+
 void init_enemy_rider(UINT8 x, UINT8 y) {
     machines[enidx].groundflg = 1;
     machines[enidx].shield = 2;
@@ -269,19 +306,80 @@ void init_enemy_rider(UINT8 x, UINT8 y) {
     machines[enidx].hboffy = 1;
     machines[enidx].width = 13;
     machines[enidx].height = 15;
-    machines[enidx].gunoffx = -bulletdimswh;    // Avoiding collision with fired bullet
+    machines[enidx].gunoffx = -3;    // Avoiding collision with fired bullet
     machines[enidx].gunoffy = 12;
-    machines[enidx].explcount = 0;
-    machines[enidx].cyccount = 0;
     machines[enidx].type = enrider;
-    for(k = 0; k < 4; k++) {
-        machines[enidx].oamtilenums[k] = oamidx;
-        incr_oam_sprite_tile_idx(1);
-    }
+    init_common_enemy_props(x, y, 0x15);
+}
 
-    set_machine_sprite_tiles(machines + enidx, 22);
-    place_machine(machines + enidx, x, y);
-    itr_enemies_idx();
+
+void init_enemy_drone(UINT8 x, UINT8 y) {
+    machines[enidx].groundflg = 0;
+    machines[enidx].shield = 1;
+    machines[enidx].hboffx = 2;
+    machines[enidx].hboffy = 5;
+    machines[enidx].width = 14;
+    machines[enidx].height = 7;
+    machines[enidx].gunoffx = 7;
+    machines[enidx].gunoffy = 13;
+    machines[enidx].type = endrone;
+    init_common_enemy_props(x, y, 0x19);
+}
+
+
+void init_enemy_missile(UINT8 x, UINT8 y) {
+    machines[enidx].groundflg = y > 90 ? 1 : 0;
+    machines[enidx].shield = 9;
+    machines[enidx].hboffx = 2;
+    machines[enidx].hboffy = 5;
+    machines[enidx].width = 13;
+    machines[enidx].height = 10;
+    machines[enidx].gunoffx = 1;
+    machines[enidx].gunoffy = 4;
+    machines[enidx].type = enmissile;
+    init_common_enemy_props(x, y, 0x1D);
+}
+
+
+void init_enemy_turret(UINT8 x, UINT8 y) {
+    machines[enidx].groundflg = 0;
+    machines[enidx].shield = 100;
+    machines[enidx].hboffx = 3;
+    machines[enidx].hboffy = 2;
+    machines[enidx].width = 14;
+    machines[enidx].height = 12;
+    machines[enidx].gunoffx = 7;
+    machines[enidx].gunoffy = -4;
+    machines[enidx].type = enturret;
+    init_common_enemy_props(x, y, 0x21);
+}
+
+
+void init_enemy_bomber(UINT8 x, UINT8 y) {
+    machines[enidx].groundflg = 0;
+    machines[enidx].shield = 2;
+    machines[enidx].hboffx = 0;
+    machines[enidx].hboffy = 5;
+    machines[enidx].width = 13;
+    machines[enidx].height = 7;
+    machines[enidx].gunoffx = 4;
+    machines[enidx].gunoffy = 11;
+    machines[enidx].type = enbomber;
+    init_common_enemy_props(x, y, 0x25);
+}
+
+
+void init_enemy_mine(UINT8 x, UINT8 y) {
+    machines[enidx].groundflg = 1;
+    machines[enidx].shield = 20;
+    machines[enidx].hboffx = 3;
+    machines[enidx].hboffy = 2;
+    machines[enidx].width = 11;
+    machines[enidx].height = 11;
+    machines[enidx].gunoffx = 0;
+    machines[enidx].gunoffy = 0;
+    machines[enidx].type = enmine;
+    init_common_enemy_props(x, y, 0x29);
 }
 
 
@@ -340,12 +438,25 @@ void scroll_level_bkg() {
 
 
 void place_level_obj(UINT8 type, UINT8 x, UINT8 y) {
-    switch (type) {
-    case enrider:
-        init_enemy_rider(x, y);
-        break;
-    default:
-        break;
+    switch(type) {
+        case enrider:
+            init_enemy_rider(x, y);
+            break;
+        case endrone:
+            init_enemy_drone(x, y);
+            break;
+        case enmissile:
+            init_enemy_missile(x, y);
+            break;
+        case enturret:
+            init_enemy_turret(x, y);
+            break;
+        case enbomber:
+            init_enemy_bomber(x, y);
+            break;
+        case enmine:
+            init_enemy_mine(x, y);
+            break;
     }
 }
 
@@ -404,20 +515,73 @@ void build_hole() {
  }
 
 
+void set_projctl_comm_prop(Machine * mch, INT8 speedx, INT8 speedy) {
+    projectiles[prjidx].speedx = speedx;
+    projectiles[prjidx].speedy = speedy;
+    projectiles[prjidx].oam = (shadow_OAM + oamidx);
+    shadow_OAM[oamidx].x = mch->x + mch->gunoffx;
+    shadow_OAM[oamidx].y = mch->y + mch->gunoffy;
+    incr_oam_sprite_tile_idx(1);
+    incr_projectile_counter();
+    incr_projectile_index();
+}
+
+
 void fire_bullet(Machine * mch, INT8 speedx, INT8 speedy) {
-    if(prjcnt != projectilelimit && oamidx != 180) {  // Check max sprites on screen limit and OAM free tile
-        projectiles[prjidx].speedx = speedx;
-        projectiles[prjidx].speedy = speedy;
-        projectiles[prjidx].width = bulletdimswh;
-        projectiles[prjidx].height = bulletdimswh;
+    if(prjcnt != projectilelimit && oamidx != 180) {  // Set props only if initialization succeeds
+        projectiles[prjidx].width = 3;
+        projectiles[prjidx].height = 3;
         projectiles[prjidx].damage = 1;
-        projectiles[prjidx].oam = (shadow_OAM + oamidx);
         shadow_OAM[oamidx].tile = 0x11;
-        shadow_OAM[oamidx].x = mch->x + mch->gunoffx;
-        shadow_OAM[oamidx].y = mch->y + mch->gunoffy;
-        incr_oam_sprite_tile_idx(1);
-        incr_projectile_counter();
-        incr_projectile_index();
+        set_projctl_comm_prop(mch, speedx, speedy);
+    }
+}
+
+
+void fire_bigbullet(Machine * mch, INT8 speedx, INT8 speedy) {
+    if(prjcnt != projectilelimit && oamidx != 180) {  // Set props only if initialization succeeds
+        projectiles[prjidx].width = 4;
+        projectiles[prjidx].height = 4;
+        projectiles[prjidx].damage = 2;
+        shadow_OAM[oamidx].tile = 0x12;
+        set_projctl_comm_prop(mch, speedx, speedy);
+    }
+}
+
+
+void fire_laser(Machine * mch, INT8 speedx, INT8 speedy) {
+    if(prjcnt != projectilelimit && oamidx != 180) {  // Set props only if initialization succeeds
+        projectiles[prjidx].width = 8;
+        projectiles[prjidx].height = 3;
+        projectiles[prjidx].damage = 3;
+        shadow_OAM[oamidx].tile = 0x13;
+        set_projctl_comm_prop(mch, speedx, speedy);
+    }
+}
+
+
+void drop_bomb(Machine * mch) {
+    if(prjcnt != projectilelimit && oamidx != 180) {  // Set props only if initialization succeeds
+        projectiles[prjidx].width = 8;
+        projectiles[prjidx].height = 8;
+        projectiles[prjidx].damage = 4;
+        shadow_OAM[oamidx].tile = 0x14;
+        set_projctl_comm_prop(mch, 0, 2);
+    }
+}
+
+
+INT8 get_prjctl_x_aimed() { // Returns projectile's x movement direction based on player's position
+    if(pl->x < 40) {
+        return -2;
+    } else if(pl->x < 80) {
+        return -1;
+    } else if(pl->x < 89) {
+        return -0;
+    } else if(pl->x < 120) {
+        return 1;
+    } else {
+        return 2;
     }
 }
 
@@ -576,10 +740,25 @@ void animate_jump() {
 // ENEMY AI
 
 
-void exec_machine_pattern(Machine * mch) {
+void exec_enemy_pattern(Machine * mch) {
     switch(mch->type) {
         case enrider:
             exec_rider_pattern(mch);
+            break;
+        case endrone:
+            exec_drone_pattern(mch);
+            break;
+        case enmissile:
+            exec_missile_pattern(mch);
+            break;
+        case enturret:
+            exec_turret_pattern(mch);
+            break;
+        case enbomber:
+            exec_bomber_pattern(mch);
+            break;
+        case enmine:
+            exec_mine_pattern(mch);
             break;
     }
 }
@@ -599,10 +778,52 @@ void exec_rider_pattern(Machine * mch) {
 }
 
 
+void exec_drone_pattern(Machine * mch) {
+    if(mch->x % 16 == 0) {
+        mch->cyccount = mch->cyccount == 0 ? 1 : 0;
+    }
+    move_enemy(mch, -1, mch->cyccount == 0 ? 1 : -1);
+    if(mch->x == 90) {
+        fire_bullet(mch, get_prjctl_x_aimed(), 1);
+    }
+}
+
+
+void exec_missile_pattern(Machine * mch) {
+    move_enemy(mch, -2, 0);
+}
+
+
+void exec_turret_pattern(Machine * mch) {
+    move_enemy(mch, -2, 0);
+    if(mch->x == 91) {
+        fire_bigbullet(mch, get_prjctl_x_aimed(), -1);
+    }
+}
+
+
+void exec_bomber_pattern(Machine * mch) {
+    move_enemy(mch, -1, 0);
+    if(mch->x == pl->x) {
+        drop_bomb(mch);
+    }
+}
+
+
+void exec_mine_pattern(Machine * mch) {
+    if(mch->y == 101 || mch->y == 102) {
+        mch->cyccount = 0;
+    } else if(mch->y == 132 || mch->y == 133) {
+        mch->cyccount = 1;
+    }
+    move_enemy(mch, -2, mch->cyccount == 0 ? 1 : -1);
+}
+
+
 // HUD
 
 void init_hud() {
-    set_win_data(25, 17, hudtiles);
+    set_win_data(29, 17, hudtiles);
     set_win_tiles(0, 0, 18, 1, hudmap);
     move_win(15, 134);
     SHOW_WIN;
@@ -614,43 +835,28 @@ void upd_hud_shield(INT8 hpbef, INT8 hpaft) {
     if(hpbef > hpaft) { // Has taken damage
         hptiletresh = hpaft < 0 ? 2 : hpaft + 2;  // HP bar lower tile boundary
         for(UINT8 hpcnt = hpbef + 2; hpcnt > hptiletresh; hpcnt--) {
-            set_win_tile_xy(hpcnt, 0, 0x28);
+            set_win_tile_xy(hpcnt, 0, 0x2C);
         }
     } else {    // Gotten a powerup or respawns after lost live
         hptiletresh = hpaft + 3;
         for(UINT8 hpcnt = hpbef + 3; hpcnt < hptiletresh; hpcnt++) {
-            set_win_tile_xy(hpcnt, 0, 0x29);
+            set_win_tile_xy(hpcnt, 0, 0x2D);
         }
     }
 }
 
 
 void upd_hud_lives() {
-    set_win_tile_xy(17, 0, pllives + 26);       // tile offset
+    set_win_tile_xy(17, 0, pllives + 30);       // tile offset
 }
 
 
-/*void play_song(const hUGESong_t * song) {
-    __critical {
-        hUGE_init(song);
-        add_VBL(hUGE_dosound);
-    }
-}
+// LEVEL PROCESSING
 
 
-void stop_song() {
-    hUGE_mute_channel(HT_CH1, HT_CH_MUTE);
-    hUGE_mute_channel(HT_CH2, HT_CH_MUTE);
-    hUGE_mute_channel(HT_CH3, HT_CH_MUTE);
-    hUGE_mute_channel(HT_CH4, HT_CH_MUTE);
-    remove_VBL(hUGE_dosound);
-}*/
-
-
-void main() {
-
+void init_level() {
     roadposx = sceneryposx = cloudposx = iframeflg = 0;
-    speedincr = 2;
+    speedincr = 3;
     plspeed = plgroundspeed;
     pllives = 3;
     prjcnt = prjidx = abtncnt = enemycount = 0;
@@ -663,17 +869,9 @@ void main() {
     levelidx = holeflg = levelclearflg = fallinholeflg = 0;
     lvlplacptr = level1objs;
 
-    DISPLAY_ON;
-    SHOW_BKG;
-    SHOW_SPRITES;
-
-    NR52_REG = 0x80; // Sound on
-    NR51_REG = 0xFF; // All channels
-    NR50_REG = 0x77; // Max level, left and right
-
     init_level_road();
     roadbuildidx = 0; // Resetting the road index
-    init_level_bgk(volcaniclvltiles, volcaniclvlmap);
+    init_level_bgk(deserttiles, desertmap);
 
     STAT_REG = 0x45;
     LYC_REG = 0x00;
@@ -686,11 +884,10 @@ void main() {
 
     set_sprite_data(0, 1, blanktile);
     set_sprite_data(1, 16, playerspritetiles);
-    set_sprite_data(17, 1, projectiletiles);
-    set_sprite_data(18, 8, enemyspritetiles);
-    set_sprite_data(26, 1, misctiles);
+    set_sprite_data(17, 4, projectiletiles);
+    set_sprite_data(21, 24, enemyspritetiles);
+    set_sprite_data(45, 1, misctiles);
     init_player();
-
 
     for(i = 0; i < projectilelimit; i++) { // Initialization of projectiles
         projectiles[i].oam = NULL;
@@ -702,9 +899,10 @@ void main() {
     }
 
     init_hud();
+}
 
-    //play_song(&road1);
 
+void level_loop() {
     while(1) {
 
         if(levelclearflg) {
@@ -712,9 +910,9 @@ void main() {
         }
 
         build_level();
-        cloudposx += speedincr - 1;    // -1
-        sceneryposx += speedincr + 1;  // +1
-        roadposx += roadscrspeed;     // +3
+        cloudposx += speedincr - 1;
+        sceneryposx += speedincr + 1;
+        roadposx += speedincr + 2;
         if(holestartx != 255 && holestartx > screenminx) { // Road hole has appeared
             holestartx -= roadscrspeed;
         }
@@ -744,12 +942,10 @@ void main() {
         
         for(i = 0; i < machlimit; i++) {    // Player and enemies handling
             if(i > 0 && machines[i].y != 0) {
-                if(!iframeflg) {
-                    if(pl->explcount == 0 && pl->groundflg == machines[i].groundflg) {    // Player hasn't exploded
-                        check_player_machine_collsn(machines + i);
-                    }
-                    exec_machine_pattern(machines + i);
+                if(!iframeflg && pl->explcount == 0 && pl->groundflg == machines[i].groundflg) {    // Player hasn't exploded
+                    check_player_machine_collsn(machines + i);
                 }
+                exec_enemy_pattern(machines + i);
             }
             if(machines[i].explcount != 0) {
                 explode_machine(machines + i);
@@ -787,7 +983,6 @@ void main() {
             HIDE_SPRITES;
             break;  // Game over
         }
-        
 
         if(lockmvmnt != 1 && lockmvmnt != 3) { // Check horizontal lock
             if(joypad() & J_LEFT) {
@@ -822,5 +1017,99 @@ void main() {
 
         wait_vbl_done();
     }
+}
+
+
+void animate_level_start() {
+    do {
+        move_machine(pl, 1, 0);
+        wait_vbl_done();
+    } while(pl->x != 16);
+
+    for(sitr = -1; sitr != ((INT8) roadscrspeed); sitr++) {
+        for(pl->cyccount = 0; pl->cyccount != 5; pl->cyccount++) {  
+            build_level();
+            cloudposx += speedincr - 1;
+            sceneryposx += speedincr + 1;
+            roadposx += speedincr + 2;
+            wait_vbl_done();
+        }
+    }
+}
+
+
+void animate_level_end() {
+    for(pl->cyccount = 0; pl->cyccount < projectilelimit; pl->cyccount++) {
+        if(projectiles[pl->cyccount].oam != NULL) {
+            destroy_projectile(projectiles + pl->cyccount);
+        }
+    }
+    pl->cyccount = 0;
+    while(pl->cyccount != 21) {
+        build_road();
+        cloudposx += speedincr - 1;
+        sceneryposx += speedincr + 1;
+        roadposx += speedincr + 2;
+        if(lockmvmnt == 2) {    // Wait until the end of the jumping animation before ending animation
+            animate_jump();
+        } else if(pl->x != 168) {
+            move_machine(pl, 1, 0);
+        } else {
+            animate_blackout(pl->cyccount);
+            pl->cyccount++;
+        }
+        wait_vbl_done();
+    }
+}
+
+
+void animate_blackout(UINT8 indictr) {   // To be used in loops
+        switch(indictr) {
+            case 1:
+                BGP_REG = 0xF9;
+                break;
+            case 10:
+                BGP_REG = 0xFE;
+                break;
+            case 20:
+                BGP_REG = 0xFF;
+                break;
+        }
+}
+
+
+/*void play_song(const hUGESong_t * song) {
+    __critical {
+        hUGE_init(song);
+        add_VBL(hUGE_dosound);
+    }
+}
+
+
+void stop_song() {
+    hUGE_mute_channel(HT_CH1, HT_CH_MUTE);
+    hUGE_mute_channel(HT_CH2, HT_CH_MUTE);
+    hUGE_mute_channel(HT_CH3, HT_CH_MUTE);
+    hUGE_mute_channel(HT_CH4, HT_CH_MUTE);
+    remove_VBL(hUGE_dosound);
+}*/
+
+
+void main() {
+
+    DISPLAY_ON;
+    SHOW_BKG;
+    SHOW_SPRITES;
+
+    NR52_REG = 0x80; // Sound on
+    NR51_REG = 0xFF; // All channels
+    NR50_REG = 0x77; // Max level, left and right
+
+    init_level();
+    animate_level_start();
+    level_loop();
+    animate_level_end();
+
+    //play_song(&road1);
 
 }
