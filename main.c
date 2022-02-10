@@ -63,7 +63,7 @@ Projectile projectiles[8]; // Array of all the projectiles
 const UINT8 projectilelimit = 8;
 UINT8 prjcnt, prjidx;  // Projectile counter, index
 const UINT8 screenminx = 8, screenminy = 16; // 0 + horizontal offset / 0 + vertical offset
-const UINT8 screenmaxx = 168, screenmaxy = 160; // x0 + screen width / y0 + screen height
+const UINT8 screenmaxx = 168, screenmaxy = 144; // x0 + screen width / y0 + screen height
 UINT8 abtncnt; // Counts cycles after A button press
 const UINT8 abtncooldown = 24; // Cycles to wait until A button becomes active
 Machine machines[5];
@@ -82,6 +82,7 @@ const UINT8 jumplimity = 50; // Jumping vert distance limit
 const UINT8 jumphalflimy = 25;
 UINT8 jumpstarty;   // Player y position at start of jump
 UINT8 holestartx, holeendx;    // Used to indicate start and end x position of road holes
+UBYTE isapressed;  // Indicates that A iscurrently pressed
 
 
 
@@ -144,11 +145,21 @@ void exec_mine_pattern(Machine * mch);
 void init_hud();
 void upd_hud_shield(INT8 hpbef, INT8 hpaft);
 void upd_hud_lives();
+void hud_draw_pause();
+void hud_clear_pause();
 void init_level();
 void level_loop();
 void animate_level_start();
 void animate_level_end();
 void animate_blackout(UINT8 indictr);
+void se_fall_in_hole();
+void se_fire_bullet();
+void se_fire_laser();
+void se_drop_bomb();
+void se_explode();
+void se_get_hit();
+void se_jump();
+void se_pause();
 //void play_song(const hUGESong_t * song);
 //void stop_song();
 
@@ -203,9 +214,9 @@ UINT8 get_tile_idx(UINT8 newidxnum) {   // Recalculate tile index according to t
 
 
 void init_level_bgk(const unsigned char * lvltiles, const unsigned char * lvlmap) {
-    set_bkg_data(47, 13, cloudtiles);
+    set_bkg_data(50, 13, cloudtiles);
     set_bkg_tiles(0, 0, 32, 1, cloudmap);
-    set_bkg_data(60, 40, lvltiles);
+    set_bkg_data(63, 40, lvltiles);
     set_bkg_tiles(0, 1, 32, 9, lvlmap);
 }
 
@@ -534,6 +545,7 @@ void fire_bullet(Machine * mch, INT8 speedx, INT8 speedy) {
         projectiles[prjidx].damage = 1;
         shadow_OAM[oamidx].tile = 0x11;
         set_projctl_comm_prop(mch, speedx, speedy);
+        se_fire_bullet();
     }
 }
 
@@ -545,6 +557,7 @@ void fire_bigbullet(Machine * mch, INT8 speedx, INT8 speedy) {
         projectiles[prjidx].damage = 2;
         shadow_OAM[oamidx].tile = 0x12;
         set_projctl_comm_prop(mch, speedx, speedy);
+        se_fire_bullet();
     }
 }
 
@@ -556,6 +569,7 @@ void fire_laser(Machine * mch, INT8 speedx, INT8 speedy) {
         projectiles[prjidx].damage = 3;
         shadow_OAM[oamidx].tile = 0x13;
         set_projctl_comm_prop(mch, speedx, speedy);
+        se_fire_laser();
     }
 }
 
@@ -567,6 +581,7 @@ void drop_bomb(Machine * mch) {
         projectiles[prjidx].damage = 4;
         shadow_OAM[oamidx].tile = 0x14;
         set_projctl_comm_prop(mch, 0, 2);
+        se_drop_bomb();
     }
 }
 
@@ -605,6 +620,7 @@ void init_explosion(Machine * mch) {
     mch->explcount = 1;
     mch->hboffx = -(mch->x + mch->width);   // x + offx + width == 0
     mch->hboffy = -(mch->y + mch->height);   // Avoiding damage dealing to player while exploding
+    se_explode();
 }
 
 
@@ -660,6 +676,8 @@ void take_damage(Machine * mch, UINT8 dmgamt) {
     }
     if(mch->shield < 1) {
         init_explosion(mch);
+    } else {
+        se_get_hit();
     }
 }
 
@@ -796,7 +814,7 @@ void exec_missile_pattern(Machine * mch) {
 
 void exec_turret_pattern(Machine * mch) {
     move_enemy(mch, -2, 0);
-    if(mch->x == 91) {
+    if(mch->x == 87) {
         fire_bigbullet(mch, get_prjctl_x_aimed(), -1);
     }
 }
@@ -804,8 +822,9 @@ void exec_turret_pattern(Machine * mch) {
 
 void exec_bomber_pattern(Machine * mch) {
     move_enemy(mch, -1, 0);
-    if(mch->x == pl->x) {
+    if(pl->x > mch->x && pl->x < mch->x + 8 && mch->cyccount == 0) {
         drop_bomb(mch);
+        mch->cyccount = 1;
     }
 }
 
@@ -823,7 +842,7 @@ void exec_mine_pattern(Machine * mch) {
 // HUD
 
 void init_hud() {
-    set_win_data(29, 17, hudtiles);
+    set_win_data(29, 21, hudtiles);
     set_win_tiles(0, 0, 18, 1, hudmap);
     move_win(15, 134);
     SHOW_WIN;
@@ -835,12 +854,12 @@ void upd_hud_shield(INT8 hpbef, INT8 hpaft) {
     if(hpbef > hpaft) { // Has taken damage
         hptiletresh = hpaft < 0 ? 2 : hpaft + 2;  // HP bar lower tile boundary
         for(UINT8 hpcnt = hpbef + 2; hpcnt > hptiletresh; hpcnt--) {
-            set_win_tile_xy(hpcnt, 0, 0x2C);
+            set_win_tile_xy(hpcnt, 0, 0x30);
         }
     } else {    // Gotten a powerup or respawns after lost live
         hptiletresh = hpaft + 3;
         for(UINT8 hpcnt = hpbef + 3; hpcnt < hptiletresh; hpcnt++) {
-            set_win_tile_xy(hpcnt, 0, 0x2D);
+            set_win_tile_xy(hpcnt, 0, 0x31);
         }
     }
 }
@@ -850,6 +869,23 @@ void upd_hud_lives() {
     set_win_tile_xy(17, 0, pllives + 30);       // tile offset
 }
 
+
+void hud_draw_pause() {
+    HIDE_SPRITES;
+    set_win_tile_xy(8, 0, 0x2B);
+    set_win_tile_xy(9, 0, 0x28);
+    set_win_tile_xy(10, 0, 0x2D);
+    set_win_tile_xy(11, 0, 0x2C);
+    set_win_tile_xy(12, 0, 0x29);
+}
+
+
+void hud_clear_pause() {
+    for(i = 8; i < 13; i++) {
+        set_win_tile_xy(i, 0, 0x00);
+    }
+    SHOW_SPRITES;
+}
 
 // LEVEL PROCESSING
 
@@ -865,6 +901,7 @@ void init_level() {
     lockmvmnt = 0; // Allowing free movement
     holestartx = 255;
     holeendx = 0;
+    isapressed = 0;
 
     levelidx = holeflg = levelclearflg = fallinholeflg = 0;
     lvlplacptr = level1objs;
@@ -959,9 +996,10 @@ void level_loop() {
         }
 
         if(lockmvmnt != 2) {
-            if(pl->x + pl->width > holestartx) { // Hole in the road and player is inside
+            if(pl->x + pl->width > holestartx && !fallinholeflg) { // Hole in the road and player is inside
                 fallinholeflg = 1;
                 lockmvmnt = 3;
+                se_fall_in_hole();
             }
         } else {
             animate_jump();
@@ -976,12 +1014,9 @@ void level_loop() {
 
         if(pl->shield < 1 && pllives != 0 && pl->explcount == 0) {
             respawn_player();
-        }
-
-        if(pllives == 0) {
-            fill_bkg_rect(0, 0, 40, 36, 0);
-            HIDE_SPRITES;
-            break;  // Game over
+        } else if(pllives == 0) {
+            animate_blackout(pl->cyccount);  // Game over
+            pl->cyccount++;
         }
 
         if(lockmvmnt != 1 && lockmvmnt != 3) { // Check horizontal lock
@@ -1007,17 +1042,31 @@ void level_loop() {
             }
         }
         if(joypad() & J_A) { 
-            if(lockmvmnt == 0) {
+            if(lockmvmnt == 0 && !isapressed) {
                 lockmvmnt = 2;  // Lock vert movement during jump
                 pl->groundflg = 0;
                 jumpstarty = pl->y; // Keeping player y position for landing
                 set_machine_sprite_tiles(pl, 13);
+                se_jump();
             }
+            isapressed = 1;
+        } else {
+            isapressed = 0;
         }
-
+        if(joypad() & J_START) {
+            hud_draw_pause();
+            se_pause();
+            performance_delay(10);
+            waitpad(J_START);
+            performance_delay(10);
+            hud_clear_pause();
+        }
         wait_vbl_done();
     }
 }
+
+
+// ANIMATIONS AND EFFECTS
 
 
 void animate_level_start() {
@@ -1035,6 +1084,7 @@ void animate_level_start() {
             wait_vbl_done();
         }
     }
+    pl->cyccount = 0;   // Resetting value
 }
 
 
@@ -1075,6 +1125,78 @@ void animate_blackout(UINT8 indictr) {   // To be used in loops
                 BGP_REG = 0xFF;
                 break;
         }
+}
+
+
+// SOUND EFFECTS
+
+
+void se_fall_in_hole() {
+    NR10_REG = 0x1F;
+    NR11_REG = 0x81;
+    NR12_REG = 0x97;
+    NR13_REG = 0xF7;
+    NR14_REG = 0x85;
+}
+
+
+void se_fire_bullet() {
+    NR41_REG = 0x00;
+    NR42_REG = 0xD4;
+    NR43_REG = 0x52;
+    NR44_REG = 0xC0;
+}
+
+
+void se_fire_laser() {
+    NR10_REG = 0x2E;
+    NR11_REG = 0xC1;
+    NR12_REG = 0xD2;
+    NR13_REG = 0x54;
+    NR14_REG = 0x87;
+}
+
+
+void se_drop_bomb() {
+    NR10_REG = 0x7F;
+    NR11_REG = 0x81;
+    NR12_REG = 0xD7;
+    NR13_REG = 0x55;
+    NR14_REG = 0x87;
+}
+
+
+void se_explode() {
+    NR41_REG = 0x04;
+    NR42_REG = 0xD5;
+    NR43_REG = 0x55;
+    NR44_REG = 0x80;
+}
+
+
+void se_get_hit() {
+    NR21_REG = 0x40;
+    NR22_REG = 0xD1;
+    NR23_REG = 0xCD;
+    NR24_REG = 0xC7;
+}
+
+
+void se_jump() {
+    NR10_REG = 0x75;
+    NR11_REG = 0x80;
+    NR12_REG = 0xD2;
+    NR13_REG = 0x46;
+    NR14_REG = 0x85;
+}
+
+
+void se_pause() {
+    NR10_REG = 0x74;
+    NR11_REG = 0x80;
+    NR12_REG = 0xD7;
+    NR13_REG = 0x0E;
+    NR14_REG = 0x86;
 }
 
 
