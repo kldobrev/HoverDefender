@@ -1,6 +1,6 @@
 /*
 
- ROADTILES.H
+ SCORPBOSSTILES.H
 
  Include File.
 
@@ -10,7 +10,7 @@
   Compression          : None.
   Counter              : None.
   Tile size            : 8 x 8
-  Tiles                : 0 to 28
+  Tiles                : 0 to 39
 
   Palette colors       : None.
   SGB Palette          : None.
@@ -22,14 +22,14 @@
 
 */
 
-#ifndef __roadtiles_h_INCLUDE
-#define __roadtiles_h_INCLUDE
+#ifndef __scorpbosstiles_h_INCLUDE
+#define __scorpbosstiles_h_INCLUDE
 
 /* Bank of tiles. */
-#define roadtilesBank 0
+#define scorpbosstilesBank 0
 /* Start of tile array. */
-extern const unsigned char roadtiles[];
+extern const unsigned char scorpbosstiles[];
 
 #endif
 
-/* End of ROADTILES.H */
+/* End of SCORPBOSSTILES.H */
