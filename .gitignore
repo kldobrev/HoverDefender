@@ -1,4 +1,4 @@
 .vscode
-*.gb
 make.bat
 make*
+hoverdefender.gb

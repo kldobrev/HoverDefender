@@ -14,13 +14,14 @@
 #include "projectile.c"
 #include "enemyspritetiles.c"
 //#include "placement.c"
-#include "misctiles.c"
 #include "hudtiles.c"
 #include "hudmap.c"
 #include "stage.c"
 #include "scorpbosstiles.c"
 #include "scorpbossmap.c"
 #include "bossspritetiles.c"
+#include "fonttiles.c"
+#include "misctiles.c"
 //#include "hUGEDriver.h"
 
 #include <stdio.h>
@@ -28,36 +29,38 @@
 extern const hUGESong_t road1;
 
 // Global scope/menus vars
-UINT8 progresscnt; // Current menu/level reached tracker
+UINT8 menuidx;
+const UINT8 gameoveropts[] = {96, 112};
 
-// Commmon level processing vars
-UINT8 levelidx; // For the level arrays
+// Commmon stage processing vars
+UINT8 stageidx; // For the stage arrays
 UBYTE holeflg;  // Flag indicating if currently rendered area is a hole or a road
-UINT8 levelclearflg; // Level completed flag
-UINT8 lvlobjscnt; // Level placement objects array counter
-const Placement * lvlplacptr; // Level placement objects array pointer
+UINT8 stageclearflg, bossclearflg; // stage/boss completed flags
+UINT8 lvlobjscnt; // stage placement objects array counter
+const Placement * lvlplacptr; // stage placement objects array pointer
 const enum asset {enrider = 0, endrone = 1, enmissile = 2, enturret = 3, enbomber = 4, enmine = 5, enboss = 6};
 const UINT8 roadlanesy[] = {98, 114, 130};
 
-// Level data
-const UINT8 level1road[] = {50, 30, 95, 25, 110, 25, 160, 25, 110, 35, 10, 10, 10, 10, 10, 10, 70};
-//const UINT8 level1roadlen = 17; // 17 total in level 1
-const Placement level1objs[] = {{2, 50, 167, 114, enrider}
+// stage data
+const UINT8 stage1road[] = {50, 30, 95, 25, 110, 25, 160, 25, 110, 35, 10, 10, 10, 10, 10, 10, 70};
+//const UINT8 stage1roadlen = 17; // 17 total in stage 1
+const Placement stage1objs[] = {{2, 50, 167, 114, enrider}
 , {4, 20, 167, 98, enrider}, {4, 40, 167, 130, enrider}, {4, 60, 167, 114, enrider}
 , {6, 20, 167, 130, enrider}, {6, 40, 167, 55, endrone}, {6, 60, 167, 98, enrider}, {6, 80, 167, 55, endrone}, {6, 100, 167, 114, enrider}
 , {8, 30, 167, 130, enrider}, {8, 40, 167, 55, endrone}, {8, 50, 167, 98, enrider}, {8, 60, 167, 114, enrider}, {8, 70, 167, 55, endrone}, {8, 80, 167, 114, enrider}
 , {9, 16, 167, 133, enturret} ,{16, 20, 167, 114, enrider}, {16, 30, 167, 55, endrone}
 };
-//const UINT8 level1objsnum = 19;
+//const UINT8 stage1objsnum = 19;
 
-const Stage stages[] = {{level1road, 17, level1objs, 19, deserttiles, 39, desertmap, 1, &road1}};
+const Stage stages[] = {{stage1road, 17, stage1objs, 19, deserttiles, 39, desertmap, 1, &road1}};
 const Stage * crntstage = stages;    // Current stage pointer
+UINT8 stagenum;     // Current stage counter
+const unsigned char stagenames[][18] = {{0x0E, 0x0F, 0x1D, 0x0F, 0x1C, 0x1E, 0x00, 0x12, 0x13, 0x11, 0x12, 0x21, 0x0B, 0x23}};
+const UINT8 stnamelengths[6] = {14};
 
-
-
-UINT8 roadbuildidx; // index for the level road array
+UINT8 roadbuildidx; // index for the stage road array
 UINT8 camtileidx, nextcamtileidx; // current tile index of the right camera border, index of area where 
-// the next part of the level should be drawn
+// the next part of the stage should be drawn
 UINT8 i, citr; // iterators for whenever
 INT8 sitr;  // signed iterator for whenever
 UINT8 roadposx, sceneryposx, cloudposx;
@@ -106,7 +109,6 @@ UINT8 explcord[5][2]; // Used to calculate exact screen coords for explosions ba
 
 
 
-
 UINT8 get_OAM_free_tile_idx();
 void custom_delay(UINT8 cycles);
 void incr_oam_sprite_tile_idx(INT8 steps);
@@ -115,8 +117,9 @@ inline void incr_projectile_counter();
 inline void itr_projectile_ptr();
 inline UBYTE found_free_projectile_space();
 inline UINT8 get_tile_idx(UINT8 newidxnum);
-void init_level_bgk();
-void init_level_road();
+void clear_all_sprites();
+void init_stage_bgk();
+void init_stage_road();
 void set_machine_tile(Machine * mch, UINT8 tlnum);
 void set_machine_sprite_tiles(Machine * mch, UINT8 fsttile);
 void place_machine(Machine * mch, UINT8 x, UINT8 y);
@@ -136,9 +139,9 @@ void move_machine(Machine * mch, INT8 speedx, INT8 speedy);
 void move_player(INT8 speedx, INT8 speedy);
 void move_enemy(Machine * en, INT8 speedx, INT8 speedy);
 void incr_bkg_x_coords(UINT8 roadsp);
-void scroll_level_bkg();
-void place_level_obj(UINT8 type, UINT8 x, UINT8 y);
-void build_level();
+void scroll_stage_bkg();
+void place_stage_obj(UINT8 type, UINT8 x, UINT8 y);
+void build_stage();
 void build_road();
 void build_hole();
 void manage_hole_props();
@@ -183,12 +186,12 @@ void hud_draw_pause();
 void hud_clear_pause();
 inline void hud_draw_gun();
 void init_game();
-void init_level(UBYTE hasscenery, UBYTE hasscroll);
-void level_loop();
+void init_stage(UBYTE hasscenery, UBYTE hasscroll);
+void stage_loop();
 void scorpboss_loop();
 void pause_game();
-void anim_level_start();
-void anim_level_end();
+void anim_stage_start();
+void anim_stage_end();
 void anim_blackout_loop(UINT8 indictr);
 void anim_reverse_blackout_loop(UINT8 indictr);
 void anim_blackout();
@@ -204,9 +207,16 @@ void se_get_hit();
 void se_jump();
 void se_pause();
 void se_wpn_upgrd();
+void se_move_cursor();
+void se_choose_entry();
+void get_menu_pl_input(UINT8 * entries, UINT8 numentries);
+void init_common_menu_props();
 void main_menu();
+void stage_intro_screen(UINT8 stnum);
+void game_over_menu();
+void demo_end_screen();     // DEMO CODE
 void password_menu();
-void play_level();
+void play_stage();
 void play_boss();
 void mute_song();
 void unmute_song();
@@ -268,7 +278,16 @@ inline UINT8 get_tile_idx(UINT8 newidxnum) {   // Recalculate tile index accordi
 }
 
 
-void init_level_bgk() {
+void clear_all_sprites() {
+    for(i = 0; i != 40; i++) {
+        set_sprite_tile(i, 0);
+        move_sprite(i, 0, 0);
+    }
+    wait_vbl_done();
+}
+
+
+void init_stage_bgk() {
     if(crntstage->hasclouds) {
         set_bkg_data(20, 13, cloudtiles);
         set_bkg_tiles(0, 0, 32, 1, cloudmap);
@@ -282,7 +301,7 @@ void init_level_bgk() {
 
 
 
-void init_level_road() { // Layount initial road tiles to start the level
+void init_stage_road() { // Layount initial road tiles to start the stage
     set_bkg_data(72, 28, roadtiles);
     for(roadbuildidx = 0; roadbuildidx < 7; roadbuildidx++) {
         set_bkg_tiles(roadbuildidx * 3, 10, 3, 7, goodroadmap);
@@ -556,13 +575,15 @@ void move_enemy(Machine * en, INT8 speedx, INT8 speedy) {
 
 
 void incr_bkg_x_coords(UINT8 roadsp) {
-    cloudposx += roadsp - 3;
-    sceneryposx += roadsp - 1;
-    roadposx += roadsp;
+    __critical {
+        cloudposx += roadsp - 3;
+        sceneryposx += roadsp - 1;
+        roadposx += roadsp;
+    }
 }
 
 
-void scroll_level_bkg() {
+void scroll_stage_bkg() {
     switch(LYC_REG) {
         case 0x00:
             move_bkg(cloudposx, 0);
@@ -580,7 +601,7 @@ void scroll_level_bkg() {
 }
 
 
-void place_level_obj(UINT8 type, UINT8 x, UINT8 y) {
+void place_stage_obj(UINT8 type, UINT8 x, UINT8 y) {
     switch(type) {
         case enrider:
             init_enemy_rider(x, y);
@@ -604,7 +625,7 @@ void place_level_obj(UINT8 type, UINT8 x, UINT8 y) {
 }
 
 
-void build_level() {   // Automatically builds the road ahead while scrolling the stage
+void build_stage() {   // Automatically builds the road ahead while scrolling the stage
     camtileidx = get_tile_idx((SCX_REG + 168) / 8);
     if(camtileidx == nextcamtileidx) {
         if(holeflg) {
@@ -613,25 +634,25 @@ void build_level() {   // Automatically builds the road ahead while scrolling th
             build_road();
         }
 
-        //if(roadbuildidx == level1road[levelidx]) {
-        if(roadbuildidx == crntstage->roadlayout[levelidx]) {
-            levelidx++; // Moving to next elem in level array
+        //if(roadbuildidx == stage1road[stageidx]) {
+        if(roadbuildidx == crntstage->roadlayout[stageidx]) {
+            stageidx++; // Moving to next elem in stage array
             roadbuildidx = 0;
             holeflg = !holeflg; // Roads and holes alternate
         } else {
             roadbuildidx++;
         }
 
-        // Placing objects inside level
-        if(lvlobjscnt != crntstage->ennum && lvlplacptr->arridx == levelidx && lvlplacptr->elemidx == roadbuildidx) {
-            place_level_obj(lvlplacptr->type, lvlplacptr->x, lvlplacptr->y);
+        // Placing objects inside stage
+        if(lvlobjscnt != crntstage->ennum && lvlplacptr->arridx == stageidx && lvlplacptr->elemidx == roadbuildidx) {
+            place_stage_obj(lvlplacptr->type, lvlplacptr->x, lvlplacptr->y);
             lvlplacptr++;
             lvlobjscnt++;
         }
     }
 
-    if(levelidx == crntstage->roadlength) { // End of level reached
-        levelclearflg = 1;
+    if(stageidx == crntstage->roadlength) { // End of stage reached
+        stageclearflg = 1;
     }
 }
 
@@ -648,7 +669,7 @@ void build_hole() {
         holestartx = 238;
         set_bkg_tiles(camtileidx, 10, 4, 7, holestartmap);
         nextcamtileidx = get_tile_idx(camtileidx + 4);
-    } else if(roadbuildidx == level1road[levelidx]) {
+    } else if(roadbuildidx == stage1road[stageidx]) {
         //holeendx = 144;
         holeendx = 174;
         holestartx = 255;   // Resetting hole start value
@@ -737,9 +758,6 @@ void manage_sound_chnls() {
 
     if(!is_alive(pl) && pllives != 0 && pl->explcount == 0) {
         respawn_player();
-    } else if(pllives == 0) {
-        anim_blackout_loop(pl->cyccount);  // Game over
-        pl->cyccount++;
     }
 
     if(abtncnt != 0) {
@@ -967,8 +985,6 @@ void anim_explode_boss(UINT8 x, UINT8 y, UINT8 width, UINT8 height) {
     set_sprite_tile(5, 0);
     set_sprite_tile(6, 0);
     set_sprite_tile(7, 0);
-    init_level_road();
-    anim_level_end();
 }
 
 
@@ -1234,7 +1250,7 @@ inline void hud_draw_gun() {
     set_win_tile_xy(10, 0, 17 + plgun); // Tile offset 17
 }
 
-// LEVEL PROCESSING
+// stage PROCESSING
 
 
 void init_game() {
@@ -1244,7 +1260,7 @@ void init_game() {
 }
 
 
-void init_level(UBYTE hasscenery, UBYTE hasscroll) {
+void init_stage(UBYTE hasscenery, UBYTE hasscroll) {
     roadposx = sceneryposx = cloudposx = iframeflg = 0;
     oamidx = 0;
     prjcnt = abtncnt = 0;
@@ -1257,22 +1273,23 @@ void init_level(UBYTE hasscenery, UBYTE hasscroll) {
     isapressed = 0;
     numkills = 0;
 
-    levelidx = holeflg = levelclearflg = fallinholeflg = 0;
+    stageidx = holeflg = fallinholeflg = 0;
     lvlplacptr = crntstage->enlayout;
 
     roadbuildidx = 0; // Resetting the road index
     if(hasscenery) {
-        init_level_bgk();
+        init_stage_bgk();
     } else {
-        fill_bkg_rect(0, 0, 20, 10, 0x00);
+        fill_bkg_rect(0, 0, 32, 10, 0x00);
     }
-    init_level_road();
+    init_stage_road();
 
     if(hasscroll) {
         STAT_REG = 0x45;
         LYC_REG = 0x00;
+        remove_LCD(scroll_stage_bkg);   // DEBUG
         disable_interrupts();
-        add_LCD(scroll_level_bkg);
+        add_LCD(scroll_stage_bkg);
         enable_interrupts();
         set_interrupts(VBL_IFLAG | LCD_IFLAG);
     }
@@ -1295,18 +1312,21 @@ void init_level(UBYTE hasscenery, UBYTE hasscroll) {
     }
 
     hud_init();
+    hud_upd_lives();
     hud_draw_gun();
 }
 
 
-void level_loop() {
+void stage_loop() {
     while(1) {
 
-        if(levelclearflg) {
-            break;  // Out of game loop
+        if(stageclearflg || pllives == 0) {
+            if(pl->explcount == 0) {    // Waiting for explosion to finish
+                break;  // Out of game loop
+            }
         }
 
-        build_level();
+        build_stage();
         incr_bkg_x_coords(4);
         manage_hole_props();
         manage_projectiles();
@@ -1321,6 +1341,10 @@ void level_loop() {
 void scorpboss_loop() {
     UINT8 pattrn = 0, firedbull = 0, explidx = 0, gunidx;
     while(1) {
+
+        if(pllives == 0 && pl->explcount == 0) {
+            break;  // Game over
+        }
 
         if(pl->x + pl->width > 98 && pl->y + pl->height > 95 && pl->explcount == 0) {
             take_damage(pl, pl->shield);    // Collision with boss bkg
@@ -1381,7 +1405,8 @@ void scorpboss_loop() {
             if(lockmvmnt == 2) {    // Wait until the end of the jumping animation
                 anim_jump();
             } else {
-                break;
+                bossclearflg = 1;
+                break;  // Boss cleared
             }
         }
 
@@ -1393,7 +1418,7 @@ void scorpboss_loop() {
 
 
 void pause_game() {
-    if(machines[1].type != enboss) {  // Hide sprites only during levels
+    if(machines[1].type != enboss) {  // Hide sprites only during stages
         HIDE_SPRITES;
     }
     stop_song();
@@ -1403,14 +1428,14 @@ void pause_game() {
     waitpad(J_START);
     custom_delay(10);
     hud_clear_pause();
-    play_song(&road1);
+    play_song(crntstage->theme);
 }
 
 
 // ANIMATIONS AND EFFECTS
 
 
-void anim_level_start() {
+void anim_stage_start() {
     anim_reverse_blackout();
     do {
         move_machine(pl, 1, 0);
@@ -1419,23 +1444,22 @@ void anim_level_start() {
 }
 
 
-void anim_level_end() {
+void anim_stage_end() {
     for(pjctptr = projectiles; pjctptr <= projectiles + pjctllimit; pjctptr++) {
         if(pjctptr->oam != NULL) {
             destroy_projectile(pjctptr);
         }
     }
     pl->cyccount = 0;
-    while(pl->cyccount != 21) {
+    while(1) {
         build_road();
         incr_bkg_x_coords(5);
-        if(lockmvmnt == 2) {    // Wait until the end of the jumping animation before ending animation
+        if(lockmvmnt == 2) {    // Wait until the end of the jumping animation
             anim_jump();
         } else if(pl->x < 168) {
             move_machine(pl, 1, 0);
         } else {
-            anim_blackout_loop(pl->cyccount);
-            pl->cyccount++;
+            break;  // Animation has finished
         }
         wait_vbl_done();
     }
@@ -1593,56 +1617,161 @@ void se_wpn_upgrd() {
 }
 
 
-// LEVEL/MENU LOADING
+void se_move_cursor() {
+    mute_music_pl_chnl(0);
+    NR10_REG = 0x00;
+    NR11_REG = 0xCB;
+    NR12_REG = 0x63;
+    NR13_REG = 0x9F;
+    NR14_REG = 0x86;
+}
+
+
+void se_choose_entry() {
+    mute_music_pl_chnl(0);
+    NR10_REG = 0x64;
+    NR11_REG = 0x88;
+    NR12_REG = 0xF3;
+    NR13_REG = 0x3E;
+    NR14_REG = 0x86;
+} 
+
+
+// STAGE/MENU LOADING
+
+
+void get_menu_pl_input(UINT8 * entries, UINT8 numentries) {
+    menuidx = 0; // First option set be default
+    while(1) {
+        if(joypad() & (J_DOWN | J_SELECT)) {
+            menuidx = menuidx + 1 == numentries ? 0 : menuidx + 1;
+            move_sprite(0, shadow_OAM[0].x, entries[menuidx]);
+            se_move_cursor();
+        } else if(joypad() & J_UP) {
+            menuidx = menuidx == 0 ? numentries - 1 : menuidx - 1;
+            move_sprite(0, shadow_OAM[0].x, entries[menuidx]);
+            se_move_cursor();
+        } else if(joypad() & (J_START | J_A)) {
+            se_choose_entry();
+            break;  // Player has made a choice
+        }
+        custom_delay(7);
+    }
+}
+
+
+void init_common_menu_props() {
+    set_bkg_data(0, 1, blanktile);
+    set_bkg_data(1, 41, fonttiles);
+    fill_bkg_rect(0, 0, 32, 18, 0x00);
+    set_sprite_data(0, 1, misctiles);
+    set_sprite_tile(0, 0);
+}
 
 
 void main_menu() {
-    remove_LCD(scroll_level_bkg);
+    init_common_menu_props();
+    remove_LCD(scroll_stage_bkg);
     disable_interrupts();
     anim_reverse_blackout();
     fill_bkg_rect(0, 0, 20, 18, 0);
+    const unsigned char pressstartsign[] = {0x1A, 0x1C, 0x0F, 0x1D, 0x1D, 0x00, 0x1D, 0x1E, 0x0B, 0x1C, 0x1E};
+    set_bkg_tiles(4, 16, 11, 1, pressstartsign);
 
     waitpad(J_START);
 }
+
+
+void stage_intro_screen(UINT8 stnum) {
+    init_common_menu_props();
+    const unsigned char stagesign[] = {0x1D, 0x1E, 0x0B, 0x11, 0x0F};
+    set_bkg_tiles(6, 4, 5, 1, stagesign);
+    set_bkg_tile_xy(12, 4, stnum + 2);
+    set_bkg_tiles((20 - stnamelengths[stnum]) / 2, 7, stnamelengths[stnum], 1, *(stagenames + stnum));
+    anim_reverse_blackout();
+    custom_delay(70);
+    anim_blackout();
+}
+
+
+void game_over_menu() {
+    init_common_menu_props();
+    const unsigned char gmoversign[] = {0x11, 0x0B, 0x17, 0x0F, 0x00, 0x019, 0x20, 0x0F, 0x1C};
+    const unsigned char contsign[] = {0x0D, 0x19, 0x18, 0x1E, 0x13, 0x18, 0x1F, 0x0F};
+    const unsigned char quitsign[] = {0x1B, 0x1F, 0x13, 0x1E};
+    const unsigned char gopasssign[] = {0x1A, 0x0B, 0x1D, 0x1D, 0x21, 0x19, 0x1C, 0x0E, 0x25};
+    const unsigned char dummypass[] = {0x28, 0x28, 0x28, 0x28};
+    set_bkg_tiles(5, 4, 9, 1, gmoversign);
+    set_bkg_tiles(7, 10, 8, 1, contsign);
+    set_bkg_tiles(7, 12, 4, 1, quitsign);
+    //set_bkg_tiles(3, 16, 9, 1, gopasssign);
+    //set_bkg_tiles(13, 16, 4, 1, dummypass);
+    move_sprite(0, 52, 96);
+    anim_reverse_blackout();
+    get_menu_pl_input(gameoveropts, 2);
+    if(menuidx == 0) {
+        init_game();
+    }
+    clear_all_sprites();
+    anim_blackout();
+}
+
+
+void demo_end_screen() {    // DEMO CODE
+    init_common_menu_props();
+    unsigned char tnx1sign[] = {0x1E, 0x12, 0x0B, 0x18, 0x15, 0x00, 0x23, 0x19, 0x1F, 0x00, 0x10, 0x19, 0x1C};
+    unsigned char tnx2sign[] =  {0x1A, 0x16, 0x0B, 0x23, 0x13, 0x18, 0x11, 0x27};
+    unsigned char tnx3sign[] = {0x17, 0x19, 0x1C, 0x0F, 0x00, 0x1C, 0x19, 0x0B, 0x0E, 0x00, 0x0B, 0x0D, 0x1E, 0x13, 0x19, 0x18};
+    unsigned char tnx4sign[] = {0x0D, 0x19, 0x17, 0x13, 0x18, 0x11, 0x00, 0x1D, 0x19, 0x19, 0x18, 0x27};
+    set_bkg_tiles(3, 3, 13, 1, tnx1sign);
+    set_bkg_tiles(6, 5, 8, 1, tnx2sign);
+    set_bkg_tiles(2, 11, 16, 1, tnx3sign);
+    set_bkg_tiles(4, 13, 12, 1, tnx4sign);
+    anim_reverse_blackout();
+    waitpad(J_START);
+    anim_blackout();
+}
+
 
 void password_menu() {
     // UNDER CONSTRUCTION
 }
 
-void play_level() {
-    init_level(1, 1);
-    anim_level_start();
+void play_stage() {
+    init_stage(1, 1);
+    anim_stage_start();
     play_song(crntstage->theme);
-    level_loop();
-
-    /*if(pllives == 0) {
-        draw_game_over_screen(); // Game over + password + continue / end options
-        if(chosen_continue) {
-            continue;
-        } else {
-            break;
-        }
-    }*/
-
-    anim_level_end();
+    stage_loop();
+    stop_song();    // Stop current stage music
+    if(stageclearflg == 1) {
+        anim_stage_end();
+    }
+    anim_blackout();
+    HIDE_WIN;
+    clear_all_sprites();
+    __critical {
+        cloudposx = sceneryposx = roadposx = 0;
+        scroll_stage_bkg();
+    }
 }
 
 void play_boss() {
-    init_level(1, 0);
+    init_stage(1, 0);
     init_scorpboss();
-    anim_level_start();
+    anim_stage_start();
     //play_song(&bosstheme);
     scorpboss_loop();
-    anim_explode_boss(80, 106, 72, 30);
-    while(1) {
-        wait_vbl_done();
+    if(bossclearflg == 1) {
+        anim_explode_boss(80, 106, 72, 30);
     }
-
-    /*if(pllives == 0) {
-        draw_game_over_screen(); // Game over + password + continue / end options
-        // Work in progress
-    }*/
-
+    anim_blackout();
+    stop_song();    // Stop current stage music
+    HIDE_WIN;
+    clear_all_sprites();
+    __critical {
+        cloudposx = sceneryposx = roadposx = 0;
+        scroll_stage_bkg();
+    }
 }
 
 
@@ -1686,9 +1815,26 @@ void main() {
     NR50_REG = 0x77; // Max level, left and right
 
     init_game();
+    stageclearflg = bossclearflg = 0;
+    stagenum = 0;
     while(1) {
-        play_level();
-        play_boss();
+        if(pllives == 0) {
+            game_over_menu();
+            if(menuidx == 1) {
+                break;  // Player has chosen to quit the stage/boss
+            }
+        } else if(stageclearflg == 0) {
+            stage_intro_screen(stagenum);
+            play_stage();
+        } else if(bossclearflg == 0) {
+            play_boss();
+        } else {    // Current stage and boss both cleared
+            demo_end_screen();  // DEMO CODE
+            init_game(); // DEMO CODE
+            stageclearflg = bossclearflg = 0;
+            //stagenum++;
+            //crntstage++;    // Next stage data
+        }
     }
 
 }
