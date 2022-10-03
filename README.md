@@ -15,4 +15,7 @@ An early prototype for an original homebrew game for the Nintendo Game Boy, writ
 
 ### Only want to play the game?
 
-TBA
+Please get the hoverdefender.gb file from the demo release which offers a full playable stage.
+The latest .gb file from the project directory may contain work in progress and/or be unplayable.
+
+I strongly recommend using the BGB or Emulicious emulators to run the game.

@@ -1,4 +1,3 @@
-//#include <gb/gb.h>
 #include "tiles/roadtiles.c"
 #include "tiles/deserttiles.c"
 #include "tiles/cloudtiles.c"
@@ -23,7 +22,6 @@
 #include "machine.c"
 #include "projectile.c"
 #include "stage.c"
-//#include "hUGEDriver.h"
 
 
 extern const hUGESong_t deserttheme;
@@ -219,7 +217,7 @@ void init_common_menu_props();
 void main_menu();
 void stage_intro_screen(UINT8 stnum);
 void game_over_menu();
-void beta_end_screen();     // BETA CODE
+void demo_end_screen();     // DEMO CODE
 void password_menu();
 void play_stage();
 void play_boss();
@@ -1687,17 +1685,17 @@ void init_common_menu_props() {
 
 void main_menu() {
     init_common_menu_props();
-    const unsigned char pressstartsign[] = {0x1A, 0x1C, 0x0F, 0x1D, 0x1D, 0x00, 0x00, 0x1D, 0x1E, 0x0B, 0x1C, 0x1E};   // BETA CODE
-    const unsigned char betasign[] = {0x0C, 0x0F, 0x1E, 0x0B, 0x00, 0x20, 0x0F, 0x1C, 0x1D, 0x13, 0x19, 0x18};   // BETA CODE
+    const unsigned char pressstartsign[] = {0x1A, 0x1C, 0x0F, 0x1D, 0x1D, 0x00, 0x00, 0x1D, 0x1E, 0x0B, 0x1C, 0x1E};   // DEMO CODE
+    const unsigned char demosign[] = {0x0E, 0x0F, 0x17, 0x19, 0x00, 0x20, 0x0F, 0x1C, 0x1D, 0x13, 0x19, 0x18};   // DEMO CODE
     set_bkg_data(33, 78, titlelogotiles);
     set_bkg_tiles(2, 1,  16, 6, titlelogomap);
     anim_reverse_blackout();
     play_song(&titletheme);
     set_bkg_tiles(4, 11, 12, 1, pressstartsign);
-    set_bkg_tiles(4, 15, 12, 1, betasign);
-    waitpad(J_START);   // BETA CODE
-    stop_song();   // BETA CODE
-    se_choose_entry();   // BETA CODE
+    set_bkg_tiles(4, 15, 12, 1, demosign);
+    waitpad(J_START);   // DEMO CODE
+    stop_song();   // DEMO CODE
+    se_choose_entry();   // DEMO CODE
     anim_blackout();
 }
 
@@ -1738,7 +1736,7 @@ void game_over_menu() {
 }
 
 
-void beta_end_screen() {    // BETA CODE
+void demo_end_screen() {    // DEMO CODE
     init_common_menu_props();
     unsigned char tnx1sign[] = {0x1E, 0x12, 0x0B, 0x18, 0x15, 0x00, 0x23, 0x19, 0x1F, 0x00, 0x10, 0x19, 0x1C};
     unsigned char tnx2sign[] =  {0x1A, 0x16, 0x0B, 0x23, 0x13, 0x18, 0x11, 0x27};
@@ -1839,7 +1837,7 @@ void main() {
     NR51_REG = 0xFF; // All channels
     NR50_REG = 0x77; // Max level, left and right
 
-    anim_blackout();    // BETA CODE
+    anim_blackout();    // DEMO CODE
     while(1) {
         main_menu();
         init_game();
@@ -1857,10 +1855,10 @@ void main() {
             } else if(bossclearflg == 0) {
                 play_boss();
             } else {    // Current stage and boss both cleared
-                beta_end_screen();  // BETA CODE
-                init_game(); // BETA CODE
+                demo_end_screen();  // DEMO CODE
+                init_game(); // DEMO CODE
                 stageclearflg = bossclearflg = 0;
-                break;  // BETA CODE
+                break;  // DEMO CODE
                 //stagenum++;
                 //crntstage++;    // Next stage data
             }
