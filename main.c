@@ -1,32 +1,36 @@
-#include <gb/gb.h>
-#include "roadtiles.c"
-#include "goodroadmap.c"
-#include "holestartmap.c"
-#include "holemap.c"
-#include "holeendmap.c"
-#include "deserttiles.c"
-#include "desertmap.c"
-#include "cloudtiles.c"
-#include "cloudmap.c"
+//#include <gb/gb.h>
+#include "tiles/roadtiles.c"
+#include "tiles/deserttiles.c"
+#include "tiles/cloudtiles.c"
+#include "tiles/playerspritetiles.c"
+#include "tiles/projectiletiles.c"
+#include "tiles/enemyspritetiles.c"
+#include "tiles/hudtiles.c"
+#include "tiles/scorpbosstiles.c"
+#include "tiles/bossspritetiles.c"
+#include "tiles/fonttiles.c"
+#include "tiles/misctiles.c"
+#include "tiles/titlelogotiles.c"
+#include "maps/goodroadmap.c"
+#include "maps/holestartmap.c"
+#include "maps/holemap.c"
+#include "maps/holeendmap.c"
+#include "maps/desertmap.c"
+#include "maps/cloudmap.c"
+#include "maps/scorpbossmap.c"
+#include "maps/titlelogomap.c"
+#include "maps/hudmap.c"
 #include "machine.c"
-#include "playerspritetiles.c"
-#include "projectiletiles.c"
 #include "projectile.c"
-#include "enemyspritetiles.c"
-//#include "placement.c"
-#include "hudtiles.c"
-#include "hudmap.c"
 #include "stage.c"
-#include "scorpbosstiles.c"
-#include "scorpbossmap.c"
-#include "bossspritetiles.c"
-#include "fonttiles.c"
-#include "misctiles.c"
 //#include "hUGEDriver.h"
 
-#include <stdio.h>
 
-extern const hUGESong_t road1;
+extern const hUGESong_t deserttheme;
+extern const hUGESong_t titletheme;
+extern const hUGESong_t bosstheme;
+extern const hUGESong_t gameovertheme;
+extern const hUGESong_t cleartheme;
 
 // Global scope/menus vars
 UINT8 menuidx;
@@ -52,7 +56,7 @@ const Placement stage1objs[] = {{2, 50, 167, 114, enrider}
 };
 //const UINT8 stage1objsnum = 19;
 
-const Stage stages[] = {{stage1road, 17, stage1objs, 19, deserttiles, 39, desertmap, 1, &road1}};
+const Stage stages[] = {{stage1road, 17, stage1objs, 19, deserttiles, 39, desertmap, 1, &deserttheme}};
 const Stage * crntstage = stages;    // Current stage pointer
 UINT8 stagenum;     // Current stage counter
 const unsigned char stagenames[][18] = {{0x0E, 0x0F, 0x1D, 0x0F, 0x1C, 0x1E, 0x00, 0x12, 0x13, 0x11, 0x12, 0x21, 0x0B, 0x23}};
@@ -190,6 +194,7 @@ void init_stage(UBYTE hasscenery, UBYTE hasscroll);
 void stage_loop();
 void scorpboss_loop();
 void pause_game();
+void clear_all_projectiles();
 void anim_stage_start();
 void anim_stage_end();
 void anim_blackout_loop(UINT8 indictr);
@@ -214,7 +219,7 @@ void init_common_menu_props();
 void main_menu();
 void stage_intro_screen(UINT8 stnum);
 void game_over_menu();
-void demo_end_screen();     // DEMO CODE
+void beta_end_screen();     // BETA CODE
 void password_menu();
 void play_stage();
 void play_boss();
@@ -1044,19 +1049,16 @@ void add_to_player_shield(UINT8 amt) {  // Used for increasing player shield val
 
 
 void check_iframes() {  // Animate blinking during iframe period
-    if(iframecnt == pliframeprd) {
+    if(iframecnt == pliframeprd) {  // Iframe period has ended
         iframecnt = iframeflg = 0;
-        move_sprite(0, pl->x, pl->y);
-        move_sprite(1, pl->x + 8, pl->y);
-        move_sprite(2, pl->x, pl->y + 8);
-        move_sprite(3, pl->x + 8, pl->y + 8);
+        set_machine_sprite_tiles(pl, pl->groundflg == 1 ? 1 : 13);
     } else {
         iframecnt++;
-        UINT8 newy = shadow_OAM[0].y == 0 ? pl->y : 0;
-        move_sprite(0, pl->x, newy);
-        move_sprite(1, pl->x + 8, newy);
-        move_sprite(2, pl->x, newy + 8);
-        move_sprite(3, pl->x + 8, newy + 8);
+        if(shadow_OAM[0].tile == 0) {   // Swap player sprite and empty tiles
+            set_machine_sprite_tiles(pl, pl->groundflg == 1 ? 1 : 13);
+        } else {
+            set_machine_tile(pl, 0);
+        }
     }
 }
 
@@ -1257,6 +1259,7 @@ void init_game() {
     plspeed = plgroundspeed;
     pllives = 3;
     plgun = 0;
+    iframecnt = 0;
 }
 
 
@@ -1287,7 +1290,7 @@ void init_stage(UBYTE hasscenery, UBYTE hasscroll) {
     if(hasscroll) {
         STAT_REG = 0x45;
         LYC_REG = 0x00;
-        remove_LCD(scroll_stage_bkg);   // DEBUG
+        remove_LCD(scroll_stage_bkg);
         disable_interrupts();
         add_LCD(scroll_stage_bkg);
         enable_interrupts();
@@ -1346,7 +1349,7 @@ void scorpboss_loop() {
             break;  // Game over
         }
 
-        if(pl->x + pl->width > 98 && pl->y + pl->height > 95 && pl->explcount == 0) {
+        if(pl->x + pl->width > 98 && pl->y + pl->height > 95 && pl->explcount == 0 && bossclearflg == 0) {
             take_damage(pl, pl->shield);    // Collision with boss bkg
         }
 
@@ -1400,12 +1403,15 @@ void scorpboss_loop() {
         manage_projectiles();
         manage_machines();
 
-        if( (!(is_alive(machines + 1) || is_alive(machines + 2) || is_alive(machines + 3)))
-           && machines[1].explcount == 0 && machines[2].explcount == 0 && machines[3].explcount == 0 ) {
+        if(bossclearflg == 0 && (!(is_alive(machines + 1) || is_alive(machines + 2) || is_alive(machines + 3))) ) {
+            bossclearflg = 1;
+        }
+
+        if(bossclearflg == 1 && machines[1].explcount == 0 && machines[2].explcount == 0 && machines[3].explcount == 0 ) {
             if(lockmvmnt == 2) {    // Wait until the end of the jumping animation
                 anim_jump();
-            } else {
-                bossclearflg = 1;
+            } else if(pl->explcount == 0) {
+                clear_all_projectiles();
                 break;  // Boss cleared
             }
         }
@@ -1428,11 +1434,24 @@ void pause_game() {
     waitpad(J_START);
     custom_delay(10);
     hud_clear_pause();
-    play_song(crntstage->theme);
+    if(stageclearflg == 0) {
+        play_song(crntstage->theme);
+    } else {
+        play_song(&bosstheme);
+    }
 }
 
 
 // ANIMATIONS AND EFFECTS
+
+
+void clear_all_projectiles() {
+    for(pjctptr = projectiles; pjctptr <= projectiles + pjctllimit; pjctptr++) {
+        if(pjctptr->oam != NULL) {
+            destroy_projectile(pjctptr);
+        }
+    }
+}
 
 
 void anim_stage_start() {
@@ -1445,11 +1464,7 @@ void anim_stage_start() {
 
 
 void anim_stage_end() {
-    for(pjctptr = projectiles; pjctptr <= projectiles + pjctllimit; pjctptr++) {
-        if(pjctptr->oam != NULL) {
-            destroy_projectile(pjctptr);
-        }
-    }
+    clear_all_projectiles();
     pl->cyccount = 0;
     while(1) {
         build_road();
@@ -1652,6 +1667,7 @@ void get_menu_pl_input(UINT8 * entries, UINT8 numentries) {
             move_sprite(0, shadow_OAM[0].x, entries[menuidx]);
             se_move_cursor();
         } else if(joypad() & (J_START | J_A)) {
+            stop_song();
             se_choose_entry();
             break;  // Player has made a choice
         }
@@ -1671,14 +1687,18 @@ void init_common_menu_props() {
 
 void main_menu() {
     init_common_menu_props();
-    remove_LCD(scroll_stage_bkg);
-    disable_interrupts();
+    const unsigned char pressstartsign[] = {0x1A, 0x1C, 0x0F, 0x1D, 0x1D, 0x00, 0x00, 0x1D, 0x1E, 0x0B, 0x1C, 0x1E};   // BETA CODE
+    const unsigned char betasign[] = {0x0C, 0x0F, 0x1E, 0x0B, 0x00, 0x20, 0x0F, 0x1C, 0x1D, 0x13, 0x19, 0x18};   // BETA CODE
+    set_bkg_data(33, 78, titlelogotiles);
+    set_bkg_tiles(2, 1,  16, 6, titlelogomap);
     anim_reverse_blackout();
-    fill_bkg_rect(0, 0, 20, 18, 0);
-    const unsigned char pressstartsign[] = {0x1A, 0x1C, 0x0F, 0x1D, 0x1D, 0x00, 0x1D, 0x1E, 0x0B, 0x1C, 0x1E};
-    set_bkg_tiles(4, 16, 11, 1, pressstartsign);
-
-    waitpad(J_START);
+    play_song(&titletheme);
+    set_bkg_tiles(4, 11, 12, 1, pressstartsign);
+    set_bkg_tiles(4, 15, 12, 1, betasign);
+    waitpad(J_START);   // BETA CODE
+    stop_song();   // BETA CODE
+    se_choose_entry();   // BETA CODE
+    anim_blackout();
 }
 
 
@@ -1707,6 +1727,7 @@ void game_over_menu() {
     //set_bkg_tiles(3, 16, 9, 1, gopasssign);
     //set_bkg_tiles(13, 16, 4, 1, dummypass);
     move_sprite(0, 52, 96);
+    play_song(&gameovertheme);
     anim_reverse_blackout();
     get_menu_pl_input(gameoveropts, 2);
     if(menuidx == 0) {
@@ -1717,7 +1738,7 @@ void game_over_menu() {
 }
 
 
-void demo_end_screen() {    // DEMO CODE
+void beta_end_screen() {    // BETA CODE
     init_common_menu_props();
     unsigned char tnx1sign[] = {0x1E, 0x12, 0x0B, 0x18, 0x15, 0x00, 0x23, 0x19, 0x1F, 0x00, 0x10, 0x19, 0x1C};
     unsigned char tnx2sign[] =  {0x1A, 0x16, 0x0B, 0x23, 0x13, 0x18, 0x11, 0x27};
@@ -1742,10 +1763,10 @@ void play_stage() {
     anim_stage_start();
     play_song(crntstage->theme);
     stage_loop();
-    stop_song();    // Stop current stage music
     if(stageclearflg == 1) {
         anim_stage_end();
     }
+    stop_song();    // Stop current stage music
     anim_blackout();
     HIDE_WIN;
     clear_all_sprites();
@@ -1759,10 +1780,14 @@ void play_boss() {
     init_stage(1, 0);
     init_scorpboss();
     anim_stage_start();
-    //play_song(&bosstheme);
+    play_song(&bosstheme);
     scorpboss_loop();
     if(bossclearflg == 1) {
+        stop_song();
         anim_explode_boss(80, 106, 72, 30);
+        play_song(&cleartheme);
+        custom_delay(255);
+        stop_song();
     }
     anim_blackout();
     stop_song();    // Stop current stage music
@@ -1810,31 +1835,38 @@ void main() {
     SHOW_BKG;
     SHOW_SPRITES;
 
-    //NR52_REG = 0x80; // Sound on
+    NR52_REG = 0x80; // Sound on
     NR51_REG = 0xFF; // All channels
     NR50_REG = 0x77; // Max level, left and right
 
-    init_game();
-    stageclearflg = bossclearflg = 0;
-    stagenum = 0;
+    anim_blackout();    // BETA CODE
     while(1) {
-        if(pllives == 0) {
-            game_over_menu();
-            if(menuidx == 1) {
-                break;  // Player has chosen to quit the stage/boss
+        main_menu();
+        init_game();
+        stageclearflg = bossclearflg = 0;
+        stagenum = 0;
+        while(1) {
+            if(pllives == 0) {
+                game_over_menu();
+                if(menuidx == 1) {
+                    break;  // Player has chosen to quit the stage/boss
+                }
+            } else if(stageclearflg == 0) {
+                stage_intro_screen(stagenum);
+                play_stage();
+            } else if(bossclearflg == 0) {
+                play_boss();
+            } else {    // Current stage and boss both cleared
+                beta_end_screen();  // BETA CODE
+                init_game(); // BETA CODE
+                stageclearflg = bossclearflg = 0;
+                break;  // BETA CODE
+                //stagenum++;
+                //crntstage++;    // Next stage data
             }
-        } else if(stageclearflg == 0) {
-            stage_intro_screen(stagenum);
-            play_stage();
-        } else if(bossclearflg == 0) {
-            play_boss();
-        } else {    // Current stage and boss both cleared
-            demo_end_screen();  // DEMO CODE
-            init_game(); // DEMO CODE
-            stageclearflg = bossclearflg = 0;
-            //stagenum++;
-            //crntstage++;    // Next stage data
         }
+
     }
+
 
 }
