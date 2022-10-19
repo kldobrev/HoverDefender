@@ -7,63 +7,297 @@ Symbol Table
     .__.ABS.                                                    =  000000 G
     .__.CPU.                                                    =  000000 L
     .__.H$L.                                                    =  000000 L
+    _BGP_REG                                                       ****** GX
     _LCDC_REG                                                      ****** GX
     _LYC_REG                                                       ****** GX
+    _NR10_REG                                                      ****** GX
+    _NR11_REG                                                      ****** GX
+    _NR12_REG                                                      ****** GX
+    _NR13_REG                                                      ****** GX
+    _NR14_REG                                                      ****** GX
+    _NR21_REG                                                      ****** GX
+    _NR22_REG                                                      ****** GX
+    _NR23_REG                                                      ****** GX
+    _NR24_REG                                                      ****** GX
+    _NR41_REG                                                      ****** GX
+    _NR42_REG                                                      ****** GX
+    _NR43_REG                                                      ****** GX
+    _NR44_REG                                                      ****** GX
+    _NR50_REG                                                      ****** GX
+    _NR51_REG                                                      ****** GX
+    _NR52_REG                                                      ****** GX
     _SCX_REG                                                       ****** GX
     _SCY_REG                                                       ****** GX
     _STAT_REG                                                      ****** GX
+    _WX_REG                                                        ****** GX
+    _WY_REG                                                        ****** GX
+    ___sdcc_bcall_ehl                                              ****** GX
+    __current_bank                                                 ****** GX
+    __divsint                                                      ****** GX
+    __mulint                                                       ****** GX
+    __mulschar                                                     ****** GX
+    __muluchar                                                     ****** GX
+  1 _abtncnt                                                       00005B GR
+  6 _abtncooldown                                                  0000CE GR
     _add_LCD                                                       ****** GX
-  0 _build_road_right                                              000479 GR
-  1 _camtileidx                                                    000001 GR
-  1 _citr                                                          000006 GR
-  0 _cloudmap                                                      0001FE GR
-  1 _cloudposx                                                     000009 GR
-  0 _cloudtiles                                                    00018E GR
+    _add_VBL                                                       ****** GX
+  6 _add_to_player_shield                                          001BBF GR
+  3 _anim_blackout                                                 0003E2 GR
+  3 _anim_blackout_loop                                            00039A GR
+  6 _anim_explode_boss                                             0018DC GR
+  6 _anim_jump                                                     001F7D GR
+  3 _anim_reverse_blackout                                         0003F6 GR
+  3 _anim_reverse_blackout_loop                                    0003BE GR
+  6 _anim_stage_end                                                00283F GR
+  6 _anim_stage_start                                              00281A GR
+  1 _ascendflg                                                     0000CD GR
+  6 _blanktile                                                     0000B8 GR
+  1 _bossclearflg                                                  000003 GR
+    _bossspritetiles                                               ****** GX
+    _bosstheme                                                     ****** GX
+  6 _build_hole                                                    000BCF GR
+  6 _build_road                                                    000BA4 GR
+  6 _build_stage                                                   000AB9 GR
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (GameBoy Z80-like CPU), page 2.
+Hexadecimal [24-Bits]
+
+Symbol Table
+
+  1 _camtileidx                                                    00000B GR
+  6 _check_iframes                                                 001C24 GR
+  6 _check_player_machine_collsn                                   001DF1 GR
+  6 _check_projectile_collsn                                       001C98 GR
+  1 _checktile                                                     000015 GR
+  1 _chmutedcyccnt                                                 0000D2 GR
+  1 _citr                                                          00000E GR
+  6 _clear_all_projectiles                                         0027D1 GR
+  3 _clear_all_sprites                                             000015 GR
+    _cleartheme                                                    ****** GX
+    _cloudmap                                                      ****** GX
+  1 _cloudposx                                                     000012 GR
+    _cloudtiles                                                    ****** GX
+  6 _collides_with_sidewalk                                        00089C GR
+  6 _cooldown_enemy                                                0022BE GR
+  1 _crntenemy                                                     0000C4 GR
+  1 _crntpjct                                                      000056 GR
+  1 _crntstage                                                     000007 GR
+  3 _custom_delay                                                  000000 GR
+    _demo_end_screen                                               ****** GX
+    _desertmap                                                     ****** GX
+    _deserttheme                                                   ****** GX
+    _deserttiles                                                   ****** GX
+  6 _destroy_machine                                               001A49 GR
+  6 _destroy_projectile                                            001644 GR
     _disable_interrupts                                            ****** GX
+  6 _drop_bomb                                                     0014EC GR
     _enable_interrupts                                             ****** GX
-  0 _get_tile_idx                                                  00026E GR
-  0 _goodroadmap                                                   000065 GR
-  1 _i                                                             000003 GR
-  0 _init_level_bgk                                                00027F GR
-  0 _init_level_road                                               0002E6 GR
-  0 _init_player                                                   00032D GR
-  1 _j                                                             000004 GR
+    _enemyspritetiles                                              ****** GX
+  6 _enlimit                                                       0000CF GR
+  6 _enprops                                                       0000FD GR
+  6 _exec_bomber_pattern                                           002217 GR
+  6 _exec_drone_pattern                                            00215F GR
+  6 _exec_enemy_pattern                                            0020AE GR
+  6 _exec_mine_pattern                                             002282 GR
+  6 _exec_missile_pattern                                          0021DD GR
+  6 _exec_rider_pattern                                            0020F9 GR
+  6 _exec_turret_pattern                                           0021EE GR
+  1 _explcord                                                      0000DD GR
+  6 _expldur                                                       0000D1 GR
+  6 _explode_machine                                               001887 GR
+  1 _fallinholeflg                                                 0000CC GR
+    _fill_bkg_rect                                                 ****** GX
+  6 _fire_bigbullet                                                001400 GR
+  6 _fire_bullet                                                   00138A GR
+  6 _fire_laser                                                    001476 GR
+  6 _found_free_projectile_space                                   0001EF GR
+    _game_over_menu                                                ****** GX
+  6 _genexplcord                                                   0000D5 GR
+  6 _get_OAM_free_tile_idx                                         000000 GR
+  6 _get_horiz_dist                                                001054 GR
+  6 _get_prjctl_x_aimed                                            001560 GR
+  6 _get_prjctl_y_aimed                                            001593 GR
+  6 _get_tile_idx                                                  000211 GR
+    _goodroadmap                                                   ****** GX
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (GameBoy Z80-like CPU), page 3.
+Hexadecimal [24-Bits]
+
+Symbol Table
+
+  1 _gradient                                                      0000D9 GR
+    _hUGE_dosound                                                  ****** GX
+    _hUGE_init                                                     ****** GX
+    _hUGE_mute_channel                                             ****** GX
+    _holeendmap                                                    ****** GX
+  1 _holeendx                                                      0000D0 GR
+  1 _holeflg                                                       000001 GR
+    _holemap                                                       ****** GX
+    _holestartmap                                                  ****** GX
+  1 _holestartx                                                    0000CF GR
+  6 _hud_clear_pause                                               0023C8 GR
+  6 _hud_draw_gun                                                  002408 GR
+  6 _hud_draw_pause                                                002381 GR
+  6 _hud_init                                                      0022DB GR
+  6 _hud_upd_lives                                                 002370 GR
+  6 _hud_upd_shield                                                00230D GR
+    _hudmap                                                        ****** GX
+    _hudtiles                                                      ****** GX
+  1 _i                                                             00000D GR
+  1 _iframecnt                                                     0000CA GR
+  1 _iframeflg                                                     0000CB GR
+  6 _incr_bkg_x_coords                                             000A7B GR
+  6 _incr_oam_sprite_tile_idx                                      000139 GR
+  6 _incr_projectile_counter                                       00019B GR
+  6 _init_explosion                                                00166D GR
+  3 _init_game                                                     00015A GR
+  6 _init_machine_props                                            0004F6 GR
+  6 _init_player                                                   00036B GR
+  6 _init_scorpboss                                                000752 GR
+  6 _init_scorpboss_gun                                            00063F GR
+  3 _init_stage                                                    000170 GR
+  3 _init_stage_bgk                                                000049 GR
+    _init_stage_road                                               ****** GX
+  6 _is_alive                                                      001621 GR
+  6 _is_inside_x_bounds                                            0008E1 GR
+  6 _is_obj_inside_screen                                          0015B3 GR
+  1 _isapressed                                                    0000D1 GR
+  6 _itr_enemies_ptr                                               000164 GR
+  6 _itr_projectile_ptr                                            0001BF GR
     _joypad                                                        ****** GX
-  1 _k                                                             000005 GR
-  0 _level1road                                                    000252 GR
-  0 _main                                                          0004D4 GR
-  0 _move_player                                                   0003BA GR
-  1 _nextcamtileidx                                                000002 GR
-  0 _performance_delay                                             000000 GR
-  1 _pl                                                            00000B GR
-  0 _playerspritetiles                                             000212 GR
+  6 _jumphalflimy                                                  0000D3 GR
+  6 _jumplimity                                                    0000D2 GR
+  6 _jumpspeed                                                     0000B4 GR
+  1 _jumpstarty                                                    0000CE GR
+  6 _lockedoamtiles                                                0000B7 GR
+  1 _lockmvmnt                                                     0000C9 GR
+  1 _lvlobjscnt                                                    000004 GR
+  1 _lvlplacptr                                                    000005 GR
+  6 _machinedimswh                                                 0000C8 GR
+  1 _machines                                                      00005C GR
+  1 _machptr                                                       0000C6 GR
+  3 _main                                                          000505 GR
+    _main_menu                                                     ****** GX
+  6 _manage_hole_props                                             000C79 GR
+  6 _manage_machines                                               000D7C GR
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (GameBoy Z80-like CPU), page 4.
+Hexadecimal [24-Bits]
+
+Symbol Table
+
+  6 _manage_player                                                 000E45 GR
+  6 _manage_projectiles                                            000CA5 GR
+  6 _manage_sound_chnls                                            000E1F GR
+  1 _menuidx                                                       0000E7 GR
+    _misctiles                                                     ****** GX
+  6 _move_enemy                                                    000A3F GR
+  6 _move_machine                                                  0008F3 GR
+  6 _move_player                                                   0009C6 GR
+  6 _move_projectile                                               001711 GR
+  3 _mute_music_pl_chnl                                            00040A GR
+  6 _mute_song                                                     002997 GR
+  6 _mutecycnum                                                    0000D4 GR
+  1 _nextcamtileidx                                                00000C GR
+  1 _numkills                                                      0000DC GR
+  1 _oamidx                                                        000014 GR
+  6 _pause_game                                                    00277B GR
+  6 _pjctllimit                                                    0000C9 GR
+  1 _pjctptr                                                       000058 GR
+  1 _pl                                                            0000C2 GR
+  6 _place_machine                                                 0002D8 GR
+  6 _place_stage_obj                                               000A9A GR
+  3 _play_boss                                                     000478 GR
+  3 _play_song                                                     0004E2 GR
+  3 _play_stage                                                    000428 GR
+    _playerspritetiles                                             ****** GX
+  6 _plgroundspeed                                                 0000B5 GR
+  1 _plgun                                                         0000DB GR
+  6 _pliframeprd                                                   0000D0 GR
+  1 _pllives                                                       0000C8 GR
+  6 _plprops                                                       0000DF GR
   1 _plspeed                                                       000013 GR
-  1 _roadbuildidx                                                  000000 GR
-  1 _roadposx                                                      000007 GR
-  0 _roadtiles                                                     000015 GR
-  1 _sceneryposx                                                   000008 GR
-  0 _scroll_level_bkg                                              000441 GR
+  1 _precfctr                                                      0000D6 GR
+  1 _prjcnt                                                        00005A GR
+  1 _projectiles                                                   000016 GR
+    _projectiletiles                                               ****** GX
+    _remove_LCD                                                    ****** GX
+    _remove_VBL                                                    ****** GX
+  6 _respawn_player                                                00044E GR
+  6 _roadboundy                                                    0000B6 GR
+  1 _roadbuildidx                                                  00000A GR
+  6 _roadlanesy                                                    00001E GR
+  1 _roadposx                                                      000010 GR
+  6 _roadscrspeed                                                  0000B3 GR
+  1 _sceneryposx                                                   000011 GR
+  6 _scorpboss_loop                                                002453 GR
+    _scorpbossmap                                                  ****** GX
+    _scorpbosstiles                                                ****** GX
+  6 _scorpgunprops                                                 0000E9 GR
+  6 _screenmaxx                                                    0000CC GR
+  6 _screenmaxy                                                    0000CD GR
+  6 _screenminx                                                    0000CA GR
+  6 _screenminy                                                    0000CB GR
+  3 _scroll_stage_bkg                                              000122 GR
+  6 _se_drop_bomb                                                  0028FC GR
+  6 _se_explode                                                    002918 GR
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (GameBoy Z80-like CPU), page 5.
+Hexadecimal [24-Bits]
+
+Symbol Table
+
+  6 _se_fall_in_hole                                               0028AB GR
+  6 _se_fire_bullet                                                0028C7 GR
+  6 _se_fire_laser                                                 0028E0 GR
+  6 _se_get_hit                                                    002931 GR
+  6 _se_jump                                                       00294A GR
+  6 _se_pause                                                      002966 GR
+  6 _se_wpn_upgrd                                                  00297B GR
     _set_bkg_data                                                  ****** GX
     _set_bkg_tiles                                                 ****** GX
     _set_interrupts                                                ****** GX
+  6 _set_machine_sprite_tiles                                      000274 GR
+  6 _set_machine_tile                                              000222 GR
+  6 _set_projctl_comm_prop                                         001064 GR
     _set_sprite_data                                               ****** GX
+    _set_win_data                                                  ****** GX
+    _set_win_tile_xy                                               ****** GX
+    _set_win_tiles                                                 ****** GX
     _shadow_OAM                                                    ****** GX
-  1 _speedincr                                                     00000A GR
-  0 _volcaniclvlmap                                                0000DA GR
-  0 _volcaniclvltiles                                              00007A GR
+  1 _sitr                                                          00000F GR
+  1 _slope                                                         0000D7 GR
+  6 _stage1objs                                                    000032 GR
+  6 _stage1road                                                    000021 GR
+    _stage_intro_screen                                            ****** GX
+  6 _stage_loop                                                    00241A GR
+  1 _stageclearflg                                                 000002 GR
+  1 _stageidx                                                      000000 GR
+  6 _stagenames                                                    00009B GR
+  1 _stagenum                                                      000009 GR
+  6 _stages                                                        00008C GR
+  6 _stingprops                                                    0000F3 GR
+  6 _stnamelengths                                                 0000AD GR
+  3 _stop_song                                                     0004F8 GR
+  6 _take_damage                                                   001AC1 GR
+  6 _unmute_song                                                   0029BF GR
+  6 _upd_mute_chnl_cycles                                          002886 GR
     _wait_vbl_done                                                 ****** GX
+    _waitpad                                                       ****** GX
+    b_demo_end_screen                                              ****** GX
+    b_game_over_menu                                               ****** GX
+    b_init_stage_road                                              ****** GX
+    b_main_menu                                                    ****** GX
+    b_stage_intro_screen                                           ****** GX
 
 
-ASxxxx Assembler V02.00 + NoICE + SDCC mods  (GameBoy Z80-like CPU), page 2.
+ASxxxx Assembler V02.00 + NoICE + SDCC mods  (GameBoy Z80-like CPU), page 6.
 Hexadecimal [24-Bits]
 
 Area Table
 
-   0 _CODE                                      size    5AC   flags    0
-   1 _DATA                                      size     14   flags    0
+   0 _CODE                                      size      0   flags    0
+   1 _DATA                                      size     E8   flags    0
    2 _DABS                                      size      0   flags    8
-   3 _HOME                                      size      0   flags    0
-   4 _GSINIT                                    size      0   flags    0
+   3 _HOME                                      size    591   flags    0
+   4 _GSINIT                                    size     1C   flags    0
    5 _GSFINAL                                   size      0   flags    0
-   6 _CABS                                      size      0   flags    8
+   6 _CODE_0                                    size   29E9   flags    0
+   7 _CABS                                      size      0   flags    8
 

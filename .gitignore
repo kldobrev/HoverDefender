@@ -1,3 +1,9 @@
 .vscode
 make.bat
 make*
+bank*lst
+bank*sym
+main.sym
+main.lst
+hoverdefender.map
+hoverdefender.noi

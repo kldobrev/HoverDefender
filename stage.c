@@ -11,5 +11,6 @@ typedef struct Stage {
     UINT8 bkgtilesnum;
     unsigned char * bkgmap;
     UBYTE hasclouds;
+    UINT8 stagebank;
     hUGESong_t * theme;
 } Stage;

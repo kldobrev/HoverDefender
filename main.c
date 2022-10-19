@@ -1,38 +1,35 @@
-#include "tiles/roadtiles.c"
-#include "tiles/deserttiles.c"
-#include "tiles/cloudtiles.c"
-#include "tiles/playerspritetiles.c"
-#include "tiles/projectiletiles.c"
-#include "tiles/enemyspritetiles.c"
-#include "tiles/hudtiles.c"
-#include "tiles/scorpbosstiles.c"
-#include "tiles/bossspritetiles.c"
-#include "tiles/fonttiles.c"
-#include "tiles/misctiles.c"
-#include "tiles/titlelogotiles.c"
-#include "maps/goodroadmap.c"
-#include "maps/holestartmap.c"
-#include "maps/holemap.c"
-#include "maps/holeendmap.c"
-#include "maps/desertmap.c"
-#include "maps/cloudmap.c"
-#include "maps/scorpbossmap.c"
-#include "maps/titlelogomap.c"
-#include "maps/hudmap.c"
+#pragma bank 0
 #include "machine.c"
 #include "projectile.c"
 #include "stage.c"
 
 
 extern const hUGESong_t deserttheme;
-extern const hUGESong_t titletheme;
 extern const hUGESong_t bosstheme;
-extern const hUGESong_t gameovertheme;
 extern const hUGESong_t cleartheme;
 
-// Global scope/menus vars
-UINT8 menuidx;
-const UINT8 gameoveropts[] = {96, 112};
+extern unsigned char roadtiles[];
+extern unsigned char deserttiles[];
+extern unsigned char cloudtiles[];
+extern unsigned char playerspritetiles[];
+extern unsigned char projectiletiles[];
+extern unsigned char enemyspritetiles[];
+extern unsigned char hudtiles[];
+extern unsigned char scorpbosstiles[];
+extern unsigned char bossspritetiles[];
+extern unsigned char fonttiles[];
+extern unsigned char misctiles[];
+extern unsigned char titlelogotiles[];
+extern unsigned char goodroadmap[];
+extern unsigned char holestartmap[];
+extern unsigned char holemap[];
+extern unsigned char holeendmap[];
+extern unsigned char desertmap[];
+extern unsigned char cloudmap[];
+extern unsigned char scorpbossmap[];
+extern unsigned char titlelogomap[];
+extern unsigned char hudmap[];
+
 
 // Commmon stage processing vars
 UINT8 stageidx; // For the stage arrays
@@ -40,26 +37,22 @@ UBYTE holeflg;  // Flag indicating if currently rendered area is a hole or a roa
 UINT8 stageclearflg, bossclearflg; // stage/boss completed flags
 UINT8 lvlobjscnt; // stage placement objects array counter
 const Placement * lvlplacptr; // stage placement objects array pointer
-const enum asset {enrider = 0, endrone = 1, enmissile = 2, enturret = 3, enbomber = 4, enmine = 5, enboss = 6};
+//const enum asset {0 = 0, 1 = 1, 2 = 2, 3 = 3, 4 = 4, 5 = 5, 6 = 6};
 const UINT8 roadlanesy[] = {98, 114, 130};
 
-// stage data
-const UINT8 stage1road[] = {50, 30, 95, 25, 110, 25, 160, 25, 110, 35, 10, 10, 10, 10, 10, 10, 70};
-//const UINT8 stage1roadlen = 17; // 17 total in stage 1
-const Placement stage1objs[] = {{2, 50, 167, 114, enrider}
-, {4, 20, 167, 98, enrider}, {4, 40, 167, 130, enrider}, {4, 60, 167, 114, enrider}
-, {6, 20, 167, 130, enrider}, {6, 40, 167, 55, endrone}, {6, 60, 167, 98, enrider}, {6, 80, 167, 55, endrone}, {6, 100, 167, 114, enrider}
-, {8, 30, 167, 130, enrider}, {8, 40, 167, 55, endrone}, {8, 50, 167, 98, enrider}, {8, 60, 167, 114, enrider}, {8, 70, 167, 55, endrone}, {8, 80, 167, 114, enrider}
-, {9, 16, 167, 133, enturret} ,{16, 20, 167, 114, enrider}, {16, 30, 167, 55, endrone}
-};
-//const UINT8 stage1objsnum = 19;
+// Stages data
+extern const UINT8 stage1road[];
+extern const Placement stage1objs[];
 
-const Stage stages[] = {{stage1road, 17, stage1objs, 19, deserttiles, 39, desertmap, 1, &deserttheme}};
+
+const Stage stages[] = {{stage1road, 17, stage1objs, 19, deserttiles, 39, desertmap, 1, 2, &deserttheme}};
 const Stage * crntstage = stages;    // Current stage pointer
 UINT8 stagenum;     // Current stage counter
 const unsigned char stagenames[][18] = {{0x0E, 0x0F, 0x1D, 0x0F, 0x1C, 0x1E, 0x00, 0x12, 0x13, 0x11, 0x12, 0x21, 0x0B, 0x23}};
-const UINT8 stnamelengths[6] = {14};
+const UINT8 stnamelengths = {14};
 
+
+UINT8 prevbank; // Used to switch back to the previously used bank
 UINT8 roadbuildidx; // index for the stage road array
 UINT8 camtileidx, nextcamtileidx; // current tile index of the right camera border, index of area where 
 // the next part of the stage should be drawn
@@ -108,123 +101,132 @@ INT16 slope, gradient;  // Used to calculate projectile trajectory when aimed at
 UINT8 plgun, numkills;
 const UINT8 genexplcord[5][2] = {{2, 2}, {3, 5}, {5, 4}, {6, 2}, {4, 5}}; // General position of explosions on boss bkg, based on 8 divisions
 UINT8 explcord[5][2]; // Used to calculate exact screen coords for explosions based on boss coords /width / height
+UINT8 menuidx;
 
 
 
-UINT8 get_OAM_free_tile_idx();
-void custom_delay(UINT8 cycles);
-void incr_oam_sprite_tile_idx(INT8 steps);
-inline void itr_enemies_ptr();
-inline void incr_projectile_counter();
-inline void itr_projectile_ptr();
-inline UBYTE found_free_projectile_space();
-inline UINT8 get_tile_idx(UINT8 newidxnum);
-void clear_all_sprites();
-void init_stage_bgk();
-void init_stage_road();
-void set_machine_tile(Machine * mch, UINT8 tlnum);
-void set_machine_sprite_tiles(Machine * mch, UINT8 fsttile);
-void place_machine(Machine * mch, UINT8 x, UINT8 y);
-void init_player();
-void respawn_player();
-void init_comm_en_props(UINT8 x, UINT8 y, UINT8 fsttile);
-void init_enemy_rider(UINT8 x, UINT8 y);
-void init_enemy_drone(UINT8 x, UINT8 y);
-void init_enemy_missile(UINT8 x, UINT8 y);
-void init_enemy_turret(UINT8 x, UINT8 y);
-void init_enemy_bomber(UINT8 x, UINT8 y);
-void init_enemy_mine(UINT8 x, UINT8 y);
-void init_scorpboss();
-inline UBYTE collides_with_sidewalk(INT8 vspeed);
-inline UBYTE is_inside_x_bounds(UINT8 posx);
-void move_machine(Machine * mch, INT8 speedx, INT8 speedy);
-void move_player(INT8 speedx, INT8 speedy);
-void move_enemy(Machine * en, INT8 speedx, INT8 speedy);
-void incr_bkg_x_coords(UINT8 roadsp);
-void scroll_stage_bkg();
-void place_stage_obj(UINT8 type, UINT8 x, UINT8 y);
-void build_stage();
-void build_road();
-void build_hole();
+
+extern const INT8 scorpgunprops[];
+extern const INT8 stingprops[];
+const INT8 enprops[6][10] = {{1, 2, 0, 1, 13, 15, -3, 12, 0, 21},
+{0, 1, 2, 5, 14, 7, 7, 13, 1, 25},
+{1, 9, 2, 5, 13, 10, 1, 4, 2, 29},
+{0, 100, 3, 2, 14, 12, 7, -4, 3, 33},
+{0, 2, 0, 5, 13, 7, 4, 11, 4, 37},
+{1, 20, 3, 2, 11, 11, 0, 0, 5, 41}};
+
+
+UINT8 get_OAM_free_tile_idx() NONBANKED;
+void custom_delay(UINT8 cycles) NONBANKED;
+void incr_oam_sprite_tile_idx(INT8 steps) NONBANKED;
+inline void itr_enemies_ptr() NONBANKED;
+inline void incr_projectile_counter() NONBANKED;
+inline void itr_projectile_ptr() NONBANKED;
+inline UBYTE found_free_projectile_space() NONBANKED;
+inline UINT8 get_tile_idx(UINT8 newidxnum) NONBANKED;
+void clear_all_sprites() NONBANKED;
+void init_stage_bgk() NONBANKED;
+void init_stage_road() NONBANKED;
+void set_machine_tile(Machine * mch, UINT8 tlnum) NONBANKED;
+void set_machine_sprite_tiles(Machine * mch, UINT8 fsttile) NONBANKED;
+void place_machine(Machine * mch, UINT8 x, UINT8 y) NONBANKED;
+void init_player() NONBANKED;
+void respawn_player() NONBANKED;
+void init_machine_props(UINT8 x, UINT8 y, const INT8 * mchprops) NONBANKED;
+void init_scorpboss() BANKED;
+inline UBYTE collides_with_sidewalk(INT8 vspeed) NONBANKED;
+inline UBYTE is_inside_x_bounds(UINT8 posx) NONBANKED;
+void move_machine(Machine * mch, INT8 speedx, INT8 speedy) NONBANKED;
+void move_player(INT8 speedx, INT8 speedy) NONBANKED;
+void move_enemy(Machine * en, INT8 speedx, INT8 speedy) NONBANKED;
+void incr_bkg_x_coords(UINT8 roadsp) NONBANKED;
+void scroll_stage_bkg() NONBANKED;
+void place_stage_obj(UINT8 type, UINT8 x, UINT8 y) NONBANKED;
+void build_stage() NONBANKED;
+void build_road() NONBANKED;
+void build_hole() NONBANKED;
 void manage_hole_props();
-void manage_projectiles();
-void manage_machines();
-void manage_sound_chnls();
-void manage_player();
-inline UINT8 get_horiz_dist(UINT8 fstobjx, UINT8 sndobjx);
-void set_projctl_comm_prop(Machine * mch, INT8 speedx, INT8 speedy);
-void fire_bullet(Machine * mch, INT8 speedx, INT8 speedy);
-void fire_bigbullet(Machine * mch, INT8 speedx, INT8 speedy);
-void fire_laser(Machine * mch, INT8 speedx, INT8 speedy);
-void drop_bomb(Machine * mch);
-inline INT8 get_prjctl_x_aimed(Projectile * prjct);
-inline INT8 get_prjctl_y_aimed(Projectile * prjct);
-inline UBYTE is_obj_inside_screen(UINT8 x, UINT8 y, UINT8 width, UINT8 height);
-inline UBYTE is_alive(Machine * mch);
-void destroy_projectile(Projectile * pr);
-void move_projectile(Projectile * pr);
-void init_explosion(Machine * mch);
-void explode_machine(Machine * mch);
-void anim_explode_boss(UINT8 x, UINT8 y, UINT8 width, UINT8 height);
-void take_damage(Machine * mch, UINT8 dmgamt);
-void add_to_player_shield(UINT8 amt);
-void check_iframes();
-void destroy_machine(Machine * mch);
-void check_projectile_collsn(Machine * mch, Projectile * prj);
-void check_player_machine_collsn(Machine * mch);
-void anim_jump();
-void exec_enemy_pattern(Machine * mch);
-void exec_rider_pattern(Machine * mch);
-void exec_drone_pattern(Machine * mch);
-void exec_missile_pattern(Machine * mch);
-void exec_turret_pattern(Machine * mch);
-void exec_bomber_pattern(Machine * mch);
-void exec_mine_pattern(Machine * mch);
-UBYTE cooldown_enemy(Machine * mch, UINT8 period);
-void hud_init();
-void hud_upd_shield(INT8 hpbef, INT8 hpaft);
-inline void hud_upd_lives();
-void hud_draw_pause();
-void hud_clear_pause();
-inline void hud_draw_gun();
-void init_game();
-void init_stage(UBYTE hasscenery, UBYTE hasscroll);
-void stage_loop();
-void scorpboss_loop();
-void pause_game();
-void clear_all_projectiles();
-void anim_stage_start();
-void anim_stage_end();
-void anim_blackout_loop(UINT8 indictr);
-void anim_reverse_blackout_loop(UINT8 indictr);
-void anim_blackout();
-void anim_reverse_blackout();
-void mute_music_pl_chnl(UINT8 chnum);
-void upd_mute_chnl_cycles(UINT8 chnum);
-void se_fall_in_hole();
-void se_fire_bullet();
-void se_fire_laser();
-void se_drop_bomb();
-void se_explode();
-void se_get_hit();
-void se_jump();
-void se_pause();
-void se_wpn_upgrd();
-void se_move_cursor();
-void se_choose_entry();
-void get_menu_pl_input(UINT8 * entries, UINT8 numentries);
-void init_common_menu_props();
-void main_menu();
-void stage_intro_screen(UINT8 stnum);
-void game_over_menu();
-void demo_end_screen();     // DEMO CODE
-void password_menu();
-void play_stage();
-void play_boss();
-void mute_song();
-void unmute_song();
-void play_song(const hUGESong_t * song);
-void stop_song();
+void manage_projectiles() NONBANKED;
+void manage_machines() NONBANKED;
+void manage_sound_chnls() NONBANKED;
+void manage_player() NONBANKED;
+inline UINT8 get_horiz_dist(UINT8 fstobjx, UINT8 sndobjx) NONBANKED;
+void set_projctl_comm_prop(Machine * mch, INT8 speedx, INT8 speedy) NONBANKED;
+void fire_bullet(Machine * mch, INT8 speedx, INT8 speedy) NONBANKED;
+void fire_bigbullet(Machine * mch, INT8 speedx, INT8 speedy) NONBANKED;
+void fire_laser(Machine * mch, INT8 speedx, INT8 speedy) NONBANKED;
+void drop_bomb(Machine * mch) NONBANKED;
+inline INT8 get_prjctl_x_aimed(Projectile * prjct) NONBANKED;
+inline INT8 get_prjctl_y_aimed(Projectile * prjct) NONBANKED;
+inline UBYTE is_obj_inside_screen(UINT8 x, UINT8 y, UINT8 width, UINT8 height) NONBANKED;
+inline UBYTE is_alive(Machine * mch) NONBANKED;
+void destroy_projectile(Projectile * pr) NONBANKED;
+void move_projectile(Projectile * pr) NONBANKED;
+void init_explosion(Machine * mch) NONBANKED;
+void explode_machine(Machine * mch) NONBANKED;
+void anim_explode_boss(UINT8 x, UINT8 y, UINT8 width, UINT8 height) NONBANKED;
+void take_damage(Machine * mch, UINT8 dmgamt) NONBANKED;
+void add_to_player_shield(UINT8 amt) NONBANKED;
+void check_iframes() NONBANKED;
+void destroy_machine(Machine * mch) NONBANKED;
+void check_projectile_collsn(Machine * mch, Projectile * prj) NONBANKED;
+void check_player_machine_collsn(Machine * mch) NONBANKED;
+void anim_jump() NONBANKED;
+void exec_enemy_pattern(Machine * mch) NONBANKED;
+void exec_rider_pattern(Machine * mch) NONBANKED;
+void exec_drone_pattern(Machine * mch) NONBANKED;
+void exec_missile_pattern(Machine * mch) NONBANKED;
+void exec_turret_pattern(Machine * mch) NONBANKED;
+void exec_bomber_pattern(Machine * mch) NONBANKED;
+void exec_mine_pattern(Machine * mch) NONBANKED;
+UBYTE cooldown_enemy(Machine * mch, UINT8 period) NONBANKED;
+void hud_init() NONBANKED;
+void hud_upd_shield(INT8 hpbef, INT8 hpaft) NONBANKED;
+inline void hud_upd_lives() NONBANKED;
+void hud_draw_pause() NONBANKED;
+void hud_clear_pause() NONBANKED;
+inline void hud_draw_gun() NONBANKED;
+void init_game() NONBANKED;
+void init_stage(UBYTE hasscenery, UBYTE hasscroll) NONBANKED;
+void stage_loop() NONBANKED;
+void scorpboss_loop() BANKED;
+void pause_game() NONBANKED;
+void clear_all_projectiles() NONBANKED;
+void anim_stage_start() NONBANKED;
+void anim_stage_end() NONBANKED;
+void anim_blackout_loop(UINT8 indictr) NONBANKED;
+void anim_reverse_blackout_loop(UINT8 indictr) NONBANKED;
+void anim_blackout() NONBANKED;
+void anim_reverse_blackout() NONBANKED;
+void mute_music_pl_chnl(UINT8 chnum) NONBANKED;
+void upd_mute_chnl_cycles(UINT8 chnum) NONBANKED;
+void se_fall_in_hole() NONBANKED;
+void se_fire_bullet() NONBANKED;
+void se_fire_laser() NONBANKED;
+void se_drop_bomb() NONBANKED;
+void se_explode() NONBANKED;
+void se_get_hit() NONBANKED;
+void se_jump() NONBANKED;
+void se_pause() NONBANKED;
+void se_wpn_upgrd() NONBANKED;
+void se_move_cursor() BANKED;
+void se_choose_entry() BANKED;
+void get_menu_pl_input(UINT8 * entries, UINT8 numentries) BANKED;
+void init_common_menu_props() BANKED;
+void main_menu() BANKED;
+void stage_intro_screen(UINT8 stnum) BANKED;
+void game_over_menu() BANKED;
+void demo_end_screen() BANKED;     // DEMO CODE
+void password_menu() BANKED;
+void play_stage() NONBANKED;
+void play_boss() NONBANKED;
+void init_boss(UINT8 stnum) NONBANKED;
+void boss_loop(UINT8 stnum) NONBANKED;
+void boss_clear_sequence(UINT8 stnum) NONBANKED;
+void mute_song() NONBANKED;
+void unmute_song() NONBANKED;
+void play_song(const hUGESong_t * song, UINT8 songbank) NONBANKED;
+void stop_song() NONBANKED;
 
 
 
@@ -240,7 +242,7 @@ UINT8 get_OAM_free_tile_idx() {
 }
 
 
-void custom_delay(UINT8 cycles) {
+void custom_delay(UINT8 cycles) NONBANKED {
     for(citr = 0; citr < cycles; citr++) {
         wait_vbl_done();
     }
@@ -256,7 +258,7 @@ void incr_oam_sprite_tile_idx(INT8 steps) {
 }
 
 
-inline void itr_enemies_ptr() {
+inline void itr_enemies_ptr() NONBANKED {
     crntenemy = crntenemy == machines + enlimit ? machines + 1 : crntenemy + 1;
 }
 
@@ -281,7 +283,7 @@ inline UINT8 get_tile_idx(UINT8 newidxnum) {   // Recalculate tile index accordi
 }
 
 
-void clear_all_sprites() {
+void clear_all_sprites() NONBANKED {
     for(i = 0; i != 40; i++) {
         set_sprite_tile(i, 0);
         move_sprite(i, 0, 0);
@@ -290,31 +292,36 @@ void clear_all_sprites() {
 }
 
 
-void init_stage_bgk() {
+void init_stage_bgk() NONBANKED {
     if(crntstage->hasclouds) {
+        SWITCH_ROM_MBC1(2);
         set_bkg_data(20, 13, cloudtiles);
         set_bkg_tiles(0, 0, 32, 1, cloudmap);
-        set_bkg_data(33, crntstage->bkgtilesnum, crntstage->bkgtiles);
+        SWITCH_ROM_MBC1(crntstage->stagebank);
+        set_bkg_data(61, crntstage->bkgtilesnum, crntstage->bkgtiles);
         set_bkg_tiles(0, 1, 32, 9, crntstage->bkgmap);
     } else {
+        SWITCH_ROM_MBC1(crntstage->stagebank);
         set_bkg_data(20, crntstage->bkgtilesnum, crntstage->bkgtiles);
         set_bkg_tiles(0, 0, 32, 10, crntstage->bkgmap);
     }
 }
 
 
-
-void init_stage_road() { // Layount initial road tiles to start the stage
-    set_bkg_data(72, 28, roadtiles);
+void init_stage_road() NONBANKED { // Layout initial road tiles to start the stage
+    prevbank = _current_bank;
+    SWITCH_ROM_MBC1(2);
+    set_bkg_data(33, 28, roadtiles);
     for(roadbuildidx = 0; roadbuildidx < 7; roadbuildidx++) {
         set_bkg_tiles(roadbuildidx * 3, 10, 3, 7, goodroadmap);
     }
+    SWITCH_ROM_MBC1(prevbank);
     camtileidx = 18;
     nextcamtileidx = camtileidx + 3;
 }
 
 
-void set_machine_tile(Machine * mch, UINT8 tlnum) { // Sets all machine tiles to a specific tile from memory
+void set_machine_tile(Machine * mch, UINT8 tlnum) NONBANKED { // Sets all machine tiles to a specific tile from memory
     set_sprite_tile(mch->oamtilenums[0], tlnum);
     set_sprite_tile(mch->oamtilenums[1], tlnum);
     set_sprite_tile(mch->oamtilenums[2], tlnum);
@@ -330,7 +337,7 @@ void set_machine_sprite_tiles(Machine * mch, UINT8 fsttile) {
 }
 
 
-void place_machine(Machine * mch, UINT8 x, UINT8 y) {
+void place_machine(Machine * mch, UINT8 x, UINT8 y) NONBANKED {
     mch->x = x;
     mch->y = y;
     move_sprite(mch->oamtilenums[0], x, y);
@@ -389,156 +396,28 @@ void respawn_player() {
 // ENEMIES INITIALIZATION
 
 
-void init_comm_en_props(UINT8 x, UINT8 y, UINT8 fsttile) {
+void init_machine_props(UINT8 x, UINT8 y, const INT8 * mchprops) NONBANKED{
     crntenemy->explcount = 0;
     crntenemy->cyccount = 0;
+    crntenemy->groundflg = mchprops[0];
+    crntenemy->shield = mchprops[1];
+    crntenemy->hboffx = mchprops[2];
+    crntenemy->hboffy = mchprops[3];
+    crntenemy->width = mchprops[4];
+    crntenemy->height = mchprops[5];
+    crntenemy->gunoffx = mchprops[6];
+    crntenemy->gunoffy = mchprops[7];
+    crntenemy->type = mchprops[8];
     for(i = 0; i < 4; i++) {
         crntenemy->oamtilenums[i] = oamidx;
         incr_oam_sprite_tile_idx(1);
     }
-    set_machine_sprite_tiles(crntenemy, fsttile);
+    set_machine_sprite_tiles(crntenemy, mchprops[9]);
     place_machine(crntenemy, x, y);
     itr_enemies_ptr();
 }
 
 
-void init_enemy_rider(UINT8 x, UINT8 y) {
-    crntenemy->groundflg = 1;
-    crntenemy->shield = 2;
-    crntenemy->hboffx = 0;
-    crntenemy->hboffy = 1;
-    crntenemy->width = 13;
-    crntenemy->height = 15;
-    crntenemy->gunoffx = -3;    // Avoiding collision with fired bullet
-    crntenemy->gunoffy = 12;
-    crntenemy->type = enrider;
-    init_comm_en_props(x, y, 0x15);
-}
-
-
-void init_enemy_drone(UINT8 x, UINT8 y) {
-    crntenemy->groundflg = 0;
-    crntenemy->shield = 1;
-    crntenemy->hboffx = 2;
-    crntenemy->hboffy = 5;
-    crntenemy->width = 14;
-    crntenemy->height = 7;
-    crntenemy->gunoffx = 7;
-    crntenemy->gunoffy = 13;
-    crntenemy->type = endrone;
-    init_comm_en_props(x, y, 0x19);
-}
-
-
-void init_enemy_missile(UINT8 x, UINT8 y) {
-    crntenemy->groundflg = y > 90 ? 1 : 0;
-    crntenemy->shield = 9;
-    crntenemy->hboffx = 2;
-    crntenemy->hboffy = 5;
-    crntenemy->width = 13;
-    crntenemy->height = 10;
-    crntenemy->gunoffx = 1;
-    crntenemy->gunoffy = 4;
-    crntenemy->type = enmissile;
-    init_comm_en_props(x, y, 0x1D);
-}
-
-
-void init_enemy_turret(UINT8 x, UINT8 y) {
-    crntenemy->groundflg = 0;
-    crntenemy->shield = 100;
-    crntenemy->hboffx = 3;
-    crntenemy->hboffy = 2;
-    crntenemy->width = 14;
-    crntenemy->height = 12;
-    crntenemy->gunoffx = 7;
-    crntenemy->gunoffy = -4;
-    crntenemy->type = enturret;
-    init_comm_en_props(x, y, 0x21);
-}
-
-
-void init_enemy_bomber(UINT8 x, UINT8 y) {
-    crntenemy->groundflg = 0;
-    crntenemy->shield = 2;
-    crntenemy->hboffx = 0;
-    crntenemy->hboffy = 5;
-    crntenemy->width = 13;
-    crntenemy->height = 7;
-    crntenemy->gunoffx = 4;
-    crntenemy->gunoffy = 11;
-    crntenemy->type = enbomber;
-    init_comm_en_props(x, y, 0x25);
-}
-
-
-void init_enemy_mine(UINT8 x, UINT8 y) {
-    crntenemy->groundflg = 1;
-    crntenemy->shield = 20;
-    crntenemy->hboffx = 3;
-    crntenemy->hboffy = 2;
-    crntenemy->width = 11;
-    crntenemy->height = 11;
-    crntenemy->gunoffx = 0;
-    crntenemy->gunoffy = 0;
-    crntenemy->type = enmine;
-    init_comm_en_props(x, y, 0x29);
-}
-
-
-// BOSSES
-
-
-void init_scorpboss_gun(UINT8 x, UINT8 y) {
-    crntenemy->groundflg = 1;
-    crntenemy->shield = 10;
-    crntenemy->hboffx = 1;
-    crntenemy->hboffy = 0;
-    crntenemy->gunoffx = -3;
-    crntenemy->gunoffy = 1;
-    crntenemy->width = 8;
-    crntenemy->height = 8;
-    crntenemy->type = enboss;
-    for(i = 0; i < 4; i++) {
-        crntenemy->oamtilenums[i] = oamidx;
-        incr_oam_sprite_tile_idx(1);
-    }
-    set_machine_tile(crntenemy, 127);   // Last tile is blank => won't be used for bullets accidently
-    set_sprite_tile(crntenemy->oamtilenums[0], 22);
-    place_machine(crntenemy, x, y);
-    itr_enemies_ptr();
-}
-
-
-void init_scorpboss() {
-    set_bkg_data(80, 40, scorpbosstiles);
-    set_bkg_tiles(11, 10, 9, 6, scorpbossmap);
-    set_sprite_data(20, 8, bossspritetiles);
-
-    // Initialize Stinger
-    crntenemy->groundflg = 1;
-    crntenemy->shield = 10;
-    crntenemy->hboffx = 1;
-    crntenemy->hboffy = 0;
-    crntenemy->width = 8;
-    crntenemy->height = 13;
-    crntenemy->type = enboss;
-    for(i = 0; i < 4; i++) {
-        crntenemy->oamtilenums[i] = oamidx;
-        incr_oam_sprite_tile_idx(1);
-    }
-    set_machine_tile(crntenemy, 127);   // Last tile is blank => won't be used for bullets accidently
-    set_sprite_tile(crntenemy->oamtilenums[0], 20);
-    set_sprite_tile(crntenemy->oamtilenums[2], 21);
-    place_machine(crntenemy, 121, 96);
-    itr_enemies_ptr();
-
-    // Initialize Right gun
-    init_scorpboss_gun(100, 105);
-
-    // Initialize Left gun
-    init_scorpboss_gun(96, 136);
-}
 
 
 inline UBYTE collides_with_sidewalk(INT8 vspeed) {
@@ -586,7 +465,7 @@ void incr_bkg_x_coords(UINT8 roadsp) {
 }
 
 
-void scroll_stage_bkg() {
+void scroll_stage_bkg() NONBANKED {
     switch(LYC_REG) {
         case 0x00:
             move_bkg(cloudposx, 0);
@@ -605,30 +484,11 @@ void scroll_stage_bkg() {
 
 
 void place_stage_obj(UINT8 type, UINT8 x, UINT8 y) {
-    switch(type) {
-        case enrider:
-            init_enemy_rider(x, y);
-            break;
-        case endrone:
-            init_enemy_drone(x, y);
-            break;
-        case enmissile:
-            init_enemy_missile(x, y);
-            break;
-        case enturret:
-            init_enemy_turret(x, y);
-            break;
-        case enbomber:
-            init_enemy_bomber(x, y);
-            break;
-        case enmine:
-            init_enemy_mine(x, y);
-            break;
-    }
+    init_machine_props(x, y, *(enprops + type));
 }
 
 
-void build_stage() {   // Automatically builds the road ahead while scrolling the stage
+void build_stage() NONBANKED {   // Automatically builds the road ahead while scrolling the stage
     camtileidx = get_tile_idx((SCX_REG + 168) / 8);
     if(camtileidx == nextcamtileidx) {
         if(holeflg) {
@@ -660,13 +520,18 @@ void build_stage() {   // Automatically builds the road ahead while scrolling th
 }
 
 
-void build_road() {
+void build_road() NONBANKED {
+    prevbank = _current_bank;
+    SWITCH_ROM_MBC1(2);
     set_bkg_tiles(camtileidx, 10, 3, 7, goodroadmap);
+    SWITCH_ROM_MBC1(prevbank);
     nextcamtileidx = get_tile_idx(camtileidx + 3);
 }
 
 
-void build_hole() {
+void build_hole() NONBANKED {
+    prevbank = _current_bank;
+    SWITCH_ROM_MBC1(2);
     if(roadbuildidx == 0) {
         //holestartx = 208;
         holestartx = 238;
@@ -682,6 +547,7 @@ void build_hole() {
         set_bkg_tiles(camtileidx, 10, 3, 7, holemap);
         nextcamtileidx = get_tile_idx(camtileidx + 3);
     }
+    SWITCH_ROM_MBC1(prevbank);
  }
 
 
@@ -828,7 +694,7 @@ void set_projctl_comm_prop(Machine * mch, INT8 speedx, INT8 speedy) {
     crntpjct->oam = (shadow_OAM + oamidx);
     crntpjct->oam->x = mch->x + mch->gunoffx;
     crntpjct->oam->y = mch->y + mch->gunoffy;
-    if((mch->type == enturret || mch->type == endrone) && (crntpjct->oam->x < pl->x || crntpjct->oam->x > (pl->x + pl->width))) {
+    if((mch->type == 3 || mch->type == 1) && (crntpjct->oam->x < pl->x || crntpjct->oam->x > (pl->x + pl->width))) {
         // Case for enemies that shoot based on player's coordinates
         crntpjct->aimedflg = 1;
         precfctr = pl->x + 46 < mch->x || mch->x + mch->width + 30 < pl->x ? 100 : 10;
@@ -1074,7 +940,7 @@ void check_player_machine_collsn(Machine * mch) {
     if ((mch->x + mch->hboffx < pl->x + pl->hboffx + pl->width && mch->y + mch->hboffy < pl->y + pl->hboffy + pl->height) 
     && (pl->x + pl->hboffx <  mch->x + mch->hboffx + mch->width && pl->y + pl->hboffy <  mch->y + mch->hboffy + mch->height)) {
         take_damage(pl, pl->shield);    // Take all health away
-        if(mch->type != enboss) {
+        if(mch->type != 6) {
             init_explosion(mch);
         }
     }
@@ -1107,22 +973,22 @@ void anim_jump() {
 
 void exec_enemy_pattern(Machine * mch) {
     switch(mch->type) {
-        case enrider:
+        case 0:
             exec_rider_pattern(mch);
             break;
-        case endrone:
+        case 1:
             exec_drone_pattern(mch);
             break;
-        case enmissile:
+        case 2:
             exec_missile_pattern(mch);
             break;
-        case enturret:
+        case 3:
             exec_turret_pattern(mch);
             break;
-        case enbomber:
+        case 4:
             exec_bomber_pattern(mch);
             break;
-        case enmine:
+        case 5:
             exec_mine_pattern(mch);
             break;
     }
@@ -1186,7 +1052,7 @@ void exec_mine_pattern(Machine * mch) {
 }
 
 
-UBYTE cooldown_enemy(Machine * mch, UINT8 period) { // Coolwon period between actions. Used in loops
+UBYTE cooldown_enemy(Machine * mch, UINT8 period) NONBANKED { // Coolwon period between actions. Used in loops
     if(mch->cyccount != period) {
         mch->cyccount++;
         return 0;
@@ -1198,10 +1064,14 @@ UBYTE cooldown_enemy(Machine * mch, UINT8 period) { // Coolwon period between ac
 
 // HUD
 
-void hud_init() {
+
+void hud_init() NONBANKED {
+    prevbank = _current_bank;
+    SWITCH_ROM_MBC1(2);
     //set_win_data(29, 21, hudtiles);
     set_win_data(0, 20, hudtiles);
     set_win_tiles(0, 0, 18, 1, hudmap);
+    SWITCH_ROM_MBC1(prevbank);
     move_win(15, 134);
     SHOW_WIN;
 }
@@ -1250,10 +1120,10 @@ inline void hud_draw_gun() {
     set_win_tile_xy(10, 0, 17 + plgun); // Tile offset 17
 }
 
-// stage PROCESSING
+// STAGE PROCESSING
 
 
-void init_game() {
+void init_game() NONBANKED {
     plspeed = plgroundspeed;
     pllives = 3;
     plgun = 0;
@@ -1261,7 +1131,7 @@ void init_game() {
 }
 
 
-void init_stage(UBYTE hasscenery, UBYTE hasscroll) {
+void init_stage(UBYTE hasscenery, UBYTE hasscroll) NONBANKED {
     roadposx = sceneryposx = cloudposx = iframeflg = 0;
     oamidx = 0;
     prjcnt = abtncnt = 0;
@@ -1296,10 +1166,13 @@ void init_stage(UBYTE hasscenery, UBYTE hasscroll) {
     }
 
     set_sprite_data(0, 1, blanktile);
+    prevbank = _current_bank;
+    SWITCH_ROM_MBC1(2);
     set_sprite_data(1, 16, playerspritetiles);
     set_sprite_data(17, 4, projectiletiles);
     set_sprite_data(21, 24, enemyspritetiles);
     set_sprite_data(45, 1, misctiles);
+    SWITCH_ROM_MBC1(prevbank);
     init_player();
 
     for(pjctptr = projectiles; pjctptr <= projectiles + pjctllimit; pjctptr++) { // Initialization of projectiles
@@ -1312,7 +1185,9 @@ void init_stage(UBYTE hasscenery, UBYTE hasscroll) {
         machptr->x = machptr->y = machptr->width = machptr->height = 0;
     }
 
+    SWITCH_ROM_MBC1(2);
     hud_init();
+    SWITCH_ROM_MBC1(prevbank);
     hud_upd_lives();
     hud_draw_gun();
 }
@@ -1339,90 +1214,8 @@ void stage_loop() {
 }
 
 
-void scorpboss_loop() {
-    UINT8 pattrn = 0, firedbull = 0, explidx = 0, gunidx;
-    while(1) {
-
-        if(pllives == 0 && pl->explcount == 0) {
-            break;  // Game over
-        }
-
-        if(pl->x + pl->width > 98 && pl->y + pl->height > 95 && pl->explcount == 0 && bossclearflg == 0) {
-            take_damage(pl, pl->shield);    // Collision with boss bkg
-        }
-
-        if(pattrn == 0) {  // Initial time for the player to adjust before boss attacks
-            if(cooldown_enemy(machines + 1, 45)) {
-                pattrn = 1;
-            }
-        }
-        
-        gunidx = pattrn == 1 ? 2 : 3; // Set gun to be fired depending on pattern num
-        if(pattrn == 1 || pattrn == 2) {  // Fire top or bottom gun
-            if(is_alive(machines + gunidx) && firedbull != 3) {
-                if(cooldown_enemy(machines + gunidx, 20)) {
-                    fire_bigbullet(machines + gunidx, -2, 0);
-                    firedbull++;
-                }
-            } else if(cooldown_enemy(machines + gunidx, 30)) {  // Cooldown until next attack
-                firedbull = 0;
-                pattrn++;
-            }
-        } else if(pattrn == 3) {  // Stinger pattern
-            if(is_alive(machines + 1)) {
-                machines[1].groundflg = pl->groundflg;
-                if(machines[1].cyccount == 0) {
-                    move_enemy(machines + 1, -2, 2);
-                    if(machines[1].y == 114) { // Rewrite
-                        machines[1].cyccount++;
-                    }
-                } else if(machines[1].cyccount == 1) {
-                    move_enemy(machines + 1, -4, 0);
-                    if(machines[1].x < 16) {
-                        machines[1].cyccount++;
-                    }
-                } else if(machines[1].cyccount == 2) {
-                    move_enemy(machines + 1, 2, -2);
-                    if(machines[1].y == 96) {
-                        machines[1].cyccount++;
-                    }
-                } else {
-                    move_enemy(machines + 1, 4, 0);
-                    if(machines[1].x == 121) {
-                        machines[1].cyccount = 0;
-                        pattrn = 1;  // Reset boss pattern
-                    }
-                }
-            } else {
-                pattrn = 1;
-            }
-        }
-
-        manage_projectiles();
-        manage_machines();
-
-        if(bossclearflg == 0 && (!(is_alive(machines + 1) || is_alive(machines + 2) || is_alive(machines + 3))) ) {
-            bossclearflg = 1;
-        }
-
-        if(bossclearflg == 1 && machines[1].explcount == 0 && machines[2].explcount == 0 && machines[3].explcount == 0 ) {
-            if(lockmvmnt == 2) {    // Wait until the end of the jumping animation
-                anim_jump();
-            } else if(pl->explcount == 0) {
-                clear_all_projectiles();
-                break;  // Boss cleared
-            }
-        }
-
-        manage_sound_chnls();
-        manage_player();
-        wait_vbl_done();
-    }
-}
-
-
 void pause_game() {
-    if(machines[1].type != enboss) {  // Hide sprites only during stages
+    if(machines[1].type != 6) {  // Hide sprites only during stages
         HIDE_SPRITES;
     }
     stop_song();
@@ -1433,9 +1226,9 @@ void pause_game() {
     custom_delay(10);
     hud_clear_pause();
     if(stageclearflg == 0) {
-        play_song(crntstage->theme);
+        play_song(crntstage->theme, crntstage->stagebank);
     } else {
-        play_song(&bosstheme);
+        play_song(&bosstheme, 2);
     }
 }
 
@@ -1452,7 +1245,7 @@ void clear_all_projectiles() {
 }
 
 
-void anim_stage_start() {
+void anim_stage_start() NONBANKED {
     anim_reverse_blackout();
     do {
         move_machine(pl, 1, 0);
@@ -1479,7 +1272,7 @@ void anim_stage_end() {
 }
 
 
-void anim_blackout_loop(UINT8 indictr) {   // To be used in loops
+void anim_blackout_loop(UINT8 indictr) NONBANKED {   // To be used in loops
         switch(indictr) {
             case 1:
                 BGP_REG = 0xF9;
@@ -1494,7 +1287,7 @@ void anim_blackout_loop(UINT8 indictr) {   // To be used in loops
 }
 
 
-void anim_reverse_blackout_loop(UINT8 indictr) {   // To be used in loops
+void anim_reverse_blackout_loop(UINT8 indictr) NONBANKED {   // To be used in loops
         switch(indictr) {
             case 1:
                 BGP_REG = 0xFE;
@@ -1509,7 +1302,7 @@ void anim_reverse_blackout_loop(UINT8 indictr) {   // To be used in loops
 }
 
 
-void anim_blackout() {  // Used as a standalone call
+void anim_blackout() NONBANKED {  // Used as a standalone call
     for(UINT8 blkstep = 0; blkstep != 21; blkstep++) {
         anim_blackout_loop(blkstep);
         wait_vbl_done();
@@ -1517,7 +1310,7 @@ void anim_blackout() {  // Used as a standalone call
 }
 
 
-void anim_reverse_blackout() {  // Used as a standalone call
+void anim_reverse_blackout() NONBANKED {  // Used as a standalone call
     for(UINT8 blkstep = 0; blkstep != 21; blkstep++) {
         anim_reverse_blackout_loop(blkstep);
         wait_vbl_done();
@@ -1528,7 +1321,7 @@ void anim_reverse_blackout() {  // Used as a standalone call
 // SOUND EFFECTS
 
 
-void mute_music_pl_chnl(UINT8 chnum) {     // Mutes a music player channel during effects
+void mute_music_pl_chnl(UINT8 chnum) NONBANKED {     // Mutes a music player channel during effects
     hUGE_mute_channel(chnum, HT_CH_MUTE);
     chmutedcyccnt[chnum] = mutecycnum;  // Initiates countdown for mute period
 }
@@ -1630,136 +1423,14 @@ void se_wpn_upgrd() {
 }
 
 
-void se_move_cursor() {
-    mute_music_pl_chnl(0);
-    NR10_REG = 0x00;
-    NR11_REG = 0xCB;
-    NR12_REG = 0x63;
-    NR13_REG = 0x9F;
-    NR14_REG = 0x86;
-}
-
-
-void se_choose_entry() {
-    mute_music_pl_chnl(0);
-    NR10_REG = 0x64;
-    NR11_REG = 0x88;
-    NR12_REG = 0xF3;
-    NR13_REG = 0x3E;
-    NR14_REG = 0x86;
-} 
-
-
 // STAGE/MENU LOADING
 
 
-void get_menu_pl_input(UINT8 * entries, UINT8 numentries) {
-    menuidx = 0; // First option set be default
-    while(1) {
-        if(joypad() & (J_DOWN | J_SELECT)) {
-            menuidx = menuidx + 1 == numentries ? 0 : menuidx + 1;
-            move_sprite(0, shadow_OAM[0].x, entries[menuidx]);
-            se_move_cursor();
-        } else if(joypad() & J_UP) {
-            menuidx = menuidx == 0 ? numentries - 1 : menuidx - 1;
-            move_sprite(0, shadow_OAM[0].x, entries[menuidx]);
-            se_move_cursor();
-        } else if(joypad() & (J_START | J_A)) {
-            stop_song();
-            se_choose_entry();
-            break;  // Player has made a choice
-        }
-        custom_delay(7);
-    }
-}
 
-
-void init_common_menu_props() {
-    set_bkg_data(0, 1, blanktile);
-    set_bkg_data(1, 41, fonttiles);
-    fill_bkg_rect(0, 0, 32, 18, 0x00);
-    set_sprite_data(0, 1, misctiles);
-    set_sprite_tile(0, 0);
-}
-
-
-void main_menu() {
-    init_common_menu_props();
-    const unsigned char pressstartsign[] = {0x1A, 0x1C, 0x0F, 0x1D, 0x1D, 0x00, 0x00, 0x1D, 0x1E, 0x0B, 0x1C, 0x1E};   // DEMO CODE
-    const unsigned char demosign[] = {0x0E, 0x0F, 0x17, 0x19, 0x00, 0x20, 0x0F, 0x1C, 0x1D, 0x13, 0x19, 0x18};   // DEMO CODE
-    set_bkg_data(33, 78, titlelogotiles);
-    set_bkg_tiles(2, 1,  16, 6, titlelogomap);
-    anim_reverse_blackout();
-    play_song(&titletheme);
-    set_bkg_tiles(4, 11, 12, 1, pressstartsign);
-    set_bkg_tiles(4, 15, 12, 1, demosign);
-    waitpad(J_START);   // DEMO CODE
-    stop_song();   // DEMO CODE
-    se_choose_entry();   // DEMO CODE
-    anim_blackout();
-}
-
-
-void stage_intro_screen(UINT8 stnum) {
-    init_common_menu_props();
-    const unsigned char stagesign[] = {0x1D, 0x1E, 0x0B, 0x11, 0x0F};
-    set_bkg_tiles(6, 4, 5, 1, stagesign);
-    set_bkg_tile_xy(12, 4, stnum + 2);
-    set_bkg_tiles((20 - stnamelengths[stnum]) / 2, 7, stnamelengths[stnum], 1, *(stagenames + stnum));
-    anim_reverse_blackout();
-    custom_delay(70);
-    anim_blackout();
-}
-
-
-void game_over_menu() {
-    init_common_menu_props();
-    const unsigned char gmoversign[] = {0x11, 0x0B, 0x17, 0x0F, 0x00, 0x019, 0x20, 0x0F, 0x1C};
-    const unsigned char contsign[] = {0x0D, 0x19, 0x18, 0x1E, 0x13, 0x18, 0x1F, 0x0F};
-    const unsigned char quitsign[] = {0x1B, 0x1F, 0x13, 0x1E};
-    const unsigned char gopasssign[] = {0x1A, 0x0B, 0x1D, 0x1D, 0x21, 0x19, 0x1C, 0x0E, 0x25};
-    const unsigned char dummypass[] = {0x28, 0x28, 0x28, 0x28};
-    set_bkg_tiles(5, 4, 9, 1, gmoversign);
-    set_bkg_tiles(7, 10, 8, 1, contsign);
-    set_bkg_tiles(7, 12, 4, 1, quitsign);
-    //set_bkg_tiles(3, 16, 9, 1, gopasssign);
-    //set_bkg_tiles(13, 16, 4, 1, dummypass);
-    move_sprite(0, 52, 96);
-    play_song(&gameovertheme);
-    anim_reverse_blackout();
-    get_menu_pl_input(gameoveropts, 2);
-    if(menuidx == 0) {
-        init_game();
-    }
-    clear_all_sprites();
-    anim_blackout();
-}
-
-
-void demo_end_screen() {    // DEMO CODE
-    init_common_menu_props();
-    unsigned char tnx1sign[] = {0x1E, 0x12, 0x0B, 0x18, 0x15, 0x00, 0x23, 0x19, 0x1F, 0x00, 0x10, 0x19, 0x1C};
-    unsigned char tnx2sign[] =  {0x1A, 0x16, 0x0B, 0x23, 0x13, 0x18, 0x11, 0x27};
-    unsigned char tnx3sign[] = {0x17, 0x19, 0x1C, 0x0F, 0x00, 0x1C, 0x19, 0x0B, 0x0E, 0x00, 0x0B, 0x0D, 0x1E, 0x13, 0x19, 0x18};
-    unsigned char tnx4sign[] = {0x0D, 0x19, 0x17, 0x13, 0x18, 0x11, 0x00, 0x1D, 0x19, 0x19, 0x18, 0x27};
-    set_bkg_tiles(3, 3, 13, 1, tnx1sign);
-    set_bkg_tiles(6, 5, 8, 1, tnx2sign);
-    set_bkg_tiles(2, 11, 16, 1, tnx3sign);
-    set_bkg_tiles(4, 13, 12, 1, tnx4sign);
-    anim_reverse_blackout();
-    waitpad(J_START);
-    anim_blackout();
-}
-
-
-void password_menu() {
-    // UNDER CONSTRUCTION
-}
-
-void play_stage() {
+void play_stage() NONBANKED {
     init_stage(1, 1);
     anim_stage_start();
-    play_song(crntstage->theme);
+    play_song(crntstage->theme, crntstage->stagebank);
     stage_loop();
     if(stageclearflg == 1) {
         anim_stage_end();
@@ -1774,16 +1445,47 @@ void play_stage() {
     }
 }
 
-void play_boss() {
+
+// BOSSES
+
+
+void init_boss(UINT8 stnum) NONBANKED {
+    switch(stnum) {
+        case 0:
+            init_scorpboss();
+            break;
+    }
+}
+
+
+void boss_loop(UINT8 stnum) NONBANKED {
+    switch(stnum) {
+        case 0:
+            scorpboss_loop();
+            break;
+    }
+}
+
+
+void boss_clear_sequence(UINT8 stnum) NONBANKED {
+    switch(stnum) {
+        case 0:
+            anim_explode_boss(80, 106, 72, 30);
+            break;
+    }
+}
+
+
+void play_boss() NONBANKED {
     init_stage(1, 0);
-    init_scorpboss();
+    init_boss(stagenum);
     anim_stage_start();
-    play_song(&bosstheme);
-    scorpboss_loop();
+    play_song(&bosstheme, 2);
+    boss_loop(stagenum);
     if(bossclearflg == 1) {
         stop_song();
-        anim_explode_boss(80, 106, 72, 30);
-        play_song(&cleartheme);
+        boss_clear_sequence(stagenum);
+        play_song(&cleartheme, 2);
         custom_delay(255);
         stop_song();
     }
@@ -1813,21 +1515,24 @@ void unmute_song() {
 }
 
 
-void play_song(const hUGESong_t * song) {
+void play_song(const hUGESong_t * song, UINT8 songbank) NONBANKED {
     __critical {
+        prevbank = _current_bank;
+        SWITCH_ROM_MBC1(songbank);
         hUGE_init(song);
         add_VBL(hUGE_dosound);
+        SWITCH_ROM_MBC1(prevbank);
     }
 }
 
 
-void stop_song() {
+void stop_song() NONBANKED {
     mute_song();
     remove_VBL(hUGE_dosound);
 }
 
 
-void main() {
+void main() NONBANKED {
 
     DISPLAY_ON;
     SHOW_BKG;
