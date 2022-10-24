@@ -2159,107 +2159,63 @@ _gameoveropts:
 ; ---------------------------------
 	b_main_menu	= 1
 _main_menu::
-	add	sp, #-24
+	add	sp, #-12
 ;menus.c:50: init_common_menu_props();
 	ld	e, #b_init_common_menu_props
 	ld	hl, #_init_common_menu_props
 	call	___sdcc_bcall_ehl
 ;menus.c:51: const unsigned char pressstartsign[] = {0x1A, 0x1C, 0x0F, 0x1D, 0x1D, 0x00, 0x00, 0x1D, 0x1E, 0x0B, 0x1C, 0x1E};   // DEMO CODE
 	ldhl	sp,	#0
-	ld	e, l
-	ld	d, h
-	ld	(hl), #0x1a
-	ld	l, e
-	ld	h, d
-	inc	hl
-	ld	(hl), #0x1c
-	ld	l, e
-	ld	h, d
-	inc	hl
-	inc	hl
-	ld	(hl), #0x0f
-	ld	l, e
-	ld	h, d
-	inc	hl
-	inc	hl
-	inc	hl
-	ld	(hl), #0x1d
-	ld	hl, #0x0004
-	add	hl, de
-	ld	(hl), #0x1d
-	ld	hl, #0x0005
-	add	hl, de
-	ld	(hl), #0x00
-	ld	hl, #0x0006
-	add	hl, de
-	ld	(hl), #0x00
-	ld	hl, #0x0007
-	add	hl, de
-	ld	(hl), #0x1d
-	ld	hl, #0x0008
-	add	hl, de
-	ld	(hl), #0x1e
-	ld	hl, #0x0009
-	add	hl, de
-	ld	(hl), #0x0b
-	ld	hl, #0x000a
-	add	hl, de
-	ld	(hl), #0x1c
-	ld	hl, #0x000b
-	add	hl, de
-	ld	(hl), #0x1e
-;menus.c:52: const unsigned char demosign[] = {0x0E, 0x0F, 0x17, 0x19, 0x00, 0x20, 0x0F, 0x1C, 0x1D, 0x13, 0x19, 0x18};   // DEMO CODE
-	ldhl	sp,	#12
 	ld	c, l
 	ld	b, h
-	ld	(hl), #0x0e
+	ld	(hl), #0x1a
 	ld	l, c
 	ld	h, b
+	inc	hl
+	ld	(hl), #0x1c
+	ld	l, c
+	ld	h, b
+	inc	hl
 	inc	hl
 	ld	(hl), #0x0f
 	ld	l, c
 	ld	h, b
 	inc	hl
 	inc	hl
-	ld	(hl), #0x17
-	ld	l, c
-	ld	h, b
 	inc	hl
-	inc	hl
-	inc	hl
-	ld	(hl), #0x19
+	ld	(hl), #0x1d
 	ld	hl, #0x0004
 	add	hl, bc
-	ld	(hl), #0x00
+	ld	(hl), #0x1d
 	ld	hl, #0x0005
 	add	hl, bc
-	ld	(hl), #0x20
+	ld	(hl), #0x00
 	ld	hl, #0x0006
 	add	hl, bc
-	ld	(hl), #0x0f
+	ld	(hl), #0x00
 	ld	hl, #0x0007
 	add	hl, bc
-	ld	(hl), #0x1c
+	ld	(hl), #0x1d
 	ld	hl, #0x0008
 	add	hl, bc
-	ld	(hl), #0x1d
+	ld	(hl), #0x1e
 	ld	hl, #0x0009
 	add	hl, bc
-	ld	(hl), #0x13
+	ld	(hl), #0x0b
 	ld	hl, #0x000a
 	add	hl, bc
-	ld	(hl), #0x19
+	ld	(hl), #0x1c
 	ld	hl, #0x000b
 	add	hl, bc
-	ld	(hl), #0x18
-;menus.c:53: set_bkg_data(33, 78, titlelogotiles);
-	push	de
+	ld	(hl), #0x1e
+;menus.c:52: set_bkg_data(33, 78, titlelogotiles);
 	ld	hl, #_titlelogotiles
 	push	hl
 	ld	de, #0x4e21
 	push	de
 	call	_set_bkg_data
 	add	sp, #4
+;menus.c:53: set_bkg_tiles(2, 1,  16, 6, titlelogomap);
 	ld	hl, #_titlelogomap
 	push	hl
 	ld	de, #0x0610
@@ -2268,67 +2224,56 @@ _main_menu::
 	push	de
 	call	_set_bkg_tiles
 	add	sp, #6
-	pop	de
-;menus.c:55: anim_reverse_blackout();
+;menus.c:54: anim_reverse_blackout();
 	push	bc
-	push	de
 	call	_anim_reverse_blackout
+	ld	a, #0x01
+	push	af
+	inc	sp
 	ld	hl, #_titletheme
 	push	hl
 	call	_play_song
-	add	sp, #2
-	pop	de
-	pop	bc
-;menus.c:57: set_bkg_tiles(4, 11, 12, 1, pressstartsign);
-	push	de
+	add	sp, #3
 	ld	de, #0x010c
 	push	de
 	ld	de, #0x0b04
 	push	de
 	call	_set_bkg_tiles
 	add	sp, #6
-;menus.c:58: set_bkg_tiles(4, 15, 12, 1, demosign);
-	push	bc
-	ld	de, #0x010c
-	push	de
-	ld	de, #0x0f04
-	push	de
-	call	_set_bkg_tiles
-	add	sp, #6
-;menus.c:59: waitpad(J_START);   // DEMO CODE
+;menus.c:57: waitpad(J_START);   // DEMO CODE
 	ld	a, #0x80
 	push	af
 	inc	sp
 	call	_waitpad
 	inc	sp
-;menus.c:60: stop_song();   // DEMO CODE
+;menus.c:58: stop_song();   // DEMO CODE
 	call	_stop_song
-;menus.c:61: se_choose_entry();   // DEMO CODE
+;menus.c:59: se_choose_entry();   // DEMO CODE
 	ld	e, #b_se_choose_entry
 	ld	hl, #_se_choose_entry
 	call	___sdcc_bcall_ehl
-;menus.c:62: anim_blackout();
+;menus.c:60: anim_blackout();
 	call	_anim_blackout
-;menus.c:63: }
-	add	sp, #24
+;menus.c:61: }
+	add	sp, #12
 	ret
-;menus.c:66: void get_menu_pl_input(UINT8 * entries, UINT8 numentries) BANKED {
+;menus.c:64: void get_menu_pl_input(UINT8 * entries, UINT8 numentries) BANKED {
 ;	---------------------------------
 ; Function get_menu_pl_input
 ; ---------------------------------
 	b_get_menu_pl_input	= 1
 _get_menu_pl_input::
-;menus.c:67: menuidx = 0; // First option set be default
+;menus.c:65: menuidx = 0; // First option set be default
 	ld	hl, #_menuidx
 	ld	(hl), #0x00
-;menus.c:68: while(1) {
+;menus.c:66: while(1) {
 00110$:
-;menus.c:69: if(joypad() & (J_DOWN | J_SELECT)) {
+;menus.c:67: if(joypad() & (J_DOWN | J_SELECT)) {
 	call	_joypad
 	ld	a, e
 	and	a, #0x48
 	jr	Z, 00107$
-;menus.c:70: menuidx = menuidx + 1 == numentries ? 0 : menuidx + 1;
+;menus.c:68: menuidx = menuidx + 1 == numentries ? 0 : menuidx + 1;
 	ld	hl, #_menuidx
 	ld	c, (hl)
 	ld	b, #0x00
@@ -2352,7 +2297,7 @@ _get_menu_pl_input::
 00117$:
 	ld	hl, #_menuidx
 	ld	(hl), c
-;menus.c:71: move_sprite(0, shadow_OAM[0].x, entries[menuidx]);
+;menus.c:69: move_sprite(0, shadow_OAM[0].x, entries[menuidx]);
 ;c
 	ldhl	sp,#6
 	ld	a, (hl+)
@@ -2374,17 +2319,17 @@ _get_menu_pl_input::
 	ld	a, c
 	ld	(hl+), a
 	ld	(hl), b
-;menus.c:72: se_move_cursor();
+;menus.c:70: se_move_cursor();
 	ld	e, #b_se_move_cursor
 	ld	hl, #_se_move_cursor
 	call	___sdcc_bcall_ehl
 	jr	00108$
 00107$:
-;menus.c:73: } else if(joypad() & J_UP) {
+;menus.c:71: } else if(joypad() & J_UP) {
 	call	_joypad
 	bit	2, e
 	jr	Z, 00104$
-;menus.c:74: menuidx = menuidx == 0 ? numentries - 1 : menuidx - 1;
+;menus.c:72: menuidx = menuidx == 0 ? numentries - 1 : menuidx - 1;
 	ld	a, (#_menuidx)
 	or	a, a
 	jr	NZ, 00118$
@@ -2397,7 +2342,7 @@ _get_menu_pl_input::
 	dec	a
 00119$:
 	ld	(#_menuidx),a
-;menus.c:75: move_sprite(0, shadow_OAM[0].x, entries[menuidx]);
+;menus.c:73: move_sprite(0, shadow_OAM[0].x, entries[menuidx]);
 ;c
 	ldhl	sp,#6
 	ld	a, (hl+)
@@ -2419,45 +2364,45 @@ _get_menu_pl_input::
 	ld	a, b
 	ld	(hl+), a
 	ld	(hl), c
-;menus.c:76: se_move_cursor();
+;menus.c:74: se_move_cursor();
 	ld	e, #b_se_move_cursor
 	ld	hl, #_se_move_cursor
 	call	___sdcc_bcall_ehl
 	jr	00108$
 00104$:
-;menus.c:77: } else if(joypad() & (J_START | J_A)) {
+;menus.c:75: } else if(joypad() & (J_START | J_A)) {
 	call	_joypad
 	ld	a, e
 	and	a, #0x90
 	jr	Z, 00108$
-;menus.c:78: stop_song();
+;menus.c:76: stop_song();
 	call	_stop_song
-;menus.c:79: se_choose_entry();
+;menus.c:77: se_choose_entry();
 	ld	e, #b_se_choose_entry
 	ld	hl, #_se_choose_entry
-;menus.c:80: break;  // Player has made a choice
+;menus.c:78: break;  // Player has made a choice
 	jp  ___sdcc_bcall_ehl
 00108$:
-;menus.c:82: custom_delay(7);
+;menus.c:80: custom_delay(7);
 	ld	a, #0x07
 	push	af
 	inc	sp
 	call	_custom_delay
 	inc	sp
-;menus.c:84: }
+;menus.c:82: }
 	jp	00110$
-;menus.c:87: void stage_intro_screen(UINT8 stnum) BANKED {
+;menus.c:85: void stage_intro_screen(UINT8 stnum) BANKED {
 ;	---------------------------------
 ; Function stage_intro_screen
 ; ---------------------------------
 	b_stage_intro_screen	= 1
 _stage_intro_screen::
 	add	sp, #-8
-;menus.c:88: init_common_menu_props();
+;menus.c:86: init_common_menu_props();
 	ld	e, #b_init_common_menu_props
 	ld	hl, #_init_common_menu_props
 	call	___sdcc_bcall_ehl
-;menus.c:89: const unsigned char stagesign[] = {0x1D, 0x1E, 0x0B, 0x11, 0x0F};
+;menus.c:87: const unsigned char stagesign[] = {0x1D, 0x1E, 0x0B, 0x11, 0x0F};
 	ldhl	sp,	#0
 	ld	c, l
 	ld	b, h
@@ -2480,7 +2425,7 @@ _stage_intro_screen::
 	ld	hl, #0x0004
 	add	hl, bc
 	ld	(hl), #0x0f
-;menus.c:90: set_bkg_tiles(6, 4, 5, 1, stagesign);
+;menus.c:88: set_bkg_tiles(6, 4, 5, 1, stagesign);
 	push	bc
 	ld	de, #0x0105
 	push	de
@@ -2488,7 +2433,7 @@ _stage_intro_screen::
 	push	de
 	call	_set_bkg_tiles
 	add	sp, #6
-;menus.c:91: set_bkg_tile_xy(12, 4, stnum + 2);
+;menus.c:89: set_bkg_tile_xy(12, 4, stnum + 2);
 	ldhl	sp,	#14
 	ld	a, (hl)
 	add	a, #0x02
@@ -2500,7 +2445,7 @@ _stage_intro_screen::
 	inc	sp
 	call	_set_bkg_tile_xy
 	add	sp, #3
-;menus.c:92: set_bkg_tiles((20 - stnamelengths[stnum]) / 2, 7, stnamelengths[stnum], 1, *(stagenames + stnum));
+;menus.c:90: set_bkg_tiles((20 - stnamelengths[stnum]) / 2, 7, stnamelengths[stnum], 1, *(stagenames + stnum));
 	ldhl	sp,	#14
 	ld	c, (hl)
 	ld	b, #0x00
@@ -2565,31 +2510,31 @@ _stage_intro_screen::
 	inc	sp
 	call	_set_bkg_tiles
 	add	sp, #6
-;menus.c:93: anim_reverse_blackout();
+;menus.c:91: anim_reverse_blackout();
 	call	_anim_reverse_blackout
-;menus.c:94: custom_delay(70);
+;menus.c:92: custom_delay(70);
 	ld	a, #0x46
 	push	af
 	inc	sp
 	call	_custom_delay
 	inc	sp
-;menus.c:95: anim_blackout();
+;menus.c:93: anim_blackout();
 	call	_anim_blackout
-;menus.c:96: }
+;menus.c:94: }
 	add	sp, #8
 	ret
-;menus.c:99: void game_over_menu() BANKED {
+;menus.c:97: void game_over_menu() BANKED {
 ;	---------------------------------
 ; Function game_over_menu
 ; ---------------------------------
 	b_game_over_menu	= 1
 _game_over_menu::
 	add	sp, #-38
-;menus.c:100: init_common_menu_props();
+;menus.c:98: init_common_menu_props();
 	ld	e, #b_init_common_menu_props
 	ld	hl, #_init_common_menu_props
 	call	___sdcc_bcall_ehl
-;menus.c:101: const unsigned char gmoversign[] = {0x11, 0x0B, 0x17, 0x0F, 0x00, 0x019, 0x20, 0x0F, 0x1C};
+;menus.c:99: const unsigned char gmoversign[] = {0x11, 0x0B, 0x17, 0x0F, 0x00, 0x019, 0x20, 0x0F, 0x1C};
 	ldhl	sp,	#0
 	ld	c, l
 	ld	b, h
@@ -2624,7 +2569,7 @@ _game_over_menu::
 	ld	hl, #0x0008
 	add	hl, bc
 	ld	(hl), #0x1c
-;menus.c:102: const unsigned char contsign[] = {0x0D, 0x19, 0x18, 0x1E, 0x13, 0x18, 0x1F, 0x0F};
+;menus.c:100: const unsigned char contsign[] = {0x0D, 0x19, 0x18, 0x1E, 0x13, 0x18, 0x1F, 0x0F};
 	ldhl	sp,	#9
 	ld	a, l
 	ld	d, h
@@ -2690,7 +2635,7 @@ _game_over_menu::
 	add	hl, de
 	ld	e, l
 	ld	(hl), #0x0f
-;menus.c:103: const unsigned char quitsign[] = {0x1B, 0x1F, 0x13, 0x1E};
+;menus.c:101: const unsigned char quitsign[] = {0x1B, 0x1F, 0x13, 0x1E};
 	ldhl	sp,	#17
 	ld	a, l
 	ld	d, h
@@ -2723,7 +2668,7 @@ _game_over_menu::
 	inc	hl
 	inc	hl
 	ld	(hl), #0x1e
-;menus.c:104: const unsigned char gopasssign[] = {0x1A, 0x0B, 0x1D, 0x1D, 0x21, 0x19, 0x1C, 0x0E, 0x25};
+;menus.c:102: const unsigned char gopasssign[] = {0x1A, 0x0B, 0x1D, 0x1D, 0x21, 0x19, 0x1C, 0x0E, 0x25};
 	ldhl	sp,	#21
 	ld	e, l
 	ld	d, h
@@ -2758,7 +2703,7 @@ _game_over_menu::
 	ld	hl, #0x0008
 	add	hl, de
 	ld	(hl), #0x25
-;menus.c:105: const unsigned char dummypass[] = {0x28, 0x28, 0x28, 0x28};
+;menus.c:103: const unsigned char dummypass[] = {0x28, 0x28, 0x28, 0x28};
 	ldhl	sp,	#30
 	ld	e, l
 	ld	d, h
@@ -2777,7 +2722,7 @@ _game_over_menu::
 	inc	de
 	ld	a, #0x28
 	ld	(de), a
-;menus.c:106: set_bkg_tiles(5, 4, 9, 1, gmoversign);
+;menus.c:104: set_bkg_tiles(5, 4, 9, 1, gmoversign);
 	push	bc
 	ld	de, #0x0109
 	push	de
@@ -2785,7 +2730,7 @@ _game_over_menu::
 	push	de
 	call	_set_bkg_tiles
 	add	sp, #6
-;menus.c:107: set_bkg_tiles(7, 10, 8, 1, contsign);
+;menus.c:105: set_bkg_tiles(7, 10, 8, 1, contsign);
 	ldhl	sp,#34
 	ld	a, (hl+)
 	ld	c, a
@@ -2797,7 +2742,7 @@ _game_over_menu::
 	push	de
 	call	_set_bkg_tiles
 	add	sp, #6
-;menus.c:108: set_bkg_tiles(7, 12, 4, 1, quitsign);
+;menus.c:106: set_bkg_tiles(7, 12, 4, 1, quitsign);
 	ldhl	sp,#36
 	ld	a, (hl+)
 	ld	c, a
@@ -2815,14 +2760,17 @@ _game_over_menu::
 	ld	a, #0x60
 	ld	(hl+), a
 	ld	(hl), #0x34
-;menus.c:112: play_song(&gameovertheme);
+;menus.c:110: play_song(&gameovertheme, 1);
+	ld	a, #0x01
+	push	af
+	inc	sp
 	ld	hl, #_gameovertheme
 	push	hl
 	call	_play_song
-	add	sp, #2
-;menus.c:113: anim_reverse_blackout();
+	add	sp, #3
+;menus.c:111: anim_reverse_blackout();
 	call	_anim_reverse_blackout
-;menus.c:114: get_menu_pl_input(gameoveropts, 2);
+;menus.c:112: get_menu_pl_input(gameoveropts, 2);
 	ld	a, #0x02
 	push	af
 	inc	sp
@@ -2832,32 +2780,32 @@ _game_over_menu::
 	ld	hl, #_get_menu_pl_input
 	call	___sdcc_bcall_ehl
 	add	sp, #3
-;menus.c:115: if(menuidx == 0) {
+;menus.c:113: if(menuidx == 0) {
 	ld	a, (#_menuidx)
 	or	a, a
 	jr	NZ, 00102$
-;menus.c:116: init_game();
+;menus.c:114: init_game();
 	call	_init_game
 00102$:
-;menus.c:118: clear_all_sprites();
+;menus.c:116: clear_all_sprites();
 	call	_clear_all_sprites
-;menus.c:119: anim_blackout();
+;menus.c:117: anim_blackout();
 	call	_anim_blackout
-;menus.c:120: }
+;menus.c:118: }
 	add	sp, #38
 	ret
-;menus.c:123: void demo_end_screen() BANKED {    // DEMO CODE
+;menus.c:121: void demo_end_screen() BANKED {    // DEMO CODE
 ;	---------------------------------
 ; Function demo_end_screen
 ; ---------------------------------
 	b_demo_end_screen	= 1
 _demo_end_screen::
 	add	sp, #-53
-;menus.c:124: init_common_menu_props();
+;menus.c:122: init_common_menu_props();
 	ld	e, #b_init_common_menu_props
 	ld	hl, #_init_common_menu_props
 	call	___sdcc_bcall_ehl
-;menus.c:125: unsigned char tnx1sign[] = {0x1E, 0x12, 0x0B, 0x18, 0x15, 0x00, 0x23, 0x19, 0x1F, 0x00, 0x10, 0x19, 0x1C};
+;menus.c:123: unsigned char tnx1sign[] = {0x1E, 0x12, 0x0B, 0x18, 0x15, 0x00, 0x23, 0x19, 0x1F, 0x00, 0x10, 0x19, 0x1C};
 	ldhl	sp,	#0
 	ld	c, l
 	ld	b, h
@@ -2904,7 +2852,7 @@ _demo_end_screen::
 	ld	hl, #0x000c
 	add	hl, bc
 	ld	(hl), #0x1c
-;menus.c:126: unsigned char tnx2sign[] =  {0x1A, 0x16, 0x0B, 0x23, 0x13, 0x18, 0x11, 0x27};
+;menus.c:124: unsigned char tnx2sign[] =  {0x1A, 0x16, 0x0B, 0x23, 0x13, 0x18, 0x11, 0x27};
 	ldhl	sp,	#13
 	ld	a, l
 	ld	d, h
@@ -2969,7 +2917,7 @@ _demo_end_screen::
 	ld	hl, #0x0007
 	add	hl, de
 	ld	(hl), #0x27
-;menus.c:127: unsigned char tnx3sign[] = {0x17, 0x19, 0x1C, 0x0F, 0x00, 0x1C, 0x19, 0x0B, 0x0E, 0x00, 0x0B, 0x0D, 0x1E, 0x13, 0x19, 0x18};
+;menus.c:125: unsigned char tnx3sign[] = {0x17, 0x19, 0x1C, 0x0F, 0x00, 0x1C, 0x19, 0x0B, 0x0E, 0x00, 0x0B, 0x0D, 0x1E, 0x13, 0x19, 0x18};
 	ldhl	sp,	#21
 	ld	a, l
 	ld	d, h
@@ -3107,7 +3055,7 @@ _demo_end_screen::
 	ld	hl, #0x000f
 	add	hl, de
 	ld	(hl), #0x18
-;menus.c:128: unsigned char tnx4sign[] = {0x0D, 0x19, 0x17, 0x13, 0x18, 0x11, 0x00, 0x1D, 0x19, 0x19, 0x18, 0x27};
+;menus.c:126: unsigned char tnx4sign[] = {0x0D, 0x19, 0x17, 0x13, 0x18, 0x11, 0x00, 0x1D, 0x19, 0x19, 0x18, 0x27};
 	ldhl	sp,	#37
 	ld	e, l
 	ld	d, h
@@ -3151,7 +3099,7 @@ _demo_end_screen::
 	ld	hl, #0x000b
 	add	hl, de
 	ld	(hl), #0x27
-;menus.c:129: set_bkg_tiles(3, 3, 13, 1, tnx1sign);
+;menus.c:127: set_bkg_tiles(3, 3, 13, 1, tnx1sign);
 	push	de
 	push	bc
 	ld	de, #0x010d
@@ -3161,7 +3109,7 @@ _demo_end_screen::
 	call	_set_bkg_tiles
 	add	sp, #6
 	pop	de
-;menus.c:130: set_bkg_tiles(6, 5, 8, 1, tnx2sign);
+;menus.c:128: set_bkg_tiles(6, 5, 8, 1, tnx2sign);
 	ldhl	sp,#49
 	ld	a, (hl+)
 	ld	c, a
@@ -3175,7 +3123,7 @@ _demo_end_screen::
 	call	_set_bkg_tiles
 	add	sp, #6
 	pop	de
-;menus.c:131: set_bkg_tiles(2, 11, 16, 1, tnx3sign);
+;menus.c:129: set_bkg_tiles(2, 11, 16, 1, tnx3sign);
 	ldhl	sp,#51
 	ld	a, (hl+)
 	ld	c, a
@@ -3194,84 +3142,84 @@ _demo_end_screen::
 	push	de
 	call	_set_bkg_tiles
 	add	sp, #6
-;menus.c:133: anim_reverse_blackout();
+;menus.c:131: anim_reverse_blackout();
 	call	_anim_reverse_blackout
-;menus.c:134: waitpad(J_START);
+;menus.c:132: waitpad(J_START);
 	ld	a, #0x80
 	push	af
 	inc	sp
 	call	_waitpad
 	inc	sp
-;menus.c:135: anim_blackout();
+;menus.c:133: anim_blackout();
 	call	_anim_blackout
-;menus.c:136: }
+;menus.c:134: }
 	add	sp, #53
 	ret
-;menus.c:139: void se_move_cursor() BANKED {
+;menus.c:137: void se_move_cursor() BANKED {
 ;	---------------------------------
 ; Function se_move_cursor
 ; ---------------------------------
 	b_se_move_cursor	= 1
 _se_move_cursor::
-;menus.c:140: mute_music_pl_chnl(0);
+;menus.c:138: mute_music_pl_chnl(0);
 	xor	a, a
 	push	af
 	inc	sp
 	call	_mute_music_pl_chnl
 	inc	sp
-;menus.c:141: NR10_REG = 0x00;
+;menus.c:139: NR10_REG = 0x00;
 	ld	a, #0x00
 	ldh	(_NR10_REG+0),a
-;menus.c:142: NR11_REG = 0xCB;
+;menus.c:140: NR11_REG = 0xCB;
 	ld	a, #0xcb
 	ldh	(_NR11_REG+0),a
-;menus.c:143: NR12_REG = 0x63;
+;menus.c:141: NR12_REG = 0x63;
 	ld	a, #0x63
 	ldh	(_NR12_REG+0),a
-;menus.c:144: NR13_REG = 0x9F;
+;menus.c:142: NR13_REG = 0x9F;
 	ld	a, #0x9f
 	ldh	(_NR13_REG+0),a
-;menus.c:145: NR14_REG = 0x86;
+;menus.c:143: NR14_REG = 0x86;
 	ld	a, #0x86
 	ldh	(_NR14_REG+0),a
-;menus.c:146: }
+;menus.c:144: }
 	ret
-;menus.c:149: void se_choose_entry() BANKED {
+;menus.c:147: void se_choose_entry() BANKED {
 ;	---------------------------------
 ; Function se_choose_entry
 ; ---------------------------------
 	b_se_choose_entry	= 1
 _se_choose_entry::
-;menus.c:150: mute_music_pl_chnl(0);
+;menus.c:148: mute_music_pl_chnl(0);
 	xor	a, a
 	push	af
 	inc	sp
 	call	_mute_music_pl_chnl
 	inc	sp
-;menus.c:151: NR10_REG = 0x64;
+;menus.c:149: NR10_REG = 0x64;
 	ld	a, #0x64
 	ldh	(_NR10_REG+0),a
-;menus.c:152: NR11_REG = 0x88;
+;menus.c:150: NR11_REG = 0x88;
 	ld	a, #0x88
 	ldh	(_NR11_REG+0),a
-;menus.c:153: NR12_REG = 0xF3;
+;menus.c:151: NR12_REG = 0xF3;
 	ld	a, #0xf3
 	ldh	(_NR12_REG+0),a
-;menus.c:154: NR13_REG = 0x3E;
+;menus.c:152: NR13_REG = 0x3E;
 	ld	a, #0x3e
 	ldh	(_NR13_REG+0),a
-;menus.c:155: NR14_REG = 0x86;
+;menus.c:153: NR14_REG = 0x86;
 	ld	a, #0x86
 	ldh	(_NR14_REG+0),a
-;menus.c:156: }
+;menus.c:154: }
 	ret
-;menus.c:158: void password_menu() {
+;menus.c:156: void password_menu() {
 ;	---------------------------------
 ; Function password_menu
 ; ---------------------------------
 	b_password_menu	= 1
 _password_menu::
-;menus.c:160: }
+;menus.c:158: }
 	ret
 	.area _CODE_1
 	.area _CABS (ABS)

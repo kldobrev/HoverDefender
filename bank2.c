@@ -12,3 +12,4 @@
 #include "maps/cloudmap.c"
 #include "maps/hudmap.c"
 #include "stages/stage1.c"
+#include "stages/stage2.c"

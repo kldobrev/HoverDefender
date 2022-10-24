@@ -13,4 +13,5 @@ typedef struct Stage {
     UBYTE hasclouds;
     UINT8 stagebank;
     hUGESong_t * theme;
+    UINT8 themebank;
 } Stage;

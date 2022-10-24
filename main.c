@@ -20,6 +20,7 @@ extern unsigned char bossspritetiles[];
 extern unsigned char fonttiles[];
 extern unsigned char misctiles[];
 extern unsigned char titlelogotiles[];
+extern unsigned char citytiles[];
 extern unsigned char goodroadmap[];
 extern unsigned char holestartmap[];
 extern unsigned char holemap[];
@@ -29,6 +30,7 @@ extern unsigned char cloudmap[];
 extern unsigned char scorpbossmap[];
 extern unsigned char titlelogomap[];
 extern unsigned char hudmap[];
+extern unsigned char citymap[];
 
 
 // Commmon stage processing vars
@@ -41,15 +43,27 @@ const Placement * lvlplacptr; // stage placement objects array pointer
 const UINT8 roadlanesy[] = {98, 114, 130};
 
 // Stages data
-extern const UINT8 stage1road[];
-extern const Placement stage1objs[];
+extern const UINT8 stage1road[], stage2road[];
+extern const Placement stage1objs[], stage2objs[];
 
 
-const Stage stages[] = {{stage1road, 17, stage1objs, 19, deserttiles, 39, desertmap, 1, 2, &deserttheme}};
+const Stage stages[] = {{stage1road, 17, stage1objs, 19, deserttiles, 39, desertmap, 1, 2, &deserttheme, 2},
+{stage2road, 25, stage2objs, 39, citytiles, 46, citymap, 1, 2, &deserttheme, 2}};
 const Stage * crntstage = stages;    // Current stage pointer
 UINT8 stagenum;     // Current stage counter
-const unsigned char stagenames[][18] = {{0x0E, 0x0F, 0x1D, 0x0F, 0x1C, 0x1E, 0x00, 0x12, 0x13, 0x11, 0x12, 0x21, 0x0B, 0x23}};
-const UINT8 stnamelengths = {14};
+const unsigned char stagenames[][18] = {{0x0E, 0x0F, 0x1D, 0x0F, 0x1C, 0x1E, 0x00, 0x12, 0x13, 0x11, 0x12, 0x21, 0x0B, 0x23},
+{0x0D, 0x0B, 0x1A, 0x1E, 0x13, 0x20, 0x0F, 0x00, 0x0D, 0x13, 0x1E, 0x23}};
+const UINT8 stnamelengths[] = {14, 12};
+
+
+extern const INT8 scorpgunprops[];
+extern const INT8 stingprops[];
+const INT8 enprops[6][10] = {{1, 2, 0, 1, 13, 15, -3, 12, 0, 21},
+{0, 1, 2, 5, 14, 7, 7, 13, 1, 25},
+{1, 9, 2, 5, 13, 10, 1, 4, 2, 29},
+{0, 100, 3, 2, 14, 12, 7, -4, 3, 33},
+{0, 2, 0, 5, 13, 7, 4, 11, 4, 37},
+{1, 20, 3, 2, 11, 11, 0, 0, 5, 41}};
 
 
 UINT8 prevbank; // Used to switch back to the previously used bank
@@ -104,16 +118,6 @@ UINT8 explcord[5][2]; // Used to calculate exact screen coords for explosions ba
 UINT8 menuidx;
 
 
-
-
-extern const INT8 scorpgunprops[];
-extern const INT8 stingprops[];
-const INT8 enprops[6][10] = {{1, 2, 0, 1, 13, 15, -3, 12, 0, 21},
-{0, 1, 2, 5, 14, 7, 7, 13, 1, 25},
-{1, 9, 2, 5, 13, 10, 1, 4, 2, 29},
-{0, 100, 3, 2, 14, 12, 7, -4, 3, 33},
-{0, 2, 0, 5, 13, 7, 4, 11, 4, 37},
-{1, 20, 3, 2, 11, 11, 0, 0, 5, 41}};
 
 
 UINT8 get_OAM_free_tile_idx() NONBANKED;
@@ -469,9 +473,9 @@ void scroll_stage_bkg() NONBANKED {
     switch(LYC_REG) {
         case 0x00:
             move_bkg(cloudposx, 0);
-            LYC_REG = 0x08;
+            LYC_REG = 0x07;
             break;
-        case 0x08:
+        case 0x07:
             move_bkg(sceneryposx, 0);
             LYC_REG = 0x50;
             break;
@@ -537,7 +541,7 @@ void build_hole() NONBANKED {
         holestartx = 238;
         set_bkg_tiles(camtileidx, 10, 4, 7, holestartmap);
         nextcamtileidx = get_tile_idx(camtileidx + 4);
-    } else if(roadbuildidx == stage1road[stageidx]) {
+    } else if(roadbuildidx == crntstage->roadlayout[stageidx]) {
         //holeendx = 144;
         holeendx = 174;
         holestartx = 255;   // Resetting hole start value
@@ -996,7 +1000,7 @@ void exec_enemy_pattern(Machine * mch) {
 
 
 void exec_rider_pattern(Machine * mch) {
-    if(mch->x > 130 && lockmvmnt != 2) {
+    if(mch->x > 130 && lockmvmnt != 2 && pl->y > 95) {
         move_enemy(mch, -1, pl->y > mch->y ? 1 : -1);
     } else if(mch->cyccount != 100) {
         if(mch->cyccount == 50) {
@@ -1021,6 +1025,9 @@ void exec_drone_pattern(Machine * mch) {
 
 
 void exec_missile_pattern(Machine * mch) {
+    if(mch->groundflg != pl->groundflg) {
+        mch->groundflg = pl->groundflg;
+    }
     move_enemy(mch, -2, 0);
 }
 
@@ -1226,7 +1233,7 @@ void pause_game() {
     custom_delay(10);
     hud_clear_pause();
     if(stageclearflg == 0) {
-        play_song(crntstage->theme, crntstage->stagebank);
+        play_song(crntstage->theme, crntstage->themebank);
     } else {
         play_song(&bosstheme, 2);
     }
@@ -1430,7 +1437,7 @@ void se_wpn_upgrd() {
 void play_stage() NONBANKED {
     init_stage(1, 1);
     anim_stage_start();
-    play_song(crntstage->theme, crntstage->stagebank);
+    play_song(crntstage->theme, crntstage->themebank);
     stage_loop();
     if(stageclearflg == 1) {
         anim_stage_end();
@@ -1454,6 +1461,9 @@ void init_boss(UINT8 stnum) NONBANKED {
         case 0:
             init_scorpboss();
             break;
+        case 1: // To be replaced with actual level 2 code
+            init_scorpboss();
+            break;
     }
 }
 
@@ -1463,6 +1473,9 @@ void boss_loop(UINT8 stnum) NONBANKED {
         case 0:
             scorpboss_loop();
             break;
+        case 1: // To be replaced with actual level 2 code
+            scorpboss_loop();
+            break;
     }
 }
 
@@ -1470,6 +1483,9 @@ void boss_loop(UINT8 stnum) NONBANKED {
 void boss_clear_sequence(UINT8 stnum) NONBANKED {
     switch(stnum) {
         case 0:
+            anim_explode_boss(80, 106, 72, 30);
+            break;
+        case 1: // To be replaced with actual level 2 code
             anim_explode_boss(80, 106, 72, 30);
             break;
     }
@@ -1560,12 +1576,14 @@ void main() NONBANKED {
             } else if(bossclearflg == 0) {
                 play_boss();
             } else {    // Current stage and boss both cleared
-                demo_end_screen();  // DEMO CODE
-                init_game(); // DEMO CODE
                 stageclearflg = bossclearflg = 0;
-                break;  // DEMO CODE
-                //stagenum++;
-                //crntstage++;    // Next stage data
+                stagenum++;
+                crntstage++;    // Next stage data
+                if(stagenum == 2) { // Has passed currently available levels
+                    demo_end_screen();  // DEMO CODE
+                    init_game(); // DEMO CODE
+                    break;  // DEMO CODE
+                }
             }
         }
 

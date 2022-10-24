@@ -19,7 +19,7 @@ const UINT8 gameoveropts[] = {96, 112};
 
 void custom_delay(UINT8 cycles) NONBANKED;
 void anim_reverse_blackout() NONBANKED;
-void play_song(const hUGESong_t * song) NONBANKED;
+void play_song(const hUGESong_t * song, UINT8 songbank) NONBANKED;
 void stop_song() NONBANKED;
 void anim_blackout() NONBANKED;
 void se_choose_entry() BANKED;
@@ -49,13 +49,11 @@ void init_common_menu_props() BANKED {
 void main_menu() BANKED {
     init_common_menu_props();
     const unsigned char pressstartsign[] = {0x1A, 0x1C, 0x0F, 0x1D, 0x1D, 0x00, 0x00, 0x1D, 0x1E, 0x0B, 0x1C, 0x1E};   // DEMO CODE
-    const unsigned char demosign[] = {0x0E, 0x0F, 0x17, 0x19, 0x00, 0x20, 0x0F, 0x1C, 0x1D, 0x13, 0x19, 0x18};   // DEMO CODE
     set_bkg_data(33, 78, titlelogotiles);
     set_bkg_tiles(2, 1,  16, 6, titlelogomap);
     anim_reverse_blackout();
-    play_song(&titletheme);
+    play_song(&titletheme, 1);
     set_bkg_tiles(4, 11, 12, 1, pressstartsign);
-    set_bkg_tiles(4, 15, 12, 1, demosign);
     waitpad(J_START);   // DEMO CODE
     stop_song();   // DEMO CODE
     se_choose_entry();   // DEMO CODE
@@ -109,7 +107,7 @@ void game_over_menu() BANKED {
     //set_bkg_tiles(3, 16, 9, 1, gopasssign);
     //set_bkg_tiles(13, 16, 4, 1, dummypass);
     move_sprite(0, 52, 96);
-    play_song(&gameovertheme);
+    play_song(&gameovertheme, 1);
     anim_reverse_blackout();
     get_menu_pl_input(gameoveropts, 2);
     if(menuidx == 0) {
