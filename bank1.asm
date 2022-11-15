@@ -8,8 +8,7 @@
 ;--------------------------------------------------------
 ; Public variables in this module
 ;--------------------------------------------------------
-	.globl _clear_all_sprites
-	.globl _init_game
+	.globl _reset_all_sprites
 	.globl _mute_music_pl_chnl
 	.globl _anim_blackout
 	.globl _stop_song
@@ -2780,32 +2779,25 @@ _game_over_menu::
 	ld	hl, #_get_menu_pl_input
 	call	___sdcc_bcall_ehl
 	add	sp, #3
-;menus.c:113: if(menuidx == 0) {
-	ld	a, (#_menuidx)
-	or	a, a
-	jr	NZ, 00102$
-;menus.c:114: init_game();
-	call	_init_game
-00102$:
-;menus.c:116: clear_all_sprites();
-	call	_clear_all_sprites
-;menus.c:117: anim_blackout();
+;menus.c:113: reset_all_sprites();
+	call	_reset_all_sprites
+;menus.c:114: anim_blackout();
 	call	_anim_blackout
-;menus.c:118: }
+;menus.c:115: }
 	add	sp, #38
 	ret
-;menus.c:121: void demo_end_screen() BANKED {    // DEMO CODE
+;menus.c:118: void demo_end_screen() BANKED {    // DEMO CODE
 ;	---------------------------------
 ; Function demo_end_screen
 ; ---------------------------------
 	b_demo_end_screen	= 1
 _demo_end_screen::
 	add	sp, #-53
-;menus.c:122: init_common_menu_props();
+;menus.c:119: init_common_menu_props();
 	ld	e, #b_init_common_menu_props
 	ld	hl, #_init_common_menu_props
 	call	___sdcc_bcall_ehl
-;menus.c:123: unsigned char tnx1sign[] = {0x1E, 0x12, 0x0B, 0x18, 0x15, 0x00, 0x23, 0x19, 0x1F, 0x00, 0x10, 0x19, 0x1C};
+;menus.c:120: unsigned char tnx1sign[] = {0x1E, 0x12, 0x0B, 0x18, 0x15, 0x00, 0x23, 0x19, 0x1F, 0x00, 0x10, 0x19, 0x1C};
 	ldhl	sp,	#0
 	ld	c, l
 	ld	b, h
@@ -2852,7 +2844,7 @@ _demo_end_screen::
 	ld	hl, #0x000c
 	add	hl, bc
 	ld	(hl), #0x1c
-;menus.c:124: unsigned char tnx2sign[] =  {0x1A, 0x16, 0x0B, 0x23, 0x13, 0x18, 0x11, 0x27};
+;menus.c:121: unsigned char tnx2sign[] =  {0x1A, 0x16, 0x0B, 0x23, 0x13, 0x18, 0x11, 0x27};
 	ldhl	sp,	#13
 	ld	a, l
 	ld	d, h
@@ -2917,7 +2909,7 @@ _demo_end_screen::
 	ld	hl, #0x0007
 	add	hl, de
 	ld	(hl), #0x27
-;menus.c:125: unsigned char tnx3sign[] = {0x17, 0x19, 0x1C, 0x0F, 0x00, 0x1C, 0x19, 0x0B, 0x0E, 0x00, 0x0B, 0x0D, 0x1E, 0x13, 0x19, 0x18};
+;menus.c:122: unsigned char tnx3sign[] = {0x17, 0x19, 0x1C, 0x0F, 0x00, 0x1C, 0x19, 0x0B, 0x0E, 0x00, 0x0B, 0x0D, 0x1E, 0x13, 0x19, 0x18};
 	ldhl	sp,	#21
 	ld	a, l
 	ld	d, h
@@ -3055,7 +3047,7 @@ _demo_end_screen::
 	ld	hl, #0x000f
 	add	hl, de
 	ld	(hl), #0x18
-;menus.c:126: unsigned char tnx4sign[] = {0x0D, 0x19, 0x17, 0x13, 0x18, 0x11, 0x00, 0x1D, 0x19, 0x19, 0x18, 0x27};
+;menus.c:123: unsigned char tnx4sign[] = {0x0D, 0x19, 0x17, 0x13, 0x18, 0x11, 0x00, 0x1D, 0x19, 0x19, 0x18, 0x27};
 	ldhl	sp,	#37
 	ld	e, l
 	ld	d, h
@@ -3099,7 +3091,7 @@ _demo_end_screen::
 	ld	hl, #0x000b
 	add	hl, de
 	ld	(hl), #0x27
-;menus.c:127: set_bkg_tiles(3, 3, 13, 1, tnx1sign);
+;menus.c:124: set_bkg_tiles(3, 3, 13, 1, tnx1sign);
 	push	de
 	push	bc
 	ld	de, #0x010d
@@ -3109,7 +3101,7 @@ _demo_end_screen::
 	call	_set_bkg_tiles
 	add	sp, #6
 	pop	de
-;menus.c:128: set_bkg_tiles(6, 5, 8, 1, tnx2sign);
+;menus.c:125: set_bkg_tiles(6, 5, 8, 1, tnx2sign);
 	ldhl	sp,#49
 	ld	a, (hl+)
 	ld	c, a
@@ -3123,7 +3115,7 @@ _demo_end_screen::
 	call	_set_bkg_tiles
 	add	sp, #6
 	pop	de
-;menus.c:129: set_bkg_tiles(2, 11, 16, 1, tnx3sign);
+;menus.c:126: set_bkg_tiles(2, 11, 16, 1, tnx3sign);
 	ldhl	sp,#51
 	ld	a, (hl+)
 	ld	c, a
@@ -3142,84 +3134,84 @@ _demo_end_screen::
 	push	de
 	call	_set_bkg_tiles
 	add	sp, #6
-;menus.c:131: anim_reverse_blackout();
+;menus.c:128: anim_reverse_blackout();
 	call	_anim_reverse_blackout
-;menus.c:132: waitpad(J_START);
+;menus.c:129: waitpad(J_START);
 	ld	a, #0x80
 	push	af
 	inc	sp
 	call	_waitpad
 	inc	sp
-;menus.c:133: anim_blackout();
+;menus.c:130: anim_blackout();
 	call	_anim_blackout
-;menus.c:134: }
+;menus.c:131: }
 	add	sp, #53
 	ret
-;menus.c:137: void se_move_cursor() BANKED {
+;menus.c:134: void se_move_cursor() BANKED {
 ;	---------------------------------
 ; Function se_move_cursor
 ; ---------------------------------
 	b_se_move_cursor	= 1
 _se_move_cursor::
-;menus.c:138: mute_music_pl_chnl(0);
+;menus.c:135: mute_music_pl_chnl(0);
 	xor	a, a
 	push	af
 	inc	sp
 	call	_mute_music_pl_chnl
 	inc	sp
-;menus.c:139: NR10_REG = 0x00;
+;menus.c:136: NR10_REG = 0x00;
 	ld	a, #0x00
 	ldh	(_NR10_REG+0),a
-;menus.c:140: NR11_REG = 0xCB;
+;menus.c:137: NR11_REG = 0xCB;
 	ld	a, #0xcb
 	ldh	(_NR11_REG+0),a
-;menus.c:141: NR12_REG = 0x63;
+;menus.c:138: NR12_REG = 0x63;
 	ld	a, #0x63
 	ldh	(_NR12_REG+0),a
-;menus.c:142: NR13_REG = 0x9F;
+;menus.c:139: NR13_REG = 0x9F;
 	ld	a, #0x9f
 	ldh	(_NR13_REG+0),a
-;menus.c:143: NR14_REG = 0x86;
+;menus.c:140: NR14_REG = 0x86;
 	ld	a, #0x86
 	ldh	(_NR14_REG+0),a
-;menus.c:144: }
+;menus.c:141: }
 	ret
-;menus.c:147: void se_choose_entry() BANKED {
+;menus.c:144: void se_choose_entry() BANKED {
 ;	---------------------------------
 ; Function se_choose_entry
 ; ---------------------------------
 	b_se_choose_entry	= 1
 _se_choose_entry::
-;menus.c:148: mute_music_pl_chnl(0);
+;menus.c:145: mute_music_pl_chnl(0);
 	xor	a, a
 	push	af
 	inc	sp
 	call	_mute_music_pl_chnl
 	inc	sp
-;menus.c:149: NR10_REG = 0x64;
+;menus.c:146: NR10_REG = 0x64;
 	ld	a, #0x64
 	ldh	(_NR10_REG+0),a
-;menus.c:150: NR11_REG = 0x88;
+;menus.c:147: NR11_REG = 0x88;
 	ld	a, #0x88
 	ldh	(_NR11_REG+0),a
-;menus.c:151: NR12_REG = 0xF3;
+;menus.c:148: NR12_REG = 0xF3;
 	ld	a, #0xf3
 	ldh	(_NR12_REG+0),a
-;menus.c:152: NR13_REG = 0x3E;
+;menus.c:149: NR13_REG = 0x3E;
 	ld	a, #0x3e
 	ldh	(_NR13_REG+0),a
-;menus.c:153: NR14_REG = 0x86;
+;menus.c:150: NR14_REG = 0x86;
 	ld	a, #0x86
 	ldh	(_NR14_REG+0),a
-;menus.c:154: }
+;menus.c:151: }
 	ret
-;menus.c:156: void password_menu() {
+;menus.c:153: void password_menu() {
 ;	---------------------------------
 ; Function password_menu
 ; ---------------------------------
 	b_password_menu	= 1
 _password_menu::
-;menus.c:158: }
+;menus.c:155: }
 	ret
 	.area _CODE_1
 	.area _CABS (ABS)

@@ -33,7 +33,7 @@ void game_over_menu() BANKED;
 void demo_end_screen() BANKED;
 void password_menu() BANKED;
 void init_game() NONBANKED;
-void clear_all_sprites() NONBANKED;
+void reset_all_sprites() NONBANKED;
 
 
 
@@ -110,10 +110,7 @@ void game_over_menu() BANKED {
     play_song(&gameovertheme, 1);
     anim_reverse_blackout();
     get_menu_pl_input(gameoveropts, 2);
-    if(menuidx == 0) {
-        init_game();
-    }
-    clear_all_sprites();
+    reset_all_sprites();
     anim_blackout();
 }
 

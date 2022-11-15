@@ -3,7 +3,10 @@ make.bat
 make*
 bank*lst
 bank*sym
+bank*adb
+bank*asm
 main.sym
 main.lst
 hoverdefender.map
 hoverdefender.noi
+hoverdefender.cdb

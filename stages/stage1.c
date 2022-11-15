@@ -7,8 +7,8 @@
 #include "../Placement.c"
 
 
-extern Machine machines[], * crntenemy, * pl;
-extern UINT8 pllives, bossclearflg, lockmvmnt;
+extern Machine machines[], * crntenemy, * pl, * hitmchptr;
+extern UINT8 pllives, bossclearflg, lockmvmnt, i, citr;
 const INT8 scorpgunprops[] = {1, 10, 1, 0, 8, 8, -3, 1, 6, 0};
 const INT8 stingprops[] = {1, 10, 1, 0, 8, 13, 1, 0, 6, 0};
 
@@ -20,7 +20,7 @@ const Placement stage1objs[] = {{2, 50, 167, 114, 0}
 , {8, 30, 167, 130, 0}, {8, 40, 167, 55, 1}, {8, 50, 167, 98, 0}, {8, 60, 167, 114, 0}, {8, 70, 167, 55, 1}, {8, 80, 167, 114, 0}
 , {9, 16, 167, 133, 3} ,{16, 20, 167, 114, 0}, {16, 30, 167, 55, 1}
 };
-
+const UINT8 scorpbossexpl[5][2] = {{98, 112}, {107, 121}, {125, 118}, {134, 112}, {116, 121}};
 
 
 void init_machine_props(UINT8 x, UINT8 y, const INT8 * mchprops) NONBANKED;
@@ -30,7 +30,7 @@ inline void itr_enemies_ptr() NONBANKED;
 void move_enemy(Machine * en, INT8 speedx, INT8 speedy) NONBANKED;
 inline UBYTE is_alive(Machine * mch) NONBANKED;
 UBYTE cooldown_enemy(Machine * mch, UINT8 period) NONBANKED;
-void fire_bigbullet(Machine * mch, INT8 speedx, INT8 speedy) NONBANKED;
+void fire_projctl(Machine * mch, UINT8 type, INT8 speedx, INT8 speedy) NONBANKED;
 void take_damage(Machine * mch, UINT8 dmgamt) NONBANKED;
 void manage_projectiles() NONBANKED;
 void manage_machines() NONBANKED;
@@ -38,9 +38,13 @@ void anim_jump() NONBANKED;
 void clear_all_projectiles() NONBANKED;
 void manage_sound_chnls() NONBANKED;
 void manage_player() NONBANKED;
+void init_stage(UBYTE hasscenery, UBYTE hasscroll) NONBANKED;
 void init_scorpboss_gun(UINT8 x, UINT8 y) BANKED;
 void init_scorpboss() BANKED;
 void scorpboss_loop() BANKED;
+void set_pincer_tiles(Machine * mch, UINT8 animcyc) BANKED;
+void set_stinger_tiles(UINT8 animcyc) BANKED;
+void scorpboss_hit_anim(UINT8 animcyc) BANKED;
 
 
 
@@ -48,21 +52,19 @@ void scorpboss_loop() BANKED;
 
 void init_scorpboss_gun(UINT8 x, UINT8 y) BANKED {
     init_machine_props(x, y, scorpgunprops);
-    set_machine_tile(crntenemy - 1, 127);
-    set_sprite_tile((crntenemy - 1)->oamtilenums[0], 22);
+    set_pincer_tiles(crntenemy - 1, 0);
 }
 
 
 void init_scorpboss() BANKED {
+    init_stage(1, 0);
     set_bkg_data(100, 40, scorpbosstiles);
     set_bkg_tiles(11, 10, 9, 6, scorpbossmap);
-    set_sprite_data(20, 8, bossspritetiles);
+    set_sprite_data(20, 6, bossspritetiles);
 
     // Initialize Stinger
     init_machine_props(121, 96, stingprops);
-    set_machine_tile(crntenemy - 1, 127);
-    set_sprite_tile((crntenemy - 1)->oamtilenums[0], 20);
-    set_sprite_tile((crntenemy - 1)->oamtilenums[2], 21);
+    set_stinger_tiles(0);
     place_machine(crntenemy - 1, 121, 96);
 
     // Initialize Right gun
@@ -73,8 +75,31 @@ void init_scorpboss() BANKED {
 }
 
 
+
+void set_stinger_tiles(UINT8 animcyc) BANKED {
+    set_machine_tile(machines + 1, 127);
+    set_sprite_tile((machines + 1)->oamtilenums[0], animcyc == 10 ? 23 : 20);
+    set_sprite_tile((machines + 1)->oamtilenums[2], animcyc == 10 ? 24 : 21);
+}
+
+
+void set_pincer_tiles(Machine * mch, UINT8 animcyc) BANKED {
+    set_machine_tile(mch, 127);
+    set_sprite_tile(mch->oamtilenums[0], animcyc == 10 ? 25 : 22);
+}
+
+
+void scorpboss_hit_anim(UINT8 animcyc) BANKED {
+    if(hitmchptr == machines + 1) {
+        set_stinger_tiles(animcyc);
+    } else {
+        set_pincer_tiles(hitmchptr, animcyc);
+    }
+}
+
+
 void scorpboss_loop() BANKED {
-    UINT8 pattrn = 0, firedbull = 0, explidx = 0, gunidx;
+    UINT8 pattrn = 0, firedbull = 0, explidx = 0, gunidx, hitanimtmr = 10;
     while(1) {
 
         if(pllives == 0 && pl->explcount == 0) {
@@ -95,7 +120,7 @@ void scorpboss_loop() BANKED {
         if(pattrn == 1 || pattrn == 2) {  // Fire top or bottom gun
             if(is_alive(machines + gunidx) && firedbull != 3) {
                 if(cooldown_enemy(machines + gunidx, 20)) {
-                    fire_bigbullet(machines + gunidx, -2, 0);
+                    fire_projctl(machines + gunidx, 1, -2, 0);
                     firedbull++;
                 }
             } else if(cooldown_enemy(machines + gunidx, 30)) {  // Cooldown until next attack
@@ -134,6 +159,17 @@ void scorpboss_loop() BANKED {
 
         manage_projectiles();
         manage_machines();
+
+        if(hitmchptr != NULL) {
+            if(hitanimtmr == 10) {
+                scorpboss_hit_anim(hitanimtmr);
+            } else if(hitanimtmr == 0) {
+                scorpboss_hit_anim(hitanimtmr);
+                hitmchptr = NULL;
+                hitanimtmr = 11;
+            }
+            hitanimtmr--;
+        }
 
         if(bossclearflg == 0 && (!(is_alive(machines + 1) || is_alive(machines + 2) || is_alive(machines + 3))) ) {
             bossclearflg = 1;

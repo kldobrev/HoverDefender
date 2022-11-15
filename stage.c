@@ -6,7 +6,6 @@ typedef struct Stage {
     UINT8 * roadlayout;
     UINT8 roadlength;
     Placement * enlayout;
-    UINT8 ennum;
     unsigned char * bkgtiles;
     UINT8 bkgtilesnum;
     unsigned char * bkgmap;
