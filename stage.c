@@ -9,6 +9,7 @@ typedef struct Stage {
     unsigned char * bkgtiles;
     UINT8 bkgtilesnum;
     unsigned char * bkgmap;
+    UINT8 bossbkgscrolls;
     UBYTE hasclouds;
     UINT8 stagebank;
     hUGESong_t * theme;

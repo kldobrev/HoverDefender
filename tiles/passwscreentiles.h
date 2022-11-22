@@ -1,8 +1,8 @@
 /*
 
- MISCTILES.C
+ PASSWSCREENTILES.H
 
- Tile Source File.
+ Include File.
 
  Info:
   Form                 : All tiles as one unit.
@@ -10,7 +10,7 @@
   Compression          : None.
   Counter              : None.
   Tile size            : 8 x 8
-  Tiles                : 0 to 2
+  Tiles                : 0 to 9
 
   Palette colors       : None.
   SGB Palette          : None.
@@ -22,15 +22,14 @@
 
 */
 
-/* Start of tile array. */
-const unsigned char misctiles[] =
-{
-  0x60,0x60,0x38,0x38,0x16,0x1E,0x1F,0x11,
-  0x36,0x2E,0x78,0x78,0xC0,0xC0,0x00,0x00,
-  0x00,0x00,0x00,0x3C,0x10,0x30,0x00,0x20,
-  0x00,0x20,0x00,0x00,0x00,0x00,0x00,0x00,
-  0x3E,0x3E,0x3E,0x3E,0x3E,0x3E,0x3C,0x3C,
-  0x7C,0x7C,0x7C,0x7C,0x7C,0x7C,0x00,0x00
-};
+#ifndef __passwscreentiles_h_INCLUDE
+#define __passwscreentiles_h_INCLUDE
 
-/* End of MISCTILES.C */
+/* Bank of tiles. */
+#define passwscreentilesBank 0
+/* Start of tile array. */
+extern const unsigned char passwscreentiles[];
+
+#endif
+
+/* End of PASSWSCREENTILES.H */
