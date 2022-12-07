@@ -7,6 +7,7 @@
 extern const hUGESong_t deserttheme;
 extern const hUGESong_t bosstheme;
 extern const hUGESong_t cleartheme;
+extern const hUGESong_t citytheme;
 
 extern unsigned char roadtiles[];
 extern unsigned char deserttiles[];
@@ -21,6 +22,7 @@ extern unsigned char fonttiles[];
 extern unsigned char misctiles[];
 extern unsigned char titlelogotiles[];
 extern unsigned char citytiles[];
+extern unsigned char mountaintiles[];
 extern unsigned char goodroadmap[];
 extern unsigned char holestartmap[];
 extern unsigned char holemap[];
@@ -31,6 +33,7 @@ extern unsigned char scorpbossmap[];
 extern unsigned char titlelogomap[];
 extern unsigned char hudmap[];
 extern unsigned char citymap[];
+extern unsigned char mountainmap[];
 
 
 // Commmon stage processing vars
@@ -41,13 +44,13 @@ const Placement * lvlplacptr; // stage placement objects array pointer
 const UINT8 roadlanesy[] = {98, 114, 130};
 
 // Stages data
-extern const UINT8 stage1road[], stage2road[];
-extern const Placement stage1objs[], stage2objs[];
+extern const UINT8 stage1road[], stage2road[], stage3road[];
+extern const Placement stage1objs[], stage2objs[], stage3objs[];
 extern const UINT8 scorpbossexpl[5][2];
 
 
-const Stage stages[] = {{stage1road, 17, stage1objs, deserttiles, 39, desertmap, 0, 1, 2, &deserttheme, 2},
-{stage2road, 25, stage2objs, citytiles, 46, citymap, 1, 1, 2, &deserttheme, 2}};
+const Stage stages[] = {{stage1road, 17, stage1objs, deserttiles, 39, desertmap, 0, 1, 2, &deserttheme},
+{stage2road, 25, stage2objs, citytiles, 46, citymap, 1, 1, 2, &citytheme}};
 const Stage * crntstage = stages;    // Current stage pointer
 UINT8 stagenum;     // Current stage counter
 const unsigned char stagenames[][18] = {{0x0E, 0x0F, 0x1D, 0x0F, 0x1C, 0x1E, 0x00, 0x12, 0x13, 0x11, 0x12, 0x21, 0x0B, 0x23},
@@ -195,7 +198,7 @@ void hud_draw_pause() NONBANKED;
 void hud_clear_pause() NONBANKED;
 inline void hud_draw_gun() NONBANKED;
 void init_game() NONBANKED;
-void init_stage(UBYTE hasscenery, UBYTE hasscroll) NONBANKED;
+void init_stage(UBYTE hasscroll) NONBANKED;
 void stage_loop() NONBANKED;
 void scorpboss_loop() BANKED;
 void pause_game() NONBANKED;
@@ -235,7 +238,7 @@ void boss_clear_sequence(UINT8 stnum) NONBANKED;
 void mech_clear_sequence() BANKED;
 void mute_song() NONBANKED;
 void unmute_song() NONBANKED;
-void play_song(const hUGESong_t * song, UINT8 songbank) NONBANKED;
+void play_song(const hUGESong_t * song) NONBANKED;
 void stop_song() NONBANKED;
 void init_mechboss() BANKED;
 void mechboss_loop() BANKED;
@@ -849,10 +852,8 @@ void create_explosion(UINT8 x, UINT8 y) NONBANKED { // Used for animations
 
 
 void anim_explode_boss(const UINT8 explarr[][2], UINT8 numexpl) NONBANKED {
-//void anim_explode_boss(const UINT8 * explarrx, const UINT8 * explarry, UINT8 numexpl) NONBANKED {
     for(citr = 0; citr < numexpl; citr++) {
         create_explosion(explarr[citr][0], explarr[citr][1]);
-        //create_explosion(explarrx[citr], explarry[citr]);
         while(1) {
             manage_machines();
             wait_vbl_done();
@@ -1144,7 +1145,7 @@ void init_game() NONBANKED {
 }
 
 
-void init_stage(UBYTE hasscenery, UBYTE hasscroll) NONBANKED {
+void init_stage(UBYTE hasscroll) NONBANKED {
     roadposx = sceneryposx = cloudposx = iframeflg = 0;
     oamidx = 0;
     prjcnt = abtncnt = 0;
@@ -1160,11 +1161,7 @@ void init_stage(UBYTE hasscenery, UBYTE hasscroll) NONBANKED {
     lvlplacptr = crntstage->enlayout;
 
     roadbuildidx = 0; // Resetting the road index
-    if(hasscenery) {
-        init_stage_bgk();
-    } else {
-        fill_bkg_rect(0, 0, 32, 10, 0x00);
-    }
+    init_stage_bgk();
     init_stage_road();
 
     if(hasscroll) {
@@ -1238,9 +1235,9 @@ void pause_game() {
     custom_delay(10);
     hud_clear_pause();
     if(stageclearflg == 0) {
-        play_song(crntstage->theme, crntstage->themebank);
+        play_song(crntstage->theme);
     } else {
-        play_song(&bosstheme, 2);
+        play_song(&bosstheme);
     }
 }
 
@@ -1470,9 +1467,9 @@ void se_charge_gun(UINT8 addfreq) NONBANKED {
 
 
 void play_stage() NONBANKED {
-    init_stage(1, 1);
+    init_stage(1);
     anim_stage_start();
-    play_song(crntstage->theme, crntstage->themebank);
+    play_song(crntstage->theme);
     stage_loop();
     if(stageclearflg == 1) {
         anim_stage_end();
@@ -1516,10 +1513,8 @@ void boss_loop(UINT8 stnum) NONBANKED {
 void boss_clear_sequence(UINT8 stnum) NONBANKED {
     switch(stnum) { // Unique boss animations
         case 0:
-            prevbank = _current_bank;
-            SWITCH_ROM_MBC1(crntstage->stagebank);
+            SWITCH_ROM_MBC1(3);
             anim_explode_boss(scorpbossexpl, 5);
-            SWITCH_ROM_MBC1(prevbank);
             break;
         case 1:
             mech_clear_sequence();
@@ -1528,7 +1523,7 @@ void boss_clear_sequence(UINT8 stnum) NONBANKED {
     
     prevbank = _current_bank;
     SWITCH_ROM_MBC1(2);
-    play_song(&cleartheme, 2);
+    play_song(&cleartheme);
     for(citr = 0;  citr < 255; citr++) {    // Waiting for fanfare to finish playing
         if(crntstage->bossbkgscrolls) {
             build_boss_road();
@@ -1542,9 +1537,11 @@ void boss_clear_sequence(UINT8 stnum) NONBANKED {
 
 
 void play_boss() NONBANKED {
+    init_stage(crntstage->bossbkgscrolls);
     init_boss(stagenum);
     anim_stage_start();
-    play_song(&bosstheme, 2);
+    SWITCH_ROM_MBC1(3);
+    play_song(&bosstheme);
     boss_loop(stagenum);
     if(bossclearflg == 1) {
         stop_song();
@@ -1576,13 +1573,10 @@ void unmute_song() {
 }
 
 
-void play_song(const hUGESong_t * song, UINT8 songbank) NONBANKED {
+void play_song(const hUGESong_t * song) NONBANKED {
     __critical {
-        prevbank = _current_bank;
-        SWITCH_ROM_MBC1(songbank);
         hUGE_init(song);
         add_VBL(hUGE_dosound);
-        SWITCH_ROM_MBC1(prevbank);
     }
 }
 

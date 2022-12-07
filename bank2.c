@@ -1,15 +1,46 @@
 #include "tiles/roadtiles.c"
-#include "tiles/bossspritetiles.c"
 #include "tiles/hudtiles.c"
 #include "tiles/enemyspritetiles.c"
 #include "tiles/cloudtiles.c"
 #include "tiles/playerspritetiles.c"
 #include "tiles/projectiletiles.c"
+#include "tiles/deserttiles.c"
+#include "tiles/citytiles.c"
 #include "maps/goodroadmap.c"
 #include "maps/holestartmap.c"
 #include "maps/holemap.c"
 #include "maps/holeendmap.c"
 #include "maps/cloudmap.c"
 #include "maps/hudmap.c"
-#include "stages/stage1.c"
-#include "stages/stage2.c"
+#include "maps/desertmap.c"
+#include "maps/citymap.c"
+#include "machine.c"
+#include "placement.c"
+
+
+
+
+// Stage 1 data
+const UINT8 stage1road[] = {50, 30, 95, 25, 110, 25, 160, 25, 110, 35, 10, 10, 10, 10, 10, 10, 70};
+const Placement stage1objs[] = {{2, 50, 167, 114, 0}
+, {4, 20, 167, 98, 0}, {4, 40, 167, 130, 0}, {4, 60, 167, 114, 0}
+, {6, 20, 167, 130, 0}, {6, 40, 167, 55, 1}, {6, 60, 167, 98, 0}, {6, 80, 167, 55, 1}, {6, 100, 167, 114, 0}
+, {8, 30, 167, 130, 0}, {8, 40, 167, 55, 1}, {8, 50, 167, 98, 0}, {8, 60, 167, 114, 0}, {8, 70, 167, 55, 1}, {8, 80, 167, 114, 0}
+, {9, 16, 167, 133, 3} ,{16, 20, 167, 114, 0}, {16, 30, 167, 55, 1}
+};
+
+
+
+
+// Stage 2 data
+const UINT8 stage2road[] = {70, 30, 110, 10, 20, 10, 120, 10, 10, 10, 10, 20, 50, 10, 120, 40, 130, 10, 10, 10, 10, 10, 10, 10, 160};
+const Placement stage2objs[] = {{0, 40, 167, 114, 0}, {1, 15, 167, 133, 3}, 
+{2, 10, 167, 60, 1}, {2, 20, 167, 96, 0}, {2, 40, 167, 133, 0}, {2, 50, 167, 30, 4}, {2, 65, 167, 114, 0},
+{4, 5, 167, 30, 1},  {6, 10, 167, 133, 0}, {6, 18, 167, 30, 4}, {6, 35, 167, 96, 0}, {6, 45, 167, 50, 4}, {6, 60, 167, 114, 0}, {6, 80, 167, 40, 4},
+{11, 9, 167, 133, 3}, {12, 15, 167, 133, 5}, {14, 20, 167, 96, 0}, {14, 55, 167, 133, 5}, {14, 60, 167, 96, 0}, {14, 95, 167, 133, 5},
+{15, 9, 167, 133, 3}, {15, 32, 167, 133, 3}, {16, 9, 167, 96, 5}, {16, 14, 167, 60, 1}, {16, 15, 167, 114, 0}, {16, 50, 167, 96, 5}, {16, 55, 167, 60, 1}, {16, 80, 167, 133, 0},
+{22, 1, 167, 50, 1}, {24, 10, 167, 30, 4}, {24, 20, 167, 96, 0}, {24, 35, 167, 50, 1}, {24, 55, 167, 133, 0}, {24, 65, 167, 40, 4}, 
+{24, 80, 167, 50, 1}, {24, 95, 167, 114, 0}, {24, 110, 167, 30, 4}, {24, 120, 167, 50, 1}};
+
+
+
