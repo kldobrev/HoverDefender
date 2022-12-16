@@ -8,7 +8,7 @@
    Section       : 
    Bank          : 0
    Map size      : 32 x 9
-   Tile set      : F:\Projects\Game Boy Projects\Tiles_Maps_Assets\Tiles\HoverAssault\MountainZoneBkgTiles.gbr
+   Tile set      : F:\Projects\Game Boy Projects\Tiles_Maps_Assets\Tiles\HoverAssault\MountainZoneBkgTiles2.gbr
    Plane count   : 1 plane (8 bits)
    Plane order   : Tiles are continues
    Tile offset   : 61

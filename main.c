@@ -41,33 +41,31 @@ UINT8 stageidx; // For the stage arrays
 UBYTE holeflg;  // Flag indicating if currently rendered area is a hole or a road
 UINT8 stageclearflg, bossclearflg; // stage/boss completed flags
 const Placement * lvlplacptr; // stage placement objects array pointer
-const UINT8 roadlanesy[] = {98, 114, 130};
+const UINT8 lanesy[] = {98, 114, 130};
 
 // Stages data
 extern const UINT8 stage1road[], stage2road[], stage3road[];
 extern const Placement stage1objs[], stage2objs[], stage3objs[];
 extern const UINT8 scorpbossexpl[5][2];
 
-
 const Stage stages[] = {{stage1road, 17, stage1objs, deserttiles, 39, desertmap, 0, 1, 2, &deserttheme},
-{stage2road, 25, stage2objs, citytiles, 46, citymap, 1, 1, 2, &citytheme}};
+{stage2road, 25, stage2objs, citytiles, 46, citymap, 1, 1, 2, &citytheme},
+{stage3road, 27, stage3objs, mountaintiles, 61, mountainmap, 0, 1, 2, &deserttheme} // Temporarily using an old theme
+};
 const Stage * crntstage = stages;    // Current stage pointer
 UINT8 stagenum;     // Current stage counter
-const unsigned char stagenames[][18] = {{0x0E, 0x0F, 0x1D, 0x0F, 0x1C, 0x1E, 0x00, 0x12, 0x13, 0x11, 0x12, 0x21, 0x0B, 0x23},
-{0x0D, 0x0B, 0x1A, 0x1E, 0x13, 0x20, 0x0F, 0x00, 0x0D, 0x13, 0x1E, 0x23}};
-const UINT8 stnamelengths[] = {14, 12};
 
 
-// Enemies order - rider, drone, rocket, turret, bomber, mine, explosion
+// Enemies order - 0 - rider, 1 - drone, 2 - rocket, 3 - turret, 4 - bomber, 5 - mine, 6 - explosion
 const INT8 enprops[7][10] = {{1, 2, 0, 1, 13, 15, -3, 12, 0, 22},
 {0, 1, 2, 5, 14, 7, 7, 13, 1, 26},
 {1, 9, 2, 5, 13, 10, 1, 4, 2, 30},
 {0, 100, 3, 2, 14, 12, 7, -4, 3, 34},
-{0, 2, 0, 5, 13, 7, 4, 11, 4, 38},
+{0, 4, 0, 5, 13, 7, 4, 11, 4, 38},
 {1, 20, 3, 2, 11, 11, 0, 0, 5, 42},
 {0, 0, 0, 0, 16, 16, 0, 0, 120, 120}
 };
-// Projectiles order - bullet, bigbullet, laser, bomb, plasma
+// Projectiles order - 0 - bullet, 1 - bigbullet, 2 - laser, 3 - bomb, 4 - plasma
 const UINT8 projctlprops[5][4] = {{3, 3, 1, 17},
 {4, 4, 2, 18},
 {8, 3, 3, 19},
@@ -381,7 +379,7 @@ void init_player() {
 
     set_machine_sprite_tiles(pl, 1);
     incr_oam_sprite_tile_idx(4);
-    place_machine(pl, 248, roadlanesy[1]);
+    place_machine(pl, 248, lanesy[1]);
 }
 
 
@@ -397,11 +395,11 @@ void respawn_player() {
         set_machine_sprite_tiles(pl, 13);
         place_machine(pl, 16, 64);
         lockmvmnt = 2;
-        jumpstarty = roadlanesy[1];
+        jumpstarty = lanesy[1];
     } else {
         pl->groundflg = 1;
         set_machine_sprite_tiles(pl, 1);
-        place_machine(pl, 16, roadlanesy[1]);
+        place_machine(pl, 16, lanesy[1]);
         lockmvmnt = 0;
     }
     iframeflg = 1;
@@ -1491,7 +1489,10 @@ void init_boss(UINT8 stnum) NONBANKED {
         case 0:
             init_scorpboss();
             break;
-        case 1: // To be replaced with actual level 2 code
+        case 1:
+            init_mechboss();
+            break;
+        case 2: // To be replaced with actual level 3 code
             init_mechboss();
             break;
     }
@@ -1506,6 +1507,9 @@ void boss_loop(UINT8 stnum) NONBANKED {
         case 1:
             mechboss_loop();
             break;
+        case 2:
+            mechboss_loop(); // To be replaced with actual level 3 code
+            break;
     }
 }
 
@@ -1518,6 +1522,9 @@ void boss_clear_sequence(UINT8 stnum) NONBANKED {
             break;
         case 1:
             mech_clear_sequence();
+            break;
+        case 2:
+            mech_clear_sequence(); // To be replaced with actual level 3 code
             break;
     }
     
@@ -1632,7 +1639,7 @@ void main() NONBANKED {
                 stageclearflg = bossclearflg = 0;
                 stagenum++;
                 crntstage++;    // Next stage data
-                if(stagenum == 2) { // Has passed currently available levels
+                if(stagenum == 3) { // Has passed currently available levels
                     demo_end_screen();
                     init_game();
                     stagenum = 0;
