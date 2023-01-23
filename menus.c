@@ -25,7 +25,7 @@ const UINT8 passconfoptsx[] = {19, 83};
 const UINT8 passconfy = 128, blinkanimdur = 3;
 const UINT8 wrongpassind = 99;  // Incorrect password indicator
 const UINT8 passwords[][4] = {{11, 12, 13, 14}, {30, 11, 27, 23}, {33, 16, 24, 13}, {15, 25, 28, 21}, 
-{28, 32, 13, 36}, {31, 28, 30, 18}};
+{28, 32, 13, 36}, {40, 40, 40, 40}, {31, 28, 30, 18}};
 UINT8 passidx, passentry[4], menuanimcnt;
 
 typedef struct Passcursor {
@@ -82,7 +82,7 @@ void main_menu() BANKED {
     init_common_menu_props();
     const unsigned char gamestsign[] = {0x1D, 0x1E, 0x0B, 0x1C, 0x1E, 0x00, 0x11, 0x0B, 0x17, 0x0F};
     const unsigned char passwsign[] = {0x1A, 0x0B, 0x1D, 0x1D, 0x21, 0x19, 0x1C, 0x0E};
-    const unsigned char creatorsign[] = {0x03, 0x01, 0x03, 0x03, 0x00, 0x15, 0x18, 0x1D, 0x00, 0x0E, 0x19, 0x0C, 0x1C, 0x0F, 0x20};
+    const unsigned char creatorsign[] = {0x03, 0x01, 0x03, 0x04, 0x00, 0x15, 0x18, 0x1D, 0x00, 0x0E, 0x19, 0x0C, 0x1C, 0x0F, 0x20};
     set_bkg_data(35, 78, titlelogotiles);
     set_bkg_tiles(2, 1, 16, 6, titlelogomap);
     anim_reverse_blackout();

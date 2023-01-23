@@ -1,6 +1,6 @@
 /*
 
- BOSSSPRITETILES.H
+ JUGGERNAUTBOSSTILES.H
 
  Include File.
 
@@ -10,7 +10,7 @@
   Compression          : None.
   Counter              : None.
   Tile size            : 8 x 8
-  Tiles                : 0 to 24
+  Tiles                : 0 to 67
 
   Palette colors       : None.
   SGB Palette          : None.
@@ -22,14 +22,14 @@
 
 */
 
-#ifndef __bossspritetiles_h_INCLUDE
-#define __bossspritetiles_h_INCLUDE
+#ifndef __juggernautbosstiles_h_INCLUDE
+#define __juggernautbosstiles_h_INCLUDE
 
 /* Bank of tiles. */
-#define bossspritetilesBank 0
+#define juggernautbosstilesBank 0
 /* Start of tile array. */
-extern const unsigned char bossspritetiles[];
+extern const unsigned char juggernautbosstiles[];
 
 #endif
 
-/* End of BOSSSPRITETILES.H */
+/* End of JUGGERNAUTBOSSTILES.H */

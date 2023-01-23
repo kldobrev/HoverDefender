@@ -19,10 +19,6 @@
 	.globl _desertmap
 	.globl _hudmap
 	.globl _cloudmap
-	.globl _holeendmap
-	.globl _holemap
-	.globl _holestartmap
-	.globl _goodroadmap
 	.globl _mountaintiles
 	.globl _citytiles
 	.globl _deserttiles
@@ -3295,11 +3291,11 @@ _mountaintiles:
 	.db #0x00	; 0
 	.db #0x00	; 0
 	.db #0x00	; 0
-	.db #0x07	; 7
+	.db #0x06	; 6
 	.db #0x00	; 0
 	.db #0x09	; 9
 	.db #0x00	; 0
-	.db #0x18	; 24
+	.db #0x19	; 25
 	.db #0x00	; 0
 	.db #0x60	; 96
 	.db #0x00	; 0
@@ -3349,7 +3345,7 @@ _mountaintiles:
 	.db #0xff	; 255
 	.db #0x00	; 0
 	.db #0xff	; 255
-	.db #0xc0	; 192
+	.db #0x80	; 128
 	.db #0x00	; 0
 	.db #0x40	; 64
 	.db #0x00	; 0
@@ -3597,9 +3593,9 @@ _mountaintiles:
 	.db #0x00	; 0
 	.db #0x00	; 0
 	.db #0x00	; 0
-	.db #0x08	; 8
 	.db #0x00	; 0
-	.db #0x0c	; 12
+	.db #0x00	; 0
+	.db #0x08	; 8
 	.db #0x00	; 0
 	.db #0x14	; 20
 	.db #0x00	; 0
@@ -3865,7 +3861,7 @@ _mountaintiles:
 	.db #0x00	; 0
 	.db #0x3c	; 60
 	.db #0x00	; 0
-	.db #0xe3	; 227
+	.db #0x62	; 98	'b'
 	.db #0x00	; 0
 	.db #0xc1	; 193
 	.db #0x00	; 0
@@ -4101,101 +4097,6 @@ _mountaintiles:
 	.db #0x00	; 0
 	.db #0x6d	; 109	'm'
 	.db #0x00	; 0
-_goodroadmap:
-	.db #0x21	; 33
-	.db #0x21	; 33
-	.db #0x21	; 33
-	.db #0x00	; 0
-	.db #0x00	; 0
-	.db #0x00	; 0
-	.db #0x25	; 37
-	.db #0x26	; 38
-	.db #0x00	; 0
-	.db #0x23	; 35
-	.db #0x24	; 36
-	.db #0x00	; 0
-	.db #0x27	; 39
-	.db #0x28	; 40
-	.db #0x00	; 0
-	.db #0x00	; 0
-	.db #0x00	; 0
-	.db #0x00	; 0
-	.db #0x22	; 34
-	.db #0x22	; 34
-	.db #0x22	; 34
-_holestartmap:
-	.db #0x21	; 33
-	.db #0x21	; 33
-	.db #0x21	; 33
-	.db #0x29	; 41
-	.db #0x00	; 0
-	.db #0x00	; 0
-	.db #0x2a	; 42
-	.db #0x2b	; 43
-	.db #0x25	; 37
-	.db #0x26	; 38
-	.db #0x2c	; 44
-	.db #0x30	; 48	'0'
-	.db #0x23	; 35
-	.db #0x2d	; 45
-	.db #0x2e	; 46
-	.db #0x33	; 51	'3'
-	.db #0x27	; 39
-	.db #0x2f	; 47
-	.db #0x30	; 48	'0'
-	.db #0x33	; 51	'3'
-	.db #0x00	; 0
-	.db #0x31	; 49	'1'
-	.db #0x33	; 51	'3'
-	.db #0x33	; 51	'3'
-	.db #0x22	; 34
-	.db #0x32	; 50	'2'
-	.db #0x3c	; 60
-	.db #0x3c	; 60
-_holemap:
-	.db #0x29	; 41
-	.db #0x29	; 41
-	.db #0x29	; 41
-	.db #0x3a	; 58
-	.db #0x3a	; 58
-	.db #0x3a	; 58
-	.db #0x33	; 51	'3'
-	.db #0x33	; 51	'3'
-	.db #0x33	; 51	'3'
-	.db #0x33	; 51	'3'
-	.db #0x33	; 51	'3'
-	.db #0x33	; 51	'3'
-	.db #0x33	; 51	'3'
-	.db #0x33	; 51	'3'
-	.db #0x33	; 51	'3'
-	.db #0x33	; 51	'3'
-	.db #0x33	; 51	'3'
-	.db #0x33	; 51	'3'
-	.db #0x3c	; 60
-	.db #0x3c	; 60
-	.db #0x3c	; 60
-_holeendmap:
-	.db #0x29	; 41
-	.db #0x29	; 41
-	.db #0x21	; 33
-	.db #0x3a	; 58
-	.db #0x34	; 52	'4'
-	.db #0x00	; 0
-	.db #0x33	; 51	'3'
-	.db #0x35	; 53	'5'
-	.db #0x00	; 0
-	.db #0x36	; 54	'6'
-	.db #0x37	; 55	'7'
-	.db #0x00	; 0
-	.db #0x38	; 56	'8'
-	.db #0x28	; 40
-	.db #0x00	; 0
-	.db #0x39	; 57	'9'
-	.db #0x00	; 0
-	.db #0x00	; 0
-	.db #0x22	; 34
-	.db #0x22	; 34
-	.db #0x22	; 34
 _cloudmap:
 	.db #0x14	; 20
 	.db #0x15	; 21

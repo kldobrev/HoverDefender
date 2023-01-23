@@ -2,6 +2,10 @@
 #include "machine.c"
 #include "projectile.c"
 #include "stage.c"
+#include "maps/goodroadmap.c"
+#include "maps/holestartmap.c"
+#include "maps/holemap.c"
+#include "maps/holeendmap.c"
 
 
 extern const hUGESong_t deserttheme;
@@ -23,10 +27,6 @@ extern unsigned char misctiles[];
 extern unsigned char titlelogotiles[];
 extern unsigned char citytiles[];
 extern unsigned char mountaintiles[];
-extern unsigned char goodroadmap[];
-extern unsigned char holestartmap[];
-extern unsigned char holemap[];
-extern unsigned char holeendmap[];
 extern unsigned char desertmap[];
 extern unsigned char cloudmap[];
 extern unsigned char scorpbossmap[];
@@ -34,6 +34,7 @@ extern unsigned char titlelogomap[];
 extern unsigned char hudmap[];
 extern unsigned char citymap[];
 extern unsigned char mountainmap[];
+
 
 
 // Commmon stage processing vars
@@ -46,11 +47,12 @@ const UINT8 lanesy[] = {98, 114, 130};
 // Stages data
 extern const UINT8 stage1road[], stage2road[], stage3road[];
 extern const Placement stage1objs[], stage2objs[], stage3objs[];
-extern const UINT8 scorpbossexpl[5][2];
+extern const UINT8 scorpbossexpl[5][2], jggrbossexpl[7][2];
+extern UINT8 jgrbkgposx;
 
 const Stage stages[] = {{stage1road, 17, stage1objs, deserttiles, 39, desertmap, 0, 1, 2, &deserttheme},
 {stage2road, 25, stage2objs, citytiles, 46, citymap, 1, 1, 2, &citytheme},
-{stage3road, 27, stage3objs, mountaintiles, 61, mountainmap, 0, 1, 2, &deserttheme} // Temporarily using an old theme
+{stage3road, 27, stage3objs, mountaintiles, 61, mountainmap, 1, 1, 2, &deserttheme} // Temporarily using an old theme
 };
 const Stage * crntstage = stages;    // Current stage pointer
 UINT8 stagenum;     // Current stage counter
@@ -118,6 +120,7 @@ UBYTE isapressed;  // Indicates that A is currently pressed
 UINT8 chmutedcyccnt[] = {255, 255, 255, 255}; // Used to mute a sound channel for a number of cycles
 INT8 precfctr; // Precision factor for caluculating coordinates
 INT16 slope, gradient;  // Used to calculate projectile trajectory when aimed at player
+UINT8 hitanimtmr;  // Damage animation timer when boss is hit
 UINT8 plgun, numkills;
 UINT8 menuidx, gamemode, extrasflg;
 
@@ -147,7 +150,9 @@ void move_machine(Machine * mch, INT8 speedx, INT8 speedy) NONBANKED;
 void move_player(INT8 speedx, INT8 speedy) NONBANKED;
 void move_enemy(Machine * en, INT8 speedx, INT8 speedy) NONBANKED;
 void incr_bkg_x_coords(UINT8 roadsp) NONBANKED;
+void incr_boss_bkg_x_coords(UINT8 roadsp, UINT8 jgrspeed) NONBANKED;
 void scroll_stage_bkg() NONBANKED;
+void scroll_boss_bkg() NONBANKED;
 void disable_bkg_scroll() NONBANKED;
 void place_stage_obj(UINT8 type, UINT8 x, UINT8 y) NONBANKED;
 void build_stage() NONBANKED;
@@ -156,7 +161,7 @@ void build_hole() NONBANKED;
 void build_boss_road() NONBANKED;
 void manage_hole_props();
 void manage_projectiles() NONBANKED;
-void manage_machines() NONBANKED;
+void manage_machines(UINT8 limit) NONBANKED;
 void manage_sound_chnls() NONBANKED;
 void manage_player() NONBANKED;
 inline UINT8 get_horiz_dist(UINT8 fstobjx, UINT8 sndobjx) NONBANKED;
@@ -240,6 +245,10 @@ void play_song(const hUGESong_t * song) NONBANKED;
 void stop_song() NONBANKED;
 void init_mechboss() BANKED;
 void mechboss_loop() BANKED;
+void init_jggrrboss() BANKED;
+void jggrrboss_loop() BANKED;
+void incr_boss_bkg_x_coords(UINT8 roadsp, UINT8 jgrspeed) NONBANKED;
+void disable_boss_bkg_scroll() BANKED;
 
 
 
@@ -307,12 +316,13 @@ void reset_all_sprites() NONBANKED {
 
 void init_stage_bgk() NONBANKED {
     if(crntstage->hasclouds) {
+        SWITCH_ROM_MBC1(crntstage->stagebank);
+        set_bkg_data(61, crntstage->bkgtilesnum, crntstage->bkgtiles);
+        set_bkg_tiles(0, stagenum == 2 && stageclearflg == 1 ? 4 : 1, 32, 9, crntstage->bkgmap);
         SWITCH_ROM_MBC1(2);
         set_bkg_data(20, 13, cloudtiles);
         set_bkg_tiles(0, 0, 32, 1, cloudmap);
         SWITCH_ROM_MBC1(crntstage->stagebank);
-        set_bkg_data(61, crntstage->bkgtilesnum, crntstage->bkgtiles);
-        set_bkg_tiles(0, 1, 32, 9, crntstage->bkgmap);
     } else {
         SWITCH_ROM_MBC1(crntstage->stagebank);
         set_bkg_data(20, crntstage->bkgtilesnum, crntstage->bkgtiles);
@@ -325,10 +335,10 @@ void init_stage_road() NONBANKED { // Layout initial road tiles to start the sta
     prevbank = _current_bank;
     SWITCH_ROM_MBC1(2);
     set_bkg_data(33, 28, roadtiles);
+    SWITCH_ROM_MBC1(prevbank);
     for(roadbuildidx = 0; roadbuildidx < 7; roadbuildidx++) {
         set_bkg_tiles(roadbuildidx * 3, 10, 3, 7, goodroadmap);
     }
-    SWITCH_ROM_MBC1(prevbank);
     camtileidx = 18;
     nextcamtileidx = camtileidx + 3;
 }
@@ -478,6 +488,18 @@ void incr_bkg_x_coords(UINT8 roadsp) NONBANKED {
 }
 
 
+
+void incr_boss_bkg_x_coords(UINT8 roadsp, UINT8 jgrspeed) NONBANKED {
+    __critical {
+        cloudposx += roadsp - 3;
+        jgrbkgposx += roadsp - 4 + jgrspeed;
+        sceneryposx += roadsp - 1;
+        roadposx += roadsp;
+    }
+}
+
+
+
 void scroll_stage_bkg() NONBANKED {
     switch(LYC_REG) {
         case 0x00:
@@ -494,6 +516,31 @@ void scroll_stage_bkg() NONBANKED {
             break;
     }
 }
+
+
+
+void scroll_boss_bkg() NONBANKED {
+    switch(LYC_REG) {
+        case 0x00:
+            move_bkg(cloudposx, 0);
+            LYC_REG = 0x07;
+            break;
+        case 0x07:
+            move_bkg(jgrbkgposx, 0);
+            LYC_REG = 0x2F;
+            break;
+        case 0x2F:
+            move_bkg(sceneryposx, 0);
+            LYC_REG = 0x50;
+            break;
+        case 0x50:
+            move_bkg(roadposx, 0);
+            LYC_REG = 0x00;
+            break;
+    }
+}
+
+
 
 
 void disable_bkg_scroll() NONBANKED {
@@ -543,17 +590,12 @@ void build_stage() NONBANKED {   // Automatically builds the road ahead while sc
 
 
 void build_road() NONBANKED {
-    prevbank = _current_bank;
-    SWITCH_ROM_MBC1(2);
     set_bkg_tiles(camtileidx, 10, 3, 7, goodroadmap);
-    SWITCH_ROM_MBC1(prevbank);
     nextcamtileidx = get_tile_idx(camtileidx + 3);
 }
 
 
 void build_hole() NONBANKED {
-    prevbank = _current_bank;
-    SWITCH_ROM_MBC1(2);
     if(roadbuildidx == 0) {
         //holestartx = 208;
         holestartx = 238;
@@ -569,7 +611,6 @@ void build_hole() NONBANKED {
         set_bkg_tiles(camtileidx, 10, 3, 7, holemap);
         nextcamtileidx = get_tile_idx(camtileidx + 3);
     }
-    SWITCH_ROM_MBC1(prevbank);
  }
 
 
@@ -609,8 +650,8 @@ void manage_hole_props() {
     }
  }
 
- void manage_machines() {
-    for(machptr = machines; machptr <= machines + enlimit; machptr++) {    // Player and enemies handling
+ void manage_machines(UINT8 limit) {
+    for(machptr = machines; machptr <= machines + limit; machptr++) {    // Player and enemies handling
         if(machptr != pl && machptr->y != 0) {
             if(!iframeflg && pl->explcount == 0 && pl->groundflg == machptr->groundflg) {    // Player hasn't exploded
                 check_player_machine_collsn(machptr);
@@ -853,7 +894,12 @@ void anim_explode_boss(const UINT8 explarr[][2], UINT8 numexpl) NONBANKED {
     for(citr = 0; citr < numexpl; citr++) {
         create_explosion(explarr[citr][0], explarr[citr][1]);
         while(1) {
-            manage_machines();
+            if(stagenum == 2) {
+                build_boss_road();
+                incr_boss_bkg_x_coords(4, 0);
+            }
+
+            manage_machines(enlimit);
             wait_vbl_done();
             if((crntenemy - 1)->explcount == 0) {
                 break;
@@ -1165,9 +1211,11 @@ void init_stage(UBYTE hasscroll) NONBANKED {
     if(hasscroll) {
         STAT_REG = 0x45;
         LYC_REG = 0x00;
-        //remove_LCD(scroll_stage_bkg);
-        //disable_interrupts();
-        add_LCD(scroll_stage_bkg);
+        if(stagenum == 2 && stageclearflg == 1) {// Case for stage 3 boss
+            add_LCD(scroll_boss_bkg);
+        } else {
+            add_LCD(scroll_stage_bkg);
+        }
         enable_interrupts();
         set_interrupts(VBL_IFLAG | LCD_IFLAG);
     }
@@ -1213,7 +1261,7 @@ void stage_loop() {
         incr_bkg_x_coords(4);
         manage_hole_props();
         manage_projectiles();
-        manage_machines();
+        manage_machines(enlimit);
         manage_sound_chnls();
         manage_player();
         wait_vbl_done();
@@ -1222,7 +1270,7 @@ void stage_loop() {
 
 
 void pause_game() {
-    if(machines[1].type != 6) {  // Hide sprites only during stages
+    if(stageclearflg == 0 || stagenum != 0) {  // Case for boss 1
         HIDE_SPRITES;
     }
     stop_song();
@@ -1485,6 +1533,7 @@ void play_stage() NONBANKED {
 
 void init_boss(UINT8 stnum) NONBANKED {
     hitmchptr = NULL;
+    hitanimtmr = 11;
     switch(stnum) {
         case 0:
             init_scorpboss();
@@ -1493,7 +1542,7 @@ void init_boss(UINT8 stnum) NONBANKED {
             init_mechboss();
             break;
         case 2: // To be replaced with actual level 3 code
-            init_mechboss();
+            init_jggrrboss();
             break;
     }
 }
@@ -1508,23 +1557,26 @@ void boss_loop(UINT8 stnum) NONBANKED {
             mechboss_loop();
             break;
         case 2:
-            mechboss_loop(); // To be replaced with actual level 3 code
+            jggrrboss_loop(); // To be replaced with actual level 3 code
             break;
     }
 }
 
 
 void boss_clear_sequence(UINT8 stnum) NONBANKED {
-    switch(stnum) { // Unique boss animations
+    switch(stnum) { // Unique boss clear animations
         case 0:
             SWITCH_ROM_MBC1(3);
             anim_explode_boss(scorpbossexpl, 5);
+            init_stage_road();
             break;
         case 1:
             mech_clear_sequence();
             break;
         case 2:
-            mech_clear_sequence(); // To be replaced with actual level 3 code
+            SWITCH_ROM_MBC1(3);
+            anim_explode_boss(jggrbossexpl, 7);
+            fill_bkg_rect(20, 1, 17, 5, 0);
             break;
     }
     
@@ -1535,6 +1587,9 @@ void boss_clear_sequence(UINT8 stnum) NONBANKED {
         if(crntstage->bossbkgscrolls) {
             build_boss_road();
             incr_bkg_x_coords(4);
+        } else if(stagenum == 2) {
+            build_boss_road();
+            incr_boss_bkg_x_coords(4, 0);
         }
         manage_sound_chnls();
         wait_vbl_done();
@@ -1558,8 +1613,12 @@ void play_boss() NONBANKED {
     anim_blackout();
     stop_song();
     HIDE_WIN;
-    if(crntstage->bossbkgscrolls) {    
-        disable_bkg_scroll();
+    if(crntstage->bossbkgscrolls) { 
+        if(stagenum == 2) {
+            disable_boss_bkg_scroll();
+        } else {
+            disable_bkg_scroll();
+        }
     }
     reset_all_sprites();
 }
@@ -1608,7 +1667,7 @@ void main() NONBANKED {
         main_menu();
         if(menuidx == 1) {
             stagenum = password_menu();
-            if(stagenum == 5) { // Unlock extras menu
+            if(stagenum == 6) { // Unlock extras menu
                 extrasflg = 1;
                 stagenum = 0;
                 continue;
