@@ -88,9 +88,9 @@ void jggrrboss_loop() BANKED;
 // COMMON BOSS FUNCTIONS
 
 void check_boss_damaged() BANKED {
-	if(hitmchptr != NULL) {
-		if(hitanimtmr == 10 || hitanimtmr == 0) {
-			switch(stagenum) {
+    if(hitmchptr != NULL) {
+        if(hitanimtmr == 10 || hitanimtmr == 0) {
+            switch(stagenum) {
                 case 0:
                     scorpboss_hit_anim();
                     break;
@@ -100,14 +100,14 @@ void check_boss_damaged() BANKED {
                 default:    // Case for bosses 2 and 4
                     mech_hit_anim();
                     break;
-			}
-		}
-		if(hitanimtmr == 0) {
-			hitmchptr = NULL;
-			hitanimtmr = 11;
-		}
-		hitanimtmr--;
-	}
+            }
+        }
+        if(hitanimtmr == 0) {
+            hitmchptr = NULL;
+            hitanimtmr = 11;
+        }
+        hitanimtmr--;
+    }
 }
 
 

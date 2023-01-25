@@ -12,6 +12,7 @@ extern const hUGESong_t deserttheme;
 extern const hUGESong_t bosstheme;
 extern const hUGESong_t cleartheme;
 extern const hUGESong_t citytheme;
+extern const hUGESong_t mountaintheme;
 
 extern unsigned char roadtiles[];
 extern unsigned char deserttiles[];
@@ -52,7 +53,7 @@ extern UINT8 jgrbkgposx;
 
 const Stage stages[] = {{stage1road, 17, stage1objs, deserttiles, 39, desertmap, 0, 1, 2, &deserttheme},
 {stage2road, 25, stage2objs, citytiles, 46, citymap, 1, 1, 2, &citytheme},
-{stage3road, 27, stage3objs, mountaintiles, 61, mountainmap, 1, 1, 2, &deserttheme} // Temporarily using an old theme
+{stage3road, 27, stage3objs, mountaintiles, 61, mountainmap, 1, 1, 2, &mountaintheme} // Temporarily using an old theme
 };
 const Stage * crntstage = stages;    // Current stage pointer
 UINT8 stagenum;     // Current stage counter
