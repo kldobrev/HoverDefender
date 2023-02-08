@@ -38,8 +38,7 @@ inline void itr_enemies_ptr() NONBANKED;
 inline UBYTE is_alive(Machine * mch) NONBANKED;
 UBYTE cooldown_enemy(Machine * mch, UINT8 period) NONBANKED;
 void fire_projctl(Machine * mch, UINT8 type, INT8 speedx, INT8 speedy) NONBANKED;
-void fire_projctl_aimed_vert(Machine * mch, UINT8 type, INT8 speedy) NONBANKED;
-void fire_projctl_aimed_horz(Machine * mch, UINT8 type, INT8 speedx) NONBANKED;
+void fire_projctl_aimed(Machine * mch, UINT8 type, INT8 speedxy) NONBANKED;
 void take_damage(Machine * mch, UINT8 dmgamt) NONBANKED;
 void manage_projectiles() NONBANKED;
 void manage_machines(UINT8 limit) NONBANKED;
@@ -359,9 +358,9 @@ void mechboss_loop() BANKED {
             } else if(ptrn == 3 && cooldown_enemy(fstmch, 20)) {
                 charge_gun(fstmch, 3);
                 if(pl->x < 120) {
-                    fire_projctl_aimed_horz(fstmch, 4, -4);
+                    fire_projctl_aimed(fstmch, 4, 4);
                 } else {
-                    fire_projctl_aimed_vert(fstmch, 4, 3);
+                    fire_projctl_aimed(fstmch, 4, 3);
                 }
                 ptrn = 4;
             } else if(ptrn == 4 && cooldown_enemy(fstmch, 50)) {
@@ -381,7 +380,7 @@ void mechboss_loop() BANKED {
                 if((pl->x > fstmch->x && fstmch->gunoffx == backhboffx) || (pl->x < fstmch->x && fstmch->gunoffx == fronthboffx)) {
                     flip_mech(fstmch);  // Face towards the player
                 }
-                fire_projctl_aimed_vert(fstmch, 1, 1);
+                fire_projctl_aimed(fstmch, 1, 1);
                 ptrn = 2;
             } else if(ptrn == 2 && cooldown_enemy(fstmch, 25)) {
                 mechspx = mechdir == 0 ? -3 : 3;
@@ -569,7 +568,7 @@ void jggrrboss_loop() BANKED {
                 if(pl->x + pl->width > fstmch->x) {  // Change bombing pattern based on player location
                     fstmch->gunoffx = jgrgunprops[6];
                     fstmch->gunoffy = jgrgunprops[7];
-                    fire_projctl_aimed_vert(fstmch, 4, 5);
+                    fire_projctl_aimed(fstmch, 4, 5);
                     fstmch->gunoffx = jgrxoffsets[6];
                     fstmch->gunoffy = 4;
                     fire_projctl(fstmch, 4, 0, 2);

@@ -2879,8 +2879,8 @@ _passwords:
 	.db #0x0d	; 13
 	.db #0x0f	; 15
 	.db #0x19	; 25
-	.db #0x1c	; 28
 	.db #0x15	; 21
+	.db #0x1c	; 28
 	.db #0x1c	; 28
 	.db #0x20	; 32
 	.db #0x0d	; 13

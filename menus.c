@@ -24,7 +24,7 @@ const UINT8 mainoptsy[] = {88, 104, 120};
 const UINT8 passconfoptsx[] = {19, 83};
 const UINT8 passconfy = 128, blinkanimdur = 3;
 const UINT8 wrongpassind = 99;  // Incorrect password indicator
-const UINT8 passwords[][4] = {{11, 12, 13, 14}, {30, 11, 27, 23}, {33, 16, 24, 13}, {15, 25, 28, 21}, 
+const UINT8 passwords[][4] = {{11, 12, 13, 14}, {30, 11, 27, 23}, {33, 16, 24, 13}, {15, 25, 21, 28}, 
 {28, 32, 13, 36}, {40, 40, 40, 40}, {31, 28, 30, 18}};
 UINT8 passidx, passentry[4], menuanimcnt;
 

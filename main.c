@@ -13,6 +13,7 @@ extern const hUGESong_t bosstheme;
 extern const hUGESong_t cleartheme;
 extern const hUGESong_t citytheme;
 extern const hUGESong_t mountaintheme;
+extern const hUGESong_t tunneltheme;
 
 extern unsigned char roadtiles[];
 extern unsigned char deserttiles[];
@@ -35,6 +36,8 @@ extern unsigned char titlelogomap[];
 extern unsigned char hudmap[];
 extern unsigned char citymap[];
 extern unsigned char mountainmap[];
+extern unsigned char tunneltiles[];
+extern unsigned char tunnelmap[];
 
 
 
@@ -46,18 +49,20 @@ const Placement * lvlplacptr; // stage placement objects array pointer
 const UINT8 lanesy[] = {98, 114, 130};
 
 // Stages data
-extern const UINT8 stage1road[], stage2road[], stage3road[];
-extern const Placement stage1objs[], stage2objs[], stage3objs[];
+extern const UINT8 stage1road[], stage2road[], stage3road[], stage3road_copy[];
+extern const Placement stage1objs[], stage2objs[], stage3objs[], stage3objs_copy[];
 extern const UINT8 scorpbossexpl[5][2], jggrbossexpl[7][2];
 extern UINT8 jgrbkgposx;
 
 const Stage stages[] = {{stage1road, 17, stage1objs, deserttiles, 39, desertmap, 0, 1, 2, &deserttheme},
 {stage2road, 25, stage2objs, citytiles, 46, citymap, 1, 1, 2, &citytheme},
-{stage3road, 27, stage3objs, mountaintiles, 61, mountainmap, 1, 1, 2, &mountaintheme} // Temporarily using an old theme
+{stage3road, 27, stage3objs, mountaintiles, 61, mountainmap, 1, 1, 2, &mountaintheme},
+{stage3road_copy, 27, stage3objs_copy, tunneltiles, 64, tunnelmap, 1, 0, 4, &tunneltheme} // Temporarily using some assets from previous levels
 };
 const Stage * crntstage = stages;    // Current stage pointer
 UINT8 stagenum;     // Current stage counter
 
+INT8 bullspx = 0, bullspy = 0;
 
 // Enemies order - 0 - rider, 1 - drone, 2 - rocket, 3 - turret, 4 - bomber, 5 - mine, 6 - explosion
 const INT8 enprops[7][10] = {{1, 2, 0, 1, 13, 15, -3, 12, 0, 22},
@@ -75,7 +80,18 @@ const UINT8 projctlprops[5][4] = {{3, 3, 1, 17},
 {8, 8, 4, 20},
 {8, 8, 4, 21}};
 
-
+const INT8 slopeshorz[] = {8, 4, 3, 2, 2, 1, 1, 1}; // Slope values of projectiles, aimed towards the bottom/top
+const INT8 slopesvert[] = {1, 2, 3, 4, 6, 7, 8, 9}; // Slope values of projectiles, aimed towards the sides
+const UINT8 slopesidx[8][9] = {
+    {0, 0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 6, 3, 2, 1, 1, 1, 1, 1},
+    {0, 3, 7, 4, 3, 3, 2, 2, 2},
+    {0, 2, 5, 7, 6, 4, 4, 3, 3},
+    {0, 1, 3, 5, 7, 6, 5, 4, 4},
+    {0, 1, 3, 4, 5, 7, 6, 5, 5},
+    {0, 1, 2, 3, 5, 6, 7, 6, 6},
+    {0, 1, 2, 3, 4, 5, 6, 7, 8}
+};
 
 UINT8 prevbank; // Used to switch back to the previously used bank
 UINT8 roadbuildidx; // index for the stage road array
@@ -120,7 +136,8 @@ UINT8 holestartx, holeendx;    // Used to indicate start and end x position of r
 UBYTE isapressed;  // Indicates that A is currently pressed
 UINT8 chmutedcyccnt[] = {255, 255, 255, 255}; // Used to mute a sound channel for a number of cycles
 INT8 precfctr; // Precision factor for caluculating coordinates
-INT16 slope, gradient;  // Used to calculate projectile trajectory when aimed at player
+INT8 slope;  // Used to calculate projectile trajectory when aimed at player
+INT16 gradient;  // Used to calculate projectile trajectory when aimed at player
 UINT8 hitanimtmr;  // Damage animation timer when boss is hit
 UINT8 plgun, numkills;
 UINT8 menuidx, gamemode, extrasflg;
@@ -136,7 +153,7 @@ inline void itr_projectile_ptr() NONBANKED;
 inline UBYTE found_free_projectile_space() NONBANKED;
 inline UINT8 get_tile_idx(UINT8 newidxnum) NONBANKED;
 void reset_all_sprites() NONBANKED;
-void init_stage_bgk() NONBANKED;
+void init_stage_bkg() NONBANKED;
 void init_stage_road() NONBANKED;
 void set_machine_tile(Machine * mch, UINT8 tlnum) NONBANKED;
 void set_machine_sprite_tiles(Machine * mch, UINT8 fsttile) NONBANKED;
@@ -152,7 +169,8 @@ void move_player(INT8 speedx, INT8 speedy) NONBANKED;
 void move_enemy(Machine * en, INT8 speedx, INT8 speedy) NONBANKED;
 void incr_bkg_x_coords(UINT8 roadsp) NONBANKED;
 void incr_boss_bkg_x_coords(UINT8 roadsp, UINT8 jgrspeed) NONBANKED;
-void scroll_stage_bkg() NONBANKED;
+void scroll_stage_bkg_outd() NONBANKED;
+void scroll_stage_bkg_ind() NONBANKED;
 void scroll_boss_bkg() NONBANKED;
 void disable_bkg_scroll() NONBANKED;
 void place_stage_obj(UINT8 type, UINT8 x, UINT8 y) NONBANKED;
@@ -168,10 +186,7 @@ void manage_player() NONBANKED;
 inline UINT8 get_horiz_dist(UINT8 fstobjx, UINT8 sndobjx) NONBANKED;
 void set_projctl_comm_prop(Machine * mch, UINT8 type, INT8 speedx, INT8 speedy) NONBANKED;
 void fire_projctl(Machine * mch, UINT8 type, INT8 speedx, INT8 speedy) NONBANKED;
-void fire_projctl_aimed_vert(Machine * mch, UINT8 type, INT8 speedy) NONBANKED;
-void fire_projctl_aimed_horz(Machine * mch, UINT8 type, INT8 speedx) NONBANKED;
-inline INT8 get_prjctl_x_aimed(Projectile * prjct) NONBANKED;
-inline INT8 get_prjctl_y_aimed(Projectile * prjct) NONBANKED;
+void fire_projctl_aimed(Machine * mch, UINT8 type, INT8 speedxy) NONBANKED;
 inline UBYTE is_obj_inside_screen(UINT8 x, UINT8 y, UINT8 width, UINT8 height) NONBANKED;
 inline UBYTE is_alive(Machine * mch) NONBANKED;
 void destroy_projectile(Projectile * pr) NONBANKED;
@@ -315,19 +330,15 @@ void reset_all_sprites() NONBANKED {
 }
 
 
-void init_stage_bgk() NONBANKED {
+void init_stage_bkg() NONBANKED {
+    SWITCH_ROM_MBC1(crntstage->stagebank);
+    set_bkg_data(61, crntstage->bkgtilesnum, crntstage->bkgtiles);
+    set_bkg_tiles(0, stagenum == 2 && stageclearflg == 1 ? 4 : crntstage->hasclouds, 32, 10 - crntstage->hasclouds, crntstage->bkgmap);
     if(crntstage->hasclouds) {
-        SWITCH_ROM_MBC1(crntstage->stagebank);
-        set_bkg_data(61, crntstage->bkgtilesnum, crntstage->bkgtiles);
-        set_bkg_tiles(0, stagenum == 2 && stageclearflg == 1 ? 4 : 1, 32, 9, crntstage->bkgmap);
         SWITCH_ROM_MBC1(2);
         set_bkg_data(20, 13, cloudtiles);
         set_bkg_tiles(0, 0, 32, 1, cloudmap);
         SWITCH_ROM_MBC1(crntstage->stagebank);
-    } else {
-        SWITCH_ROM_MBC1(crntstage->stagebank);
-        set_bkg_data(20, crntstage->bkgtilesnum, crntstage->bkgtiles);
-        set_bkg_tiles(0, 0, 32, 10, crntstage->bkgmap);
     }
 }
 
@@ -501,13 +512,27 @@ void incr_boss_bkg_x_coords(UINT8 roadsp, UINT8 jgrspeed) NONBANKED {
 
 
 
-void scroll_stage_bkg() NONBANKED {
+void scroll_stage_bkg_outd() NONBANKED {
     switch(LYC_REG) {
         case 0x00:
             move_bkg(cloudposx, 0);
             LYC_REG = 0x07;
             break;
         case 0x07:
+            move_bkg(sceneryposx, 0);
+            LYC_REG = 0x50;
+            break;
+        case 0x50:
+            move_bkg(roadposx, 0);
+            LYC_REG = 0x00;
+            break;
+    }
+}
+
+
+void scroll_stage_bkg_ind() NONBANKED {
+    switch(LYC_REG) {
+        case 0x00:
             move_bkg(sceneryposx, 0);
             LYC_REG = 0x50;
             break;
@@ -547,8 +572,12 @@ void scroll_boss_bkg() NONBANKED {
 void disable_bkg_scroll() NONBANKED {
     __critical {
         cloudposx = sceneryposx = roadposx = 0;
-        scroll_stage_bkg();
-        remove_LCD(scroll_stage_bkg);
+        scroll_stage_bkg_outd();
+        if(crntstage->hasclouds) {
+            remove_LCD(scroll_stage_bkg_outd);
+        } else {
+            remove_LCD(scroll_stage_bkg_ind);
+        }
         disable_interrupts();
     }
 }
@@ -762,10 +791,35 @@ void set_projctl_comm_prop(Machine * mch, UINT8 type, INT8 speedx, INT8 speedy) 
     crntpjct->damage = projctlprops[type][2];
     set_sprite_tile(oamidx, projctlprops[type][3]);
     if(crntpjct->aimedflg == 1) {
-        // Case for enemies that shoot based on player's coordinates
-        precfctr = pl->x + 46 < mch->x || mch->x + mch->width + 30 < pl->x ? 100 : 10;
-        slope = ((crntpjct->oam->y - (pl->y + 8)) * precfctr) / (crntpjct->oam->x - (pl->x + 8));
-        gradient = crntpjct->oam->y - ((slope * crntpjct->oam->x) / precfctr );
+        precfctr = 1;
+        if(crntpjct->oam->x > pl->x && crntpjct->oam->x < pl->x + pl->width) {  // Firing straight up/down
+            crntpjct->aimedflg = 0;
+        } else if(crntpjct->oam->y > pl->y && crntpjct->oam->y < pl->y + pl->height) { // Firing left/right
+            crntpjct->aimedflg = 0;
+            precfctr = 10;
+        } else {
+            INT8 hdistidx = (crntpjct->oam->x - pl->x) >> 4;
+            INT8 vdistidx = (crntpjct->oam->y - pl->y) >> 4;
+            hdistidx = hdistidx < 0 ? -hdistidx : hdistidx;
+            vdistidx = vdistidx < 0 ? -vdistidx : vdistidx;
+            if(hdistidx <= vdistidx) {
+                slope = slopeshorz[slopesidx[vdistidx][hdistidx]];
+            } else if(vdistidx < hdistidx) {
+                slope = slopesvert[slopesidx[vdistidx][hdistidx]];
+                precfctr = 10;
+            }
+            if((pl->x < crntpjct->oam->x && pl->y > crntpjct->oam->y) || (pl->x > crntpjct->oam->x && pl->y < crntpjct->oam->y)) {
+                slope = -slope;
+            }
+            gradient = crntpjct->oam->y - ((slope * crntpjct->oam->x) / precfctr );
+        }
+        if(precfctr == 10) {
+                crntpjct->speedx = pl->x > crntpjct->oam->x ? speedx : -speedx;
+                crntpjct->speedy = 0;
+            } else {
+                crntpjct->speedy = pl->y > crntpjct->oam->y ? speedy : -speedy;
+                crntpjct->speedx = 0;
+        }
     }
     incr_oam_sprite_tile_idx(1);
     incr_projectile_counter();
@@ -796,25 +850,9 @@ void fire_projctl(Machine * mch, UINT8 type, INT8 speedx, INT8 speedy) NONBANKED
 }
 
 
-void fire_projctl_aimed_vert(Machine * mch, UINT8 type, INT8 speedy) NONBANKED {
-    crntpjct->aimedflg = (crntpjct->oam->x < (pl->x + pl->width) && pl->x < (crntpjct->oam->x + crntpjct->width)) ? 0 : 1;
-    set_projctl_comm_prop(mch, type, 0, speedy);
-}
-
-
-void fire_projctl_aimed_horz(Machine * mch, UINT8 type, INT8 speedx) NONBANKED {
-    crntpjct->aimedflg = (crntpjct->oam->y < (pl->y + pl->height) && pl->y < (crntpjct->oam->y + crntpjct->height)) ? 0 : 1;
-    set_projctl_comm_prop(mch, type, speedx, 0);
-}
-
-
-inline INT8 get_prjctl_x_aimed(Projectile * prjct) NONBANKED { // Returns projectile's y position based on player's position
-    return ((prjct->oam->y - gradient) * precfctr) / slope;
-}
-
-
-inline INT8 get_prjctl_y_aimed(Projectile * prjct) NONBANKED { // Returns projectile's y position based on player's position
-    return ((slope * prjct->oam->x) / precfctr) + gradient;
+void fire_projctl_aimed(Machine * mch, UINT8 type, INT8 speedxy) NONBANKED {
+    crntpjct->aimedflg = 1;
+    set_projctl_comm_prop(mch, type, speedxy, speedxy);
 }
 
 
@@ -858,10 +896,10 @@ void move_projectile(Projectile * pr) {
             pr->oam->x += pr->speedx;
             pr->oam->y += pr->speedy;
         } else {
-            pr->oam->x = pr->speedx == 0 ? get_prjctl_x_aimed(pr) : pr->oam->x + pr->speedx;
-            pr->oam->y = pr->speedy == 0 ? get_prjctl_y_aimed(pr) : pr->oam->y + pr->speedy;
+            pr->oam->x = pr->speedx == 0 ? (((pr->oam->y - gradient) * precfctr) / slope) : pr->oam->x + pr->speedx;
+            pr->oam->y = pr->speedy == 0 ? (((slope * pr->oam->x) / precfctr) + gradient) : pr->oam->y + pr->speedy;
         }
-    } else {
+    } else if(pr->oam != NULL) {
         destroy_projectile(pr);
     }
 }
@@ -1071,7 +1109,7 @@ void exec_drone_pattern(Machine * mch) {
     }
     move_enemy(mch, -1, mch->cyccount == 0 ? 1 : -1);
     if(mch->x == 90 && pl->groundflg == 1) {
-        fire_projctl_aimed_vert(mch, 0, 1);
+        fire_projctl_aimed(mch, 0, 1);
     }
 }
 
@@ -1087,7 +1125,7 @@ void exec_missile_pattern(Machine * mch) {
 void exec_turret_pattern(Machine * mch) {
     move_enemy(mch, -2, 0);
     if(mch->x == 87) {
-        fire_projctl_aimed_vert(mch, 1, -1);
+        fire_projctl_aimed(mch, 1, 1);
     }
 }
 
@@ -1206,7 +1244,7 @@ void init_stage(UBYTE hasscroll) NONBANKED {
     lvlplacptr = crntstage->enlayout;
 
     roadbuildidx = 0; // Resetting the road index
-    init_stage_bgk();
+    init_stage_bkg();
     init_stage_road();
 
     if(hasscroll) {
@@ -1215,20 +1253,22 @@ void init_stage(UBYTE hasscroll) NONBANKED {
         if(stagenum == 2 && stageclearflg == 1) {// Case for stage 3 boss
             add_LCD(scroll_boss_bkg);
         } else {
-            add_LCD(scroll_stage_bkg);
+            if(crntstage->hasclouds) {
+                add_LCD(scroll_stage_bkg_outd);
+            } else {
+                add_LCD(scroll_stage_bkg_ind);
+            }
         }
         enable_interrupts();
         set_interrupts(VBL_IFLAG | LCD_IFLAG);
     }
 
     set_sprite_data(0, 1, blanktile);
-    prevbank = _current_bank;
     SWITCH_ROM_MBC1(2);
     set_sprite_data(1, 16, playerspritetiles);
     set_sprite_data(17, 5, projectiletiles);
     set_sprite_data(22, 24, enemyspritetiles);
     set_sprite_data(46, 1, misctiles);
-    SWITCH_ROM_MBC1(prevbank);
     init_player();
 
     for(pjctptr = projectiles; pjctptr <= projectiles + pjctllimit; pjctptr++) { // Initialization of projectiles
@@ -1241,9 +1281,8 @@ void init_stage(UBYTE hasscroll) NONBANKED {
         machptr->x = machptr->y = machptr->width = machptr->height = 0;
     }
 
-    SWITCH_ROM_MBC1(2);
     hud_init();
-    SWITCH_ROM_MBC1(prevbank);
+    SWITCH_ROM_MBC1(crntstage->stagebank);
     hud_upd_lives();
     hud_draw_gun();
 }
@@ -1699,7 +1738,7 @@ void main() NONBANKED {
                 stageclearflg = bossclearflg = 0;
                 stagenum++;
                 crntstage++;    // Next stage data
-                if(stagenum == 3) { // Has passed currently available levels
+                if(stagenum == 4) { // Has passed currently available levels
                     demo_end_screen();
                     init_game();
                     stagenum = 0;
