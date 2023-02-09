@@ -73,6 +73,7 @@ const INT8 enprops[7][10] = {{1, 2, 0, 1, 13, 15, -3, 12, 0, 22},
 {1, 20, 3, 2, 11, 11, 0, 0, 5, 42},
 {0, 0, 0, 0, 16, 16, 0, 0, 120, 120}
 };
+
 // Projectiles order - 0 - bullet, 1 - bigbullet, 2 - laser, 3 - bomb, 4 - plasma
 const UINT8 projctlprops[5][4] = {{3, 3, 1, 17},
 {4, 4, 2, 18},
@@ -80,18 +81,17 @@ const UINT8 projctlprops[5][4] = {{3, 3, 1, 17},
 {8, 8, 4, 20},
 {8, 8, 4, 21}};
 
-const INT8 slopeshorz[] = {8, 4, 3, 2, 2, 1, 1, 1}; // Slope values of projectiles, aimed towards the bottom/top
-const INT8 slopesvert[] = {1, 2, 3, 4, 6, 7, 8, 9}; // Slope values of projectiles, aimed towards the sides
-const UINT8 slopesidx[8][9] = {
-    {0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 6, 3, 2, 1, 1, 1, 1, 1},
-    {0, 3, 7, 4, 3, 3, 2, 2, 2},
-    {0, 2, 5, 7, 6, 4, 4, 3, 3},
-    {0, 1, 3, 5, 7, 6, 5, 4, 4},
-    {0, 1, 3, 4, 5, 7, 6, 5, 5},
-    {0, 1, 2, 3, 5, 6, 7, 6, 6},
-    {0, 1, 2, 3, 4, 5, 6, 7, 8}
-};
+// Represents the screen, divided into 16x16px squares, each containing the slope
+// between the player and enemy projectile
+const UINT8 slopesidx[8][9] = {{8, 1, 1, 1, 1, 1, 1, 1, 1},
+{8, 1, 4, 3, 2, 2, 2, 2, 2},
+{8, 2, 1, 6, 4, 4, 3, 3, 3},
+{8, 3, 1, 1, 8, 6, 6, 4, 4},
+{8, 4, 2, 1, 1, 8, 7, 6, 6},
+{8, 4, 2, 2, 1, 1, 8, 7, 7},
+{8, 4, 3, 2, 1, 1, 1, 8, 8},
+{8, 4, 3, 2, 2, 1, 1, 1, 9}};
+
 
 UINT8 prevbank; // Used to switch back to the previously used bank
 UINT8 roadbuildidx; // index for the stage road array
@@ -135,7 +135,7 @@ UINT8 jumpstarty;   // Player y position at start of jump
 UINT8 holestartx, holeendx;    // Used to indicate start and end x position of road holes
 UBYTE isapressed;  // Indicates that A is currently pressed
 UINT8 chmutedcyccnt[] = {255, 255, 255, 255}; // Used to mute a sound channel for a number of cycles
-INT8 precfctr; // Precision factor for caluculating coordinates
+INT8 fractdiv; // Precision factor for caluculating coordinates
 INT8 slope;  // Used to calculate projectile trajectory when aimed at player
 INT16 gradient;  // Used to calculate projectile trajectory when aimed at player
 UINT8 hitanimtmr;  // Damage animation timer when boss is hit
@@ -790,32 +790,30 @@ void set_projctl_comm_prop(Machine * mch, UINT8 type, INT8 speedx, INT8 speedy) 
     crntpjct->height = projctlprops[type][1];
     crntpjct->damage = projctlprops[type][2];
     set_sprite_tile(oamidx, projctlprops[type][3]);
-    if(crntpjct->aimedflg == 1) {
-        precfctr = 1;
+    if(crntpjct->aimedflg == 1) {   // Case for projectiles that should be aimed at the player
+        fractdiv = 1;   // Default starting value
         if(crntpjct->oam->x > pl->x && crntpjct->oam->x < pl->x + pl->width) {  // Firing straight up/down
-            crntpjct->aimedflg = 0;
+            crntpjct->aimedflg = 0; // The projectile's coordinates do not have to be calculated using the slope equation
         } else if(crntpjct->oam->y > pl->y && crntpjct->oam->y < pl->y + pl->height) { // Firing left/right
             crntpjct->aimedflg = 0;
-            precfctr = 10;
+            fractdiv = 10;  // Using value to indicate horizontal trajectory
         } else {
-            INT8 hdistidx = (crntpjct->oam->x - pl->x) >> 4;
+            INT8 hdistidx = (crntpjct->oam->x - pl->x) >> 4;    // Distance between projectile and player in 16x16px suares
             INT8 vdistidx = (crntpjct->oam->y - pl->y) >> 4;
             hdistidx = hdistidx < 0 ? -hdistidx : hdistidx;
             vdistidx = vdistidx < 0 ? -vdistidx : vdistidx;
-            if(hdistidx <= vdistidx) {
-                slope = slopeshorz[slopesidx[vdistidx][hdistidx]];
-            } else if(vdistidx < hdistidx) {
-                slope = slopesvert[slopesidx[vdistidx][hdistidx]];
-                precfctr = 10;
+            slope = slopesidx[vdistidx][hdistidx];  // Assign a slope using the square distances as indexes
+            if(vdistidx < hdistidx) {   // Slopes in the array that match the condition are fractions between 0 - 1
+                fractdiv = 10;  // Multiplying/Dividing by set amount to simulate fractions calculations without actually implementing them
             }
             if((pl->x < crntpjct->oam->x && pl->y > crntpjct->oam->y) || (pl->x > crntpjct->oam->x && pl->y < crntpjct->oam->y)) {
-                slope = -slope;
+                slope = -slope; // Setting projectile direction based on it's location, compared to the player's
             }
-            gradient = crntpjct->oam->y - ((slope * crntpjct->oam->x) / precfctr );
+            gradient = crntpjct->oam->y - ((slope * crntpjct->oam->x) / fractdiv );
         }
-        if(precfctr == 10) {
-                crntpjct->speedx = pl->x > crntpjct->oam->x ? speedx : -speedx;
-                crntpjct->speedy = 0;
+        if(fractdiv == 10) {    // Deciding wether x or y should be calculated or change at a constant rate
+                crntpjct->speedx = pl->x > crntpjct->oam->x ? speedx : -speedx; // X will change at the rate of speedx on each cycle
+                crntpjct->speedy = 0;   // Y coordinates will be calculated using the slope equation(See definition of move_projectile for more details)
             } else {
                 crntpjct->speedy = pl->y > crntpjct->oam->y ? speedy : -speedy;
                 crntpjct->speedx = 0;
@@ -896,8 +894,8 @@ void move_projectile(Projectile * pr) {
             pr->oam->x += pr->speedx;
             pr->oam->y += pr->speedy;
         } else {
-            pr->oam->x = pr->speedx == 0 ? (((pr->oam->y - gradient) * precfctr) / slope) : pr->oam->x + pr->speedx;
-            pr->oam->y = pr->speedy == 0 ? (((slope * pr->oam->x) / precfctr) + gradient) : pr->oam->y + pr->speedy;
+            pr->oam->x = pr->speedx == 0 ? (((pr->oam->y - gradient) * fractdiv) / slope) : pr->oam->x + pr->speedx;
+            pr->oam->y = pr->speedy == 0 ? (((slope * pr->oam->x) / fractdiv) + gradient) : pr->oam->y + pr->speedy;
         }
     } else if(pr->oam != NULL) {
         destroy_projectile(pr);
