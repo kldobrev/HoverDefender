@@ -49,37 +49,41 @@ const Placement * lvlplacptr; // stage placement objects array pointer
 const UINT8 lanesy[] = {98, 114, 130};
 
 // Stages data
-extern const UINT8 stage1road[], stage2road[], stage3road[], stage3road_copy[];
-extern const Placement stage1objs[], stage2objs[], stage3objs[], stage3objs_copy[];
+extern const UINT8 stage1road[], stage2road[], stage3road[], stage4road[];
+extern const Placement stage1objs[], stage2objs[], stage3objs[], stage4objs[];
 extern const UINT8 scorpbossexpl[5][2], jggrbossexpl[7][2];
 extern UINT8 jgrbkgposx;
 
 const Stage stages[] = {{stage1road, 17, stage1objs, deserttiles, 39, desertmap, 0, 1, 2, &deserttheme},
 {stage2road, 25, stage2objs, citytiles, 46, citymap, 1, 1, 2, &citytheme},
 {stage3road, 27, stage3objs, mountaintiles, 61, mountainmap, 1, 1, 2, &mountaintheme},
-{stage3road_copy, 27, stage3objs_copy, tunneltiles, 64, tunnelmap, 1, 0, 4, &tunneltheme} // Temporarily using some assets from previous levels
+{stage4road, 3, stage4objs, tunneltiles, 64, tunnelmap, 1, 0, 4, &tunneltheme} // Temporarily using some assets from previous levels
 };
 const Stage * crntstage = stages;    // Current stage pointer
 UINT8 stagenum;     // Current stage counter
 
 INT8 bullspx = 0, bullspy = 0;
 
-// Enemies order - 0 - rider, 1 - drone, 2 - rocket, 3 - turret, 4 - bomber, 5 - mine, 6 - explosion
-const INT8 enprops[7][10] = {{1, 2, 0, 1, 13, 15, -3, 12, 0, 22},
-{0, 1, 2, 5, 14, 7, 7, 13, 1, 26},
-{1, 9, 2, 5, 13, 10, 1, 4, 2, 30},
-{0, 100, 3, 2, 14, 12, 7, -4, 3, 34},
-{0, 4, 0, 5, 13, 7, 4, 11, 4, 38},
-{1, 20, 3, 2, 11, 11, 0, 0, 5, 42},
-{0, 0, 0, 0, 16, 16, 0, 0, 120, 120}
+// Enemies order - 0 - rider, 1 - drone, 2 - rocket, 3 - turret, 4 - bomber, 5 - mine, 6 - explosion, 7 - laser turret, 8 - tri-turret, 9 - seeker
+const INT8 enprops[10][10] = {{1, 2, 0, 1, 13, 15, -3, 12, 0, 23},
+{0, 1, 2, 5, 14, 7, 7, 13, 1, 27},
+{1, 9, 2, 5, 13, 10, 1, 4, 2, 31},
+{0, 100, 3, 2, 14, 12, 7, -4, 3, 35},
+{0, 4, 0, 5, 13, 7, 4, 11, 4, 39},
+{1, 20, 3, 2, 11, 11, 0, 0, 5, 43},
+{0, 0, 0, 0, 16, 16, 0, 0, 120, 120},
+{1, 100, 0, 0, 15, 13, 6, 13, 7, 47},
+{1, 100, 0, 0, 15, 5, 7, 7, 8, 51},
+{1, 2, 0, 4, 15, 9, 0, 0, 9, 55}
 };
 
-// Projectiles order - 0 - bullet, 1 - bigbullet, 2 - laser, 3 - bomb, 4 - plasma
-const UINT8 projctlprops[5][4] = {{3, 3, 1, 17},
+// Projectiles order - 0 - bullet, 1 - bigbullet, 2 - horizontal laser, 3 - bomb, 4 - plasma, 5 - vertical laser
+const UINT8 projctlprops[6][4] = {{3, 3, 1, 17},
 {4, 4, 2, 18},
 {8, 3, 3, 19},
 {8, 8, 4, 20},
-{8, 8, 4, 21}};
+{8, 8, 4, 21},
+{3, 8, 3, 22}};
 
 // Represents the screen, divided into 16x16px squares, each containing the slope
 // between the player and enemy projectile
@@ -141,11 +145,12 @@ INT16 gradient;  // Used to calculate projectile trajectory when aimed at player
 UINT8 hitanimtmr;  // Damage animation timer when boss is hit
 UINT8 plgun, numkills;
 UINT8 menuidx, gamemode, extrasflg;
-
+UINT8 cycrulecheck; // Keeping track of cyles, used for optimization purposes
 
 
 UINT8 get_OAM_free_tile_idx() NONBANKED;
 void custom_delay(UINT8 cycles) NONBANKED;
+inline void incr_cycle_counter() NONBANKED;
 void incr_oam_sprite_tile_idx(INT8 steps) NONBANKED;
 inline void itr_enemies_ptr() NONBANKED;
 inline void incr_projectile_counter() NONBANKED;
@@ -209,6 +214,9 @@ void exec_missile_pattern(Machine * mch) NONBANKED;
 void exec_turret_pattern(Machine * mch) NONBANKED;
 void exec_bomber_pattern(Machine * mch) NONBANKED;
 void exec_mine_pattern(Machine * mch) NONBANKED;
+void exec_laserturret_pattern(Machine * mch) BANKED;
+void exec_triturret_pattern(Machine * mch) BANKED;
+void exec_seeker_pattern(Machine * mch) BANKED;
 UBYTE cooldown_enemy(Machine * mch, UINT8 period) NONBANKED;
 void hud_init() NONBANKED;
 void hud_upd_shield(INT8 hpbef, INT8 hpaft) NONBANKED;
@@ -283,6 +291,11 @@ void custom_delay(UINT8 cycles) NONBANKED {
     for(citr = 0; citr < cycles; citr++) {
         wait_vbl_done();
     }
+}
+
+
+inline void incr_cycle_counter() NONBANKED {
+    cycrulecheck = !cycrulecheck;
 }
 
 
@@ -668,12 +681,14 @@ void manage_hole_props() {
     for(pjctptr = projectiles; pjctptr <= projectiles + pjctllimit; pjctptr++) { // Projectiles handling
         if(pjctptr->oam != NULL) {
             move_projectile(pjctptr);
-            for(machptr = machines; machptr <= machines + enlimit; machptr++) {
-                if(is_alive(machptr)) {
-                    if(pl == machptr && iframeflg) {
-                        continue;   // Avoid hit during iframes
+            if ((cycrulecheck == 1)) {  // Check for collision every othe cycle
+                for(machptr = machines; machptr <= machines + enlimit; machptr++) {
+                    if(is_alive(machptr)) {
+                        if(pl == machptr && iframeflg) {
+                            continue;   // Avoid hit during iframes
+                        }
+                        check_projectile_collsn(machptr, pjctptr); // Check collision for all machines on screen
                     }
-                    check_projectile_collsn(machptr, pjctptr); // Check collision for all machines on screen
                 }
             }
         }
@@ -683,7 +698,7 @@ void manage_hole_props() {
  void manage_machines(UINT8 limit) {
     for(machptr = machines; machptr <= machines + limit; machptr++) {    // Player and enemies handling
         if(machptr != pl && machptr->y != 0) {
-            if(!iframeflg && pl->explcount == 0 && pl->groundflg == machptr->groundflg) {    // Player hasn't exploded
+            if(!iframeflg && cycrulecheck == 0 && pl->explcount == 0 && pl->groundflg == machptr->groundflg) {    // Player hasn't exploded
                 check_player_machine_collsn(machptr);
             }
             exec_enemy_pattern(machptr);
@@ -837,6 +852,9 @@ void set_projctl_comm_prop(Machine * mch, UINT8 type, INT8 speedx, INT8 speedy) 
             break;
         case 4:
             se_fire_plasma();
+            break;
+        case 5:
+            se_fire_laser();
             break;
     }
 }
@@ -1083,6 +1101,15 @@ void exec_enemy_pattern(Machine * mch) {
         case 5:
             exec_mine_pattern(mch);
             break;
+        case 7:
+            exec_laserturret_pattern(mch);
+            break;
+        case 8:
+            exec_triturret_pattern(mch);
+            break;
+        case 9:
+            exec_seeker_pattern(mch);
+            break;
     }
 }
 
@@ -1103,10 +1130,10 @@ void exec_rider_pattern(Machine * mch) {
 
 void exec_drone_pattern(Machine * mch) {
     if(mch->x % 16 == 0) {
-        mch->cyccount = mch->cyccount == 0 ? 1 : 0;
+        mch->cyccount = !mch->cyccount;
     }
     move_enemy(mch, -1, mch->cyccount == 0 ? 1 : -1);
-    if(mch->x == 90 && pl->groundflg == 1) {
+    if(mch->x == 90 && mch->y < pl->y) {
         fire_projctl_aimed(mch, 0, 1);
     }
 }
@@ -1237,6 +1264,7 @@ void init_stage(UBYTE hasscroll) NONBANKED {
     holestartx = 255;
     holeendx = 0;
     isapressed = 0;
+    cycrulecheck = 0;
 
     stageidx = holeflg = fallinholeflg = 0;
     lvlplacptr = crntstage->enlayout;
@@ -1264,9 +1292,8 @@ void init_stage(UBYTE hasscroll) NONBANKED {
     set_sprite_data(0, 1, blanktile);
     SWITCH_ROM_MBC1(2);
     set_sprite_data(1, 16, playerspritetiles);
-    set_sprite_data(17, 5, projectiletiles);
-    set_sprite_data(22, 24, enemyspritetiles);
-    set_sprite_data(46, 1, misctiles);
+    set_sprite_data(17, 6, projectiletiles);
+    set_sprite_data(23, 36, enemyspritetiles);
     init_player();
 
     for(pjctptr = projectiles; pjctptr <= projectiles + pjctllimit; pjctptr++) { // Initialization of projectiles
@@ -1297,6 +1324,7 @@ void stage_loop() {
 
         build_stage();
         incr_bkg_x_coords(4);
+        incr_cycle_counter();
         manage_hole_props();
         manage_projectiles();
         manage_machines(enlimit);
@@ -1720,12 +1748,12 @@ void main() NONBANKED {
             unmute_all_channels();
             if(pllives == 0) {
                 game_over_menu(stagenum);
-                if(menuidx == 0) {
-                    init_game();        // Chosen continue
-                } else {
+                if(menuidx == 0) {  // Chosen continue
+                    init_game();
+                } else {    // Chosen quit
                     stagenum = 0;
                     crntstage = stages;
-                    break;  // Chosen quit
+                    break;
                 }
             } else if(stageclearflg == 0) {
                 stage_intro_screen(stagenum);

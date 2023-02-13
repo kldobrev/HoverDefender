@@ -115,10 +115,12 @@ void get_menu_pl_input(UINT8 * entries, UINT8 numentries) BANKED {
             menuidx = menuidx + 1 == numentries ? 0 : menuidx + 1;
             move_sprite(0, shadow_OAM[0].x, entries[menuidx]);
             se_move_cursor();
+            waitpadup();
         } else if(joypad() & J_UP) {
             menuidx = menuidx == 0 ? numentries - 1 : menuidx - 1;
             move_sprite(0, shadow_OAM[0].x, entries[menuidx]);
             se_move_cursor();
+            waitpadup();
         } else if(joypad() & (J_START | J_A)) {
             stop_song();
             se_choose_entry();
@@ -218,7 +220,9 @@ void update_pass_field() BANKED {
     for(i = 0; i < 4; i++) {
         set_bkg_tile_xy(6 + i * 2, 3, passentry[i]);
     }
-    move_sprite(6, 61 + passidx * 16, 40);
+    if(passidx != 4) {
+        move_sprite(6, 61 + passidx * 16, 40);
+    }
 }
 
 
@@ -279,6 +283,7 @@ UBYTE confirm_password() BANKED {
         if(joypad() & (J_LEFT | J_RIGHT | J_SELECT)) {
             move_sprite(5, passconfoptsx[shadow_OAM[5].x == passconfoptsx[0] ? 1 : 0], passconfy);
             se_move_cursor();
+            waitpadup();
         } else if(joypad() & (J_A |  J_START)) {
             set_sprite_tile(5, 0);
             return shadow_OAM[5].x == passconfoptsx[1];
@@ -331,9 +336,11 @@ UINT8 password_menu() {
                 } else {
                     add_character();
                 }
+                waitpadup();
                 break;
             case J_B:
                 drop_character();
+                waitpadup();
                 break;
         }
         if(passidx == 4) {   // Full password entered

@@ -10,7 +10,7 @@
 
 
 extern Machine machines[], * crntenemy, * pl, * hitmchptr;
-extern UINT8 pllives, bossclearflg, lockmvmnt, oamidx, i, citr, cloudposx, sceneryposx, roadposx, stagenum, hitanimtmr, ascendflg, plgroundspeed;
+extern UINT8 pllives, bossclearflg, lockmvmnt, oamidx, i, citr, cloudposx, sceneryposx, roadposx, stagenum, hitanimtmr, ascendflg, plgroundspeed, cyccount;
 extern UBYTE iframeflg;
 
 const INT8 scorpgunprops[] = {1, 9, 1, 0, 8, 8, -3, 1, 6, 0};
@@ -35,6 +35,7 @@ void init_machine_props(UINT8 x, UINT8 y, const INT8 * mchprops) NONBANKED;
 void set_machine_tile(Machine * mch, UINT8 tlnum) NONBANKED;
 void place_machine(Machine * mch, UINT8 x, UINT8 y) NONBANKED;
 inline void itr_enemies_ptr() NONBANKED;
+inline void incr_cycle_counter() NONBANKED;
 inline UBYTE is_alive(Machine * mch) NONBANKED;
 UBYTE cooldown_enemy(Machine * mch, UINT8 period) NONBANKED;
 void fire_projctl(Machine * mch, UINT8 type, INT8 speedx, INT8 speedy) NONBANKED;
@@ -223,6 +224,7 @@ void scorpboss_loop() BANKED {
             }
         }
 
+        incr_cycle_counter();
         manage_projectiles();
         manage_machines(3);
         check_boss_damaged();
@@ -343,6 +345,7 @@ void mechboss_loop() BANKED {
 
         build_boss_road();
         incr_bkg_x_coords(4);
+        incr_cycle_counter();
 
         if(fstmch->x == 143 && fstmch->y == 64) {
             if(ptrn == 0) {
@@ -526,6 +529,7 @@ void jggrrboss_loop() BANKED {
 
         build_boss_road();
         incr_boss_bkg_x_coords(4, jgrspeed);
+        incr_cycle_counter();
 
         if((!is_alive(pl)) && pl->explcount == 0) {
             break;  // Game over
