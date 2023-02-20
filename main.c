@@ -47,6 +47,8 @@ UBYTE holeflg;  // Flag indicating if currently rendered area is a hole or a roa
 UINT8 stageclearflg, bossclearflg; // stage/boss completed flags
 const Placement * lvlplacptr; // stage placement objects array pointer
 const UINT8 lanesy[] = {98, 114, 130};
+const UINT8 placmntxpos = 167;  // Initial x position of stage enemies
+
 
 // Stages data
 extern const UINT8 stage1road[], stage2road[], stage3road[], stage4road[];
@@ -57,24 +59,24 @@ extern UINT8 jgrbkgposx;
 const Stage stages[] = {{stage1road, 17, stage1objs, deserttiles, 39, desertmap, 0, 1, 2, &deserttheme},
 {stage2road, 25, stage2objs, citytiles, 46, citymap, 1, 1, 2, &citytheme},
 {stage3road, 27, stage3objs, mountaintiles, 61, mountainmap, 1, 1, 2, &mountaintheme},
-{stage4road, 3, stage4objs, tunneltiles, 64, tunnelmap, 1, 0, 4, &tunneltheme} // Temporarily using some assets from previous levels
+{stage4road, 31, stage4objs, tunneltiles, 64, tunnelmap, 1, 0, 4, &tunneltheme} // Temporarily using some assets from previous levels
 };
 const Stage * crntstage = stages;    // Current stage pointer
 UINT8 stagenum;     // Current stage counter
 
 INT8 bullspx = 0, bullspy = 0;
 
-// Enemies order - 0 - rider, 1 - drone, 2 - rocket, 3 - turret, 4 - bomber, 5 - mine, 6 - explosion, 7 - laser turret, 8 - tri-turret, 9 - seeker
+// Enemies order - 0 - rider, 1 - drone, 2 - rocket, 3 - turret, 4 - bomber, 5 - mine, 6 - laser turret, 7 - tri-turret, 8 - seeker, 9 - explosion/boss
 const INT8 enprops[10][10] = {{1, 2, 0, 1, 13, 15, -3, 12, 0, 23},
 {0, 1, 2, 5, 14, 7, 7, 13, 1, 27},
 {1, 9, 2, 5, 13, 10, 1, 4, 2, 31},
 {0, 100, 3, 2, 14, 12, 7, -4, 3, 35},
 {0, 4, 0, 5, 13, 7, 4, 11, 4, 39},
 {1, 20, 3, 2, 11, 11, 0, 0, 5, 43},
-{0, 0, 0, 0, 16, 16, 0, 0, 120, 120},
-{1, 100, 0, 0, 15, 13, 6, 13, 7, 47},
-{1, 100, 0, 0, 15, 5, 7, 7, 8, 51},
-{1, 2, 0, 4, 15, 9, 0, 0, 9, 55}
+{1, 100, 0, 0, 15, 13, 6, 13, 6, 47},
+{1, 100, 0, 0, 15, 5, 7, 7, 7, 51},
+{1, 2, 0, 4, 15, 9, 0, 0, 8, 55},
+{0, 0, 0, 0, 16, 16, 0, 0, 120, 120}
 };
 
 // Projectiles order - 0 - bullet, 1 - bigbullet, 2 - horizontal laser, 3 - bomb, 4 - plasma, 5 - vertical laser
@@ -148,6 +150,7 @@ UINT8 menuidx, gamemode, extrasflg;
 UINT8 cycrulecheck; // Keeping track of cyles, used for optimization purposes
 
 
+
 UINT8 get_OAM_free_tile_idx() NONBANKED;
 void custom_delay(UINT8 cycles) NONBANKED;
 inline void incr_cycle_counter() NONBANKED;
@@ -178,7 +181,6 @@ void scroll_stage_bkg_outd() NONBANKED;
 void scroll_stage_bkg_ind() NONBANKED;
 void scroll_boss_bkg() NONBANKED;
 void disable_bkg_scroll() NONBANKED;
-void place_stage_obj(UINT8 type, UINT8 x, UINT8 y) NONBANKED;
 void build_stage() NONBANKED;
 void build_road() NONBANKED;
 void build_hole() NONBANKED;
@@ -295,7 +297,7 @@ void custom_delay(UINT8 cycles) NONBANKED {
 
 
 inline void incr_cycle_counter() NONBANKED {
-    cycrulecheck = !cycrulecheck;
+    cycrulecheck = cycrulecheck == 3 ? 0 : cycrulecheck + 1;
 }
 
 
@@ -597,11 +599,6 @@ void disable_bkg_scroll() NONBANKED {
 
 
 
-void place_stage_obj(UINT8 type, UINT8 x, UINT8 y) {
-    init_machine_props(x, y, *(enprops + type));
-}
-
-
 void build_stage() NONBANKED {   // Automatically builds the road ahead while scrolling the stage
     camtileidx = get_tile_idx((SCX_REG + 168) / 8);
     if(camtileidx == nextcamtileidx) {
@@ -621,7 +618,7 @@ void build_stage() NONBANKED {   // Automatically builds the road ahead while sc
 
         // Placing objects inside stage
         if(lvlplacptr->arridx == stageidx && lvlplacptr->elemidx == roadbuildidx) {
-            place_stage_obj(lvlplacptr->type, lvlplacptr->x, lvlplacptr->y);
+            init_machine_props(placmntxpos, lvlplacptr->y, *(enprops + lvlplacptr->type));
             lvlplacptr++;
         }
     }
@@ -681,7 +678,7 @@ void manage_hole_props() {
     for(pjctptr = projectiles; pjctptr <= projectiles + pjctllimit; pjctptr++) { // Projectiles handling
         if(pjctptr->oam != NULL) {
             move_projectile(pjctptr);
-            if ((cycrulecheck == 1)) {  // Check for collision every othe cycle
+            if ((cycrulecheck == 3)) {  // Check for collision every othe cycle
                 for(machptr = machines; machptr <= machines + enlimit; machptr++) {
                     if(is_alive(machptr)) {
                         if(pl == machptr && iframeflg) {
@@ -698,7 +695,7 @@ void manage_hole_props() {
  void manage_machines(UINT8 limit) {
     for(machptr = machines; machptr <= machines + limit; machptr++) {    // Player and enemies handling
         if(machptr != pl && machptr->y != 0) {
-            if(!iframeflg && cycrulecheck == 0 && pl->explcount == 0 && pl->groundflg == machptr->groundflg) {    // Player hasn't exploded
+            if(!iframeflg && cycrulecheck == 1 && pl->explcount == 0 && pl->groundflg == machptr->groundflg) {    // Player hasn't exploded
                 check_player_machine_collsn(machptr);
             }
             exec_enemy_pattern(machptr);
@@ -940,7 +937,7 @@ void create_explosion(UINT8 x, UINT8 y) NONBANKED { // Used for animations
     if(crntenemy == machines + enlimit) {
         crntenemy = machines + 1;
     }
-    init_machine_props(x, y, enprops[6]);
+    init_machine_props(x, y, enprops[9]);
     init_explosion(crntenemy - 1);
 }
 
@@ -1003,7 +1000,7 @@ void take_damage(Machine * mch, UINT8 dmgamt) {
         }
         init_explosion(mch);
     } else {
-        if(mch->type == 6 && hitmchptr == NULL) {
+        if(mch->type == 9 && hitmchptr == NULL) {
             hitmchptr = mch;
         }
         se_get_hit();
@@ -1050,7 +1047,7 @@ void check_player_machine_collsn(Machine * mch) {
     if ((mch->x + mch->hboffx < pl->x + pl->hboffx + pl->width && mch->y + mch->hboffy < pl->y + pl->hboffy + pl->height) 
     && (pl->x + pl->hboffx <  mch->x + mch->hboffx + mch->width && pl->y + pl->hboffy <  mch->y + mch->hboffy + mch->height)) {
         take_damage(pl, pl->shield);    // Take all health away
-        if(mch->type != 6) {
+        if(mch->type != 9) {
             init_explosion(mch);
         }
     }
@@ -1101,13 +1098,13 @@ void exec_enemy_pattern(Machine * mch) {
         case 5:
             exec_mine_pattern(mch);
             break;
-        case 7:
+        case 6:
             exec_laserturret_pattern(mch);
             break;
-        case 8:
+        case 7:
             exec_triturret_pattern(mch);
             break;
-        case 9:
+        case 8:
             exec_seeker_pattern(mch);
             break;
     }

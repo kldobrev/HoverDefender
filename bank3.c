@@ -13,15 +13,15 @@ extern Machine machines[], * crntenemy, * pl, * hitmchptr;
 extern UINT8 pllives, bossclearflg, lockmvmnt, oamidx, i, citr, cloudposx, sceneryposx, roadposx, stagenum, hitanimtmr, ascendflg, plgroundspeed, cyccount;
 extern UBYTE iframeflg;
 
-const INT8 scorpgunprops[] = {1, 9, 1, 0, 8, 8, -3, 1, 6, 0};
-const INT8 stingprops[] = {1, 9, 1, 0, 8, 13, 1, 0, 6, 0};
+const INT8 scorpgunprops[] = {1, 9, 1, 0, 8, 8, -3, 1, 9, 0};
+const INT8 stingprops[] = {1, 9, 1, 0, 8, 13, 1, 0, 9, 0};
 const UINT8 scorpbossexpl[5][2] = {{98, 112}, {107, 121}, {125, 118}, {134, 112}, {116, 121}};
 const UINT8 jggrbossexpl[7][2] = {{54, 38}, {81, 29}, {28, 41}, {100, 20}, {31, 30}, {116, 34}, {94, 37}};
 
 const UINT8 mechforwtiles[] = {28, 30, 29, 31, 32, 33};
 const UINT8 mechbackwtiles[] = {30, 28, 31, 29, 33, 32};
-const UINT8 mechprops[] = {0, 15, 1, 1, 14, 22, 16, 16, 6, 28};
-const INT8 jgrgunprops[] = {0, 18, 0, 0, 8, 8, 1, 9, 6, 43};
+const UINT8 mechprops[] = {0, 15, 1, 1, 14, 22, 16, 16, 9, 28};
+const INT8 jgrgunprops[] = {0, 18, 0, 0, 8, 8, 1, 9, 9, 43};
 const INT8 backhboffx = -10, fronthboffx = 16;
 UINT8 chargeidx = 255;    // Charge sprite tile index
 UINT8 jgrbkgposx;
@@ -572,10 +572,14 @@ void jggrrboss_loop() BANKED {
                 if(pl->x + pl->width > fstmch->x) {  // Change bombing pattern based on player location
                     fstmch->gunoffx = jgrgunprops[6];
                     fstmch->gunoffy = jgrgunprops[7];
-                    fire_projctl_aimed(fstmch, 4, 5);
+                    if(pl->x == 140 && pl->y == 127) {
+                        fire_projctl(fstmch, 4, 4, 5);   // Edge case
+                    } else {
+                        fire_projctl_aimed(fstmch, 4, 5);
+                    }
                     fstmch->gunoffx = jgrxoffsets[6];
                     fstmch->gunoffy = 4;
-                    fire_projctl(fstmch, 4, 0, 2);
+                    fire_projctl(fstmch, 3, 0, 2);
                 } else {
                     fstmch->gunoffy = 4;
                     exec_bombing_ptrn(attkcnt - 1);
