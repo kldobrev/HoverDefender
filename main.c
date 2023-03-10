@@ -53,8 +53,8 @@ const UINT8 placmntxpos = 167;  // Initial x position of stage enemies
 // Stages data
 extern const UINT8 stage1road[], stage2road[], stage3road[], stage4road[];
 extern const Placement stage1objs[], stage2objs[], stage3objs[], stage4objs[];
-extern const UINT8 scorpbossexpl[5][2], jggrbossexpl[7][2];
-extern UINT8 jgrbkgposx;
+extern const UINT8 scorpbossexpl[5][2], jggrbossexpl[7][2], mechbossexpl[4][2];
+extern UINT8 jgrbkgposx, jgrposx;
 
 const Stage stages[] = {{stage1road, 17, stage1objs, deserttiles, 39, desertmap, 0, 1, 2, &deserttheme},
 {stage2road, 25, stage2objs, citytiles, 46, citymap, 1, 1, 2, &citytheme},
@@ -130,7 +130,7 @@ const UINT8 enlimit = 5; // Enemy limit, with player makes for max num of machin
 const UINT8 pliframeprd = 120; // Iframe duration
 const UINT8 expldur = 32; // Explosion duration
 UINT8 lockmvmnt; // 0 - no locking, 1 - horizontal, 2 - vertical, 3 - both
-Machine * hitmchptr;   // Used during boss fights for animations
+Machine * hitmchptr;   // Pointer to the enemy who was hit last. Used during boss fights for animations
 UINT8 iframecnt;
 UBYTE iframeflg;
 UBYTE fallinholeflg;
@@ -155,7 +155,7 @@ UINT8 get_OAM_free_tile_idx() NONBANKED;
 void custom_delay(UINT8 cycles) NONBANKED;
 inline void incr_cycle_counter() NONBANKED;
 void incr_oam_sprite_tile_idx(INT8 steps) NONBANKED;
-inline void itr_enemies_ptr() NONBANKED;
+void itr_enemies_ptr() NONBANKED;
 inline void incr_projectile_counter() NONBANKED;
 inline void itr_projectile_ptr() NONBANKED;
 inline UBYTE found_free_projectile_space() NONBANKED;
@@ -200,8 +200,8 @@ void destroy_projectile(Projectile * pr) NONBANKED;
 void move_projectile(Projectile * pr) NONBANKED;
 void init_explosion(Machine * mch) NONBANKED;
 void explode_machine(Machine * mch) NONBANKED;
-void create_explosion(UINT8 x, UINT8 y) NONBANKED;
-void anim_explode_boss(const UINT8 explarr[][2], UINT8 numexpl) NONBANKED;
+Machine * create_explosion(UINT8 x, UINT8 y) NONBANKED;
+void anim_explode_boss(const UINT8 explarr[][2], UINT8 numexpl, UINT8 hasscroll, UINT8 offsx, UINT8 offsy) NONBANKED;
 void take_damage(Machine * mch, UINT8 dmgamt) NONBANKED;
 void add_to_player_shield(UINT8 amt) NONBANKED;
 void check_iframes() NONBANKED;
@@ -269,19 +269,22 @@ void mute_song() NONBANKED;
 void unmute_song() NONBANKED;
 void play_song(const hUGESong_t * song) NONBANKED;
 void stop_song() NONBANKED;
-void init_mechboss() BANKED;
+void init_mechboss(UINT8 x, UINT8 y) BANKED;
 void mechboss_loop() BANKED;
 void init_jggrrboss() BANKED;
 void jggrrboss_loop() BANKED;
 void incr_boss_bkg_x_coords(UINT8 roadsp, UINT8 jgrspeed) NONBANKED;
 void disable_boss_bkg_scroll() BANKED;
+void init_mechbrosboss() BANKED;
+void mechbrosboss_loop() BANKED;
+void destroy_mech(Machine * mech) BANKED;
 
 
 
 
 UINT8 get_OAM_free_tile_idx() {
     for(UINT8 oami = 4; oami < 40; oami++) {
-        if(shadow_OAM[oami].tile == 0) {
+        if(shadow_OAM[oami].y == 0) {
             return oami; // First free tile for usage
         }
     }
@@ -304,14 +307,22 @@ inline void incr_cycle_counter() NONBANKED {
 void incr_oam_sprite_tile_idx(INT8 steps) NONBANKED {
     UINT8 nextoamind = oamidx + steps;
     oamidx = nextoamind < 40 ? nextoamind : nextoamind - 40 + lockedoamtiles; // Out of bounds check and reset
-    if(shadow_OAM[oamidx].tile != 0) { // If next OAM tile is used, loop to find a free one
+    if(shadow_OAM[oamidx].y != 0) { // If next OAM struct used, loop to find a free one
         oamidx = get_OAM_free_tile_idx();
     }
 }
 
 
-inline void itr_enemies_ptr() NONBANKED {
+void itr_enemies_ptr() NONBANKED {
     crntenemy = crntenemy == machines + enlimit ? machines + 1 : crntenemy + 1;
+    if(crntenemy->y != 0) { // If next element is used, loop to find a free one
+        for(i = 1; i != enlimit + 1; i++) {
+            if((machines + i)->y == 0) {
+                crntenemy = machines + i;
+                break;
+            }
+        }
+    }
 }
 
 
@@ -763,7 +774,7 @@ void manage_sound_chnls() {
         }
     }
     if(joypad() & J_B) {
-        if(abtncnt == 0) { // Check cooldown period before firing
+        if(abtncnt == 0 && lockmvmnt != 3) { // Check cooldown period before firing
             fire_projctl(pl, plgun, 2, 0);
             abtncnt = 1;
         }
@@ -933,27 +944,27 @@ void explode_machine(Machine * mch) {
 }
 
 
-void create_explosion(UINT8 x, UINT8 y) NONBANKED { // Used for animations
-    if(crntenemy == machines + enlimit) {
-        crntenemy = machines + 1;
-    }
+Machine * create_explosion(UINT8 x, UINT8 y) NONBANKED { // Used for animations
+    Machine * explptr = crntenemy;
     init_machine_props(x, y, enprops[9]);
-    init_explosion(crntenemy - 1);
+    init_explosion(explptr);
+    return explptr;
 }
 
 
-void anim_explode_boss(const UINT8 explarr[][2], UINT8 numexpl) NONBANKED {
+void anim_explode_boss(const UINT8 explarr[][2], UINT8 numexpl, UINT8 hasscroll, UINT8 offsx, UINT8 offsy) NONBANKED {
+    Machine * crntexpl;
     for(citr = 0; citr < numexpl; citr++) {
-        create_explosion(explarr[citr][0], explarr[citr][1]);
+        crntexpl = create_explosion(offsx + explarr[citr][0], offsy + explarr[citr][1]);
         while(1) {
-            if(stagenum == 2) {
+            if(hasscroll) {
                 build_boss_road();
                 incr_boss_bkg_x_coords(4, 0);
             }
 
             manage_machines(enlimit);
             wait_vbl_done();
-            if((crntenemy - 1)->explcount == 0) {
+            if(crntexpl->explcount == 0) {
                 break;
             }
         }
@@ -1597,15 +1608,21 @@ void play_stage() NONBANKED {
 void init_boss(UINT8 stnum) NONBANKED {
     hitmchptr = NULL;
     hitanimtmr = 11;
+    SWITCH_ROM_MBC1(3);
+    set_sprite_data(23, 31, bossspritetiles);
+    SWITCH_ROM_MBC1(0);
     switch(stnum) {
         case 0:
             init_scorpboss();
             break;
         case 1:
-            init_mechboss();
+            init_mechboss(167, 64);
             break;
-        case 2: // To be replaced with actual level 3 code
+        case 2:
             init_jggrrboss();
+            break;
+        case 3:
+            init_mechbrosboss();
             break;
     }
 }
@@ -1620,7 +1637,10 @@ void boss_loop(UINT8 stnum) NONBANKED {
             mechboss_loop();
             break;
         case 2:
-            jggrrboss_loop(); // To be replaced with actual level 3 code
+            jggrrboss_loop();
+            break;
+        case 3:
+            mechbrosboss_loop();
             break;
     }
 }
@@ -1630,7 +1650,7 @@ void boss_clear_sequence(UINT8 stnum) NONBANKED {
     switch(stnum) { // Unique boss clear animations
         case 0:
             SWITCH_ROM_MBC1(3);
-            anim_explode_boss(scorpbossexpl, 5);
+            anim_explode_boss(scorpbossexpl, 5, 0, 0, 0);
             init_stage_road();
             break;
         case 1:
@@ -1638,8 +1658,14 @@ void boss_clear_sequence(UINT8 stnum) NONBANKED {
             break;
         case 2:
             SWITCH_ROM_MBC1(3);
-            anim_explode_boss(jggrbossexpl, 7);
+            jgrposx -= jgrposx != 15 ? 40 : 0;  // Readjustment for explosion
+            anim_explode_boss(jggrbossexpl, 7, 1, jgrposx, 24);
             fill_bkg_rect(20, 1, 17, 5, 0);
+            break;
+        case 3:
+            SWITCH_ROM_MBC1(3);
+            anim_explode_boss(mechbossexpl, 4, 1, hitmchptr->x, hitmchptr->y);
+            destroy_mech(hitmchptr);
             break;
     }
     
