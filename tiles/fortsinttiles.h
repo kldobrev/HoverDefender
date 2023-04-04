@@ -1,6 +1,6 @@
 /*
 
- CITYTILES.H
+ FORTSINTTILES.H
 
  Include File.
 
@@ -10,7 +10,7 @@
   Compression          : None.
   Counter              : None.
   Tile size            : 8 x 8
-  Tiles                : 0 to 45
+  Tiles                : 0 to 66
 
   Palette colors       : None.
   SGB Palette          : None.
@@ -22,14 +22,14 @@
 
 */
 
-#ifndef __citytiles_h_INCLUDE
-#define __citytiles_h_INCLUDE
+#ifndef __fortsinttiles_h_INCLUDE
+#define __fortsinttiles_h_INCLUDE
 
 /* Bank of tiles. */
-#define citytilesBank 0
+#define fortsinttilesBank 0
 /* Start of tile array. */
-extern const unsigned char citytiles[];
+extern const unsigned char fortsinttiles[];
 
 #endif
 
-/* End of CITYTILES.H */
+/* End of FORTSINTTILES.H */

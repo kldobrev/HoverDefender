@@ -38,6 +38,10 @@ extern unsigned char citymap[];
 extern unsigned char mountainmap[];
 extern unsigned char tunneltiles[];
 extern unsigned char tunnelmap[];
+extern unsigned char fortstiles[];
+extern unsigned char fortsmap[];
+extern unsigned char fortsinttiles[];
+extern unsigned char fortsintmap[];
 
 
 
@@ -51,15 +55,16 @@ const UINT8 placmntxpos = 167;  // Initial x position of stage enemies
 
 
 // Stages data
-extern const UINT8 stage1road[], stage2road[], stage3road[], stage4road[];
-extern const Placement stage1objs[], stage2objs[], stage3objs[], stage4objs[];
+extern const UINT8 stage1road[], stage2road[], stage3road[], stage4road[], stage5road[];
+extern const Placement stage1objs[], stage2objs[], stage3objs[], stage4objs[], stage5objs[];
 extern const UINT8 scorpbossexpl[5][2], jggrbossexpl[7][2], mechbossexpl[4][2];
 extern UINT8 jgrbkgposx, jgrposx;
 
 const Stage stages[] = {{stage1road, 17, stage1objs, deserttiles, 39, desertmap, 0, 1, 2, &deserttheme},
 {stage2road, 25, stage2objs, citytiles, 46, citymap, 1, 1, 2, &citytheme},
 {stage3road, 27, stage3objs, mountaintiles, 61, mountainmap, 1, 1, 2, &mountaintheme},
-{stage4road, 31, stage4objs, tunneltiles, 64, tunnelmap, 1, 0, 4, &tunneltheme} // Temporarily using some assets from previous levels
+{stage4road, 31, stage4objs, tunneltiles, 64, tunnelmap, 1, 0, 4, &tunneltheme}, // Temporarily using some assets from previous levels
+{stage5road, 33, stage5objs, fortstiles, 104, fortsmap, 1, 0, 4, &tunneltheme}
 };
 const Stage * crntstage = stages;    // Current stage pointer
 UINT8 stagenum;     // Current stage counter
@@ -709,7 +714,9 @@ void manage_hole_props() {
             if(!iframeflg && cycrulecheck == 1 && pl->explcount == 0 && pl->groundflg == machptr->groundflg) {    // Player hasn't exploded
                 check_player_machine_collsn(machptr);
             }
-            exec_enemy_pattern(machptr);
+            if(machptr->explcount == 0) {
+                exec_enemy_pattern(machptr);
+            }
         }
         if(machptr->explcount != 0) {
             explode_machine(machptr);
@@ -1350,9 +1357,11 @@ void pause_game() {
     stop_song();
     hud_draw_pause();
     se_pause();
+    waitpadup();
     custom_delay(10);
     waitpad(J_START);
     custom_delay(10);
+    waitpadup();
     hud_clear_pause();
     if(stageclearflg == 0) {
         play_song(crntstage->theme);

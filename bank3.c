@@ -23,7 +23,7 @@ const INT8 mechbossexpl[4][2] = {{-2, -1}, {4, 12}, {-2, 10}, {6, -2}};
 const UINT8 mechforwtiles[] = {29, 31, 30, 32, 33, 34};
 const UINT8 mechbackwtiles[] = {31, 29, 32, 30, 34, 33};
 const UINT8 mechprops[] = {0, 50, 1, 1, 14, 22, 16, 16, 9, 29};
-const INT8 jgrgunprops[] = {0, 18, 0, 0, 8, 8, 1, 9, 9, 44};
+const INT8 jgrgunprops[] = {0, 18, 0, 0, 16, 8, 1, 9, 9, 44};
 const INT8 backhboffx = -10, fronthboffx = 16;
 UINT8 chargeidx = 255;    // Charge sprite tile index
 UINT8 jgrbkgposx = 255, jgrposx;
@@ -986,13 +986,13 @@ void mechbrosboss_loop() BANKED {
             }
         }
 
-        if(sndmch->x == 16) {
-            swappattrns = 1;
-        } else if(fstmch->x == 16) {
-            swappattrns = 0;
-        }
-
         if(pattrn < 35) {   // Patterns for both mechs active
+            if(sndmch->x == 16) {
+                swappattrns = 1;
+            } else if(fstmch->x == 16) {
+                swappattrns = 0;
+            }
+
             if(swappattrns == 0) {
                 pattrn = exec_mechbros_pattern(fstmch, sndmch, pattrn);
             } else {
