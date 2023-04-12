@@ -1940,10 +1940,10 @@ _projectiletiles:
 	.db #0x5a	; 90	'Z'
 	.db #0x34	; 52	'4'
 	.db #0x6e	; 110	'n'
-	.db #0x69	; 105	'i'
-	.db #0x45	; 69	'E'
-	.db #0x96	; 150
-	.db #0xa2	; 162
+	.db #0x79	; 121	'y'
+	.db #0x5d	; 93
+	.db #0x9e	; 158
+	.db #0xba	; 186
 	.db #0x2c	; 44
 	.db #0x76	; 118	'v'
 	.db #0x52	; 82	'R'

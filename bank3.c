@@ -33,7 +33,7 @@ const INT8 jgrxoffsets[7] = {-74, -60, -46, -32, -18, 1, 16};    // Hatches and 
 
 
 
-void check_boss_damaged() BANKED;
+void check_boss_damaged() NONBANKED;
 void init_machine_props(UINT8 x, UINT8 y, const INT8 * mchprops) NONBANKED;
 void set_machine_tile(Machine * mch, UINT8 tlnum) NONBANKED;
 void place_machine(Machine * mch, UINT8 x, UINT8 y) NONBANKED;
@@ -89,35 +89,6 @@ void destroy_mech(Machine * mech) BANKED;
 
 
 
-
-
-// COMMON BOSS FUNCTIONS
-
-void check_boss_damaged() BANKED {
-    if(hitmchptr != NULL) {
-        if(hitanimtmr == 10 || hitanimtmr == 0) {
-            switch(stagenum) {
-                case 0:
-                    scorpboss_hit_anim();
-                    break;
-                case 1:
-                    mech_hit_anim();
-                    break;
-                case 2:
-                    jggrboss_hit_anim();
-                    break;
-                case 3:
-                    mech_hit_anim();
-                    break;
-            }
-        }
-        if(hitanimtmr == 0) {
-            hitmchptr = NULL;
-            hitanimtmr = 11;
-        }
-        hitanimtmr--;
-    }
-}
 
 
 
@@ -1001,7 +972,6 @@ void mechbrosboss_loop() BANKED {
         } else {
             pattrn = exec_limited_pattern(pattrn);
         }
-        
 
         manage_projectiles();
         manage_machines(enlimit);
