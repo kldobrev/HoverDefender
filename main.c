@@ -55,8 +55,8 @@ const UINT8 placmntxpos = 167;  // Initial x position of stage enemies
 
 
 // Stages data
-extern const UINT8 stage1road[], stage2road[], stage3road[], stage4road[], stage5road[];
-extern const Placement stage1objs[], stage2objs[], stage3objs[], stage4objs[], stage5objs[];
+extern const UINT8 stage1road[], stage2road[], stage3road[], stage4road[], stage5road[], stage6road[];
+extern const Placement stage1objs[], stage2objs[], stage3objs[], stage4objs[], stage5objs[], stage6objs[];
 extern const UINT8 scorpbossexpl[5][2], jggrbossexpl[7][2], mechbossexpl[4][2], genrlbossexpl[5][2];
 extern UINT8 jgrbkgposx, jgrposx;
 
@@ -64,7 +64,8 @@ const Stage stages[] = {{stage1road, 17, stage1objs, deserttiles, 39, desertmap,
 {stage2road, 25, stage2objs, citytiles, 46, citymap, 1, 1, 2, &citytheme},
 {stage3road, 27, stage3objs, mountaintiles, 61, mountainmap, 1, 1, 2, &mountaintheme},
 {stage4road, 31, stage4objs, tunneltiles, 64, tunnelmap, 1, 0, 4, &tunneltheme}, // Temporarily using some assets from previous levels
-{stage5road, 33, stage5objs, fortstiles, 104, fortsmap, 1, 0, 4, &tunneltheme}
+{stage5road, 33, stage5objs, fortstiles, 104, fortsmap, 1, 0, 4, &tunneltheme},
+{stage6road, 39, stage6objs, fortsinttiles, 67, fortsintmap, 0, 0, 4, &tunneltheme}
 };
 const Stage * crntstage = stages;    // Current stage pointer
 UINT8 stagenum;     // Current stage counter
@@ -717,7 +718,7 @@ void manage_hole_props() {
 
  void manage_machines(UINT8 limit) {
     for(machptr = machines; machptr <= machines + limit; machptr++) {    // Player and enemies handling
-        if(machptr != pl && machptr->y != 0) {
+        if(machptr != pl && machptr->shield != 0) {
             if(!iframeflg && cycrulecheck == 1 && pl->explcount == 0 && pl->groundflg == machptr->groundflg) {    // Player hasn't exploded
                 check_player_machine_collsn(machptr);
             }
@@ -992,7 +993,7 @@ void destroy_machine(Machine * mch) {
     move_sprite(mch->oamtilenums[1], 0, 0);
     move_sprite(mch->oamtilenums[2], 0, 0);
     move_sprite(mch->oamtilenums[3], 0, 0);
-    mch->explcount = mch->x = mch->y = 0;
+    mch->explcount = mch->shield = mch->x = mch->y = 0;
 }
 
 
@@ -1819,7 +1820,7 @@ void main() NONBANKED {
         main_menu();
         if(menuidx == 1) {
             stagenum = password_menu();
-            if(stagenum == 6) { // Unlock extras menu
+            if(stagenum == 7) { // Unlock extras menu
                 extrasflg = 1;
                 stagenum = 0;
                 continue;
@@ -1850,7 +1851,7 @@ void main() NONBANKED {
                 stageclearflg = bossclearflg = 0;
                 stagenum++;
                 crntstage++;    // Next stage data
-                if(stagenum == 5) { // Has passed currently available levels
+                if(stagenum == 6) { // Has passed currently available levels
                     demo_end_screen();
                     init_game();
                     stagenum = 0;
