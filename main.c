@@ -292,6 +292,8 @@ void init_genrlboss() BANKED;
 void genrlboss_loop() BANKED;
 void genrl_hit_anim() BANKED;
 void genrl_clear_sequence() BANKED;
+void init_defsysboss() BANKED;
+void defsysboss_loop() BANKED;
 
 
 
@@ -1646,6 +1648,9 @@ void init_boss(UINT8 stnum) NONBANKED {
         case 4:
             init_genrlboss();
             break;
+        case 5:
+            init_defsysboss();
+            break;
     }
 }
 
@@ -1666,6 +1671,9 @@ void boss_loop(UINT8 stnum) NONBANKED {
             break;
         case 4:
             genrlboss_loop();
+            break;
+        case 5:
+            defsysboss_loop();
             break;
     }
 }

@@ -1,6 +1,6 @@
 /*
 
- BOSSSPRITETILES.H
+ DEFSYSBOSSTILES.H
 
  Include File.
 
@@ -10,7 +10,7 @@
   Compression          : None.
   Counter              : None.
   Tile size            : 8 x 8
-  Tiles                : 0 to 56
+  Tiles                : 0 to 54
 
   Palette colors       : None.
   SGB Palette          : None.
@@ -22,14 +22,14 @@
 
 */
 
-#ifndef __bossspritetiles_h_INCLUDE
-#define __bossspritetiles_h_INCLUDE
+#ifndef __defsysbosstiles_h_INCLUDE
+#define __defsysbosstiles_h_INCLUDE
 
 /* Bank of tiles. */
-#define bossspritetilesBank 0
+#define defsysbosstilesBank 0
 /* Start of tile array. */
-extern const unsigned char bossspritetiles[];
+extern const unsigned char defsysbosstiles[];
 
 #endif
 
-/* End of BOSSSPRITETILES.H */
+/* End of DEFSYSBOSSTILES.H */

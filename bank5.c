@@ -1,12 +1,17 @@
 #include <gb/gb.h>
 #include "machine.c"
 #include "placement.c"
+#include "tiles/defsysbosstiles.c"
+#include "maps/defsysbossmap.c"
+#include "maps/defsysbossdoorholemap.c"
+#include "maps/defsysbossceilgunmap.c"
 
 
 extern Machine machines[], * crntenemy, * pl, * hitmchptr;
 extern UINT8 pllives, bossclearflg, lockmvmnt, oamidx, i, citr, cloudposx, sceneryposx, roadposx, stagenum, hitanimtmr, ascendflg, plgroundspeed, cyccount;
 extern UBYTE iframeflg;
 extern const UINT8 enlimit;
+extern const unsigned char goodroadmap[];
 
 const INT8 genrlprops[] = {0, 25, 2, 1, 28, 22, 0, 16, 9, 54};
 const UINT8 genrltilemaps[8][11] = {
@@ -56,6 +61,7 @@ void incr_boss_bkg_x_coords(UINT8 roadsp, UINT8 jgrspeed) NONBANKED;
 void scroll_boss_bkg() NONBANKED;
 Machine * create_explosion(UINT8 x, UINT8 y) NONBANKED;
 void mute_music_pl_chnl(UINT8 chnum) NONBANKED;
+void init_stage_road() NONBANKED;
 void genrl_hit_anim() BANKED;
 void set_genrl_tiles(UINT8 tileidx) BANKED;
 void se_teleport(UINT8 vol) BANKED;
@@ -67,7 +73,8 @@ void genrl_hit_anim() BANKED;
 void set_currnt_genrl_gun(UINT8 gunidx) BANKED;
 void genrlboss_loop() BANKED;
 void genrl_clear_sequence() BANKED;
-
+void init_defsysboss() BANKED;
+void defsysboss_loop() BANKED;
 
 
 
@@ -315,3 +322,30 @@ void genrl_clear_sequence() BANKED {
 }
 
 
+
+
+void init_defsysboss() BANKED {
+    set_bkg_data(128, 55, defsysbosstiles);
+    move_bkg(128, 0);
+    fill_bkg_rect(21, 0, 9, 1, 62);
+    fill_bkg_rect(21, 1, 9, 1, 63);
+    fill_bkg_rect(25, 2, 8, 8, 61);
+    set_bkg_tile_xy(25, 2, 82);
+    set_bkg_tile_xy(26, 2, 83);
+    set_bkg_tile_xy(27, 2, 84);
+    for(i = 16; i != 34; i +=3) {
+        set_bkg_tiles(i, 10, 3, 7, goodroadmap);
+    }
+    set_bkg_tiles(0, 0, 4, 16, defsysbossmap);
+    set_bkg_tiles(25, 3, 3, 2, defsysbossceilgunmap);
+    fill_bkg_rect(16, 10, 16, 1, 182);
+    set_bkg_tiles(0, 10, 4, 5, defsysbossdoorholemap);  // After ending sequence
+}
+
+
+
+void defsysboss_loop() BANKED {
+    while(1) {  // In Progress
+            wait_vbl_done();
+    }
+}
