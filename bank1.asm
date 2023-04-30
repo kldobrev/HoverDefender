@@ -2797,6 +2797,10 @@ _stagenames:
 	.db #0x21	; 33
 	.db #0x0b	; 11
 	.db #0x23	; 35
+	.db 0x00
+	.db 0x00
+	.db 0x00
+	.db 0x00
 	.db #0x0d	; 13
 	.db #0x0b	; 11
 	.db #0x1a	; 26
@@ -2809,6 +2813,10 @@ _stagenames:
 	.db #0x13	; 19
 	.db #0x1e	; 30
 	.db #0x23	; 35
+	.db 0x00
+	.db 0x00
+	.db 0x00
+	.db 0x00
 	.db 0x00
 	.db 0x00
 	.db #0x17	; 23
@@ -2825,6 +2833,10 @@ _stagenames:
 	.db #0x1d	; 29
 	.db #0x1d	; 29
 	.db 0x00
+	.db 0x00
+	.db 0x00
+	.db 0x00
+	.db 0x00
 	.db #0x1d	; 29
 	.db #0x15	; 21
 	.db #0x23	; 35
@@ -2835,6 +2847,10 @@ _stagenames:
 	.db #0x18	; 24
 	.db #0x0f	; 15
 	.db #0x16	; 22
+	.db 0x00
+	.db 0x00
+	.db 0x00
+	.db 0x00
 	.db 0x00
 	.db 0x00
 	.db 0x00
@@ -2853,18 +2869,26 @@ _stagenames:
 	.db #0x1d	; 29
 	.db 0x00
 	.db 0x00
-	.db #0x13	; 19
+	.db 0x00
+	.db 0x00
+	.db 0x00
+	.db 0x00
+	.db #0x10	; 16
+	.db #0x26	; 38
+	.db #0x1d	; 29
+	.db #0x26	; 38
+	.db #0x00	; 0
+	.db #0x1f	; 31
 	.db #0x18	; 24
-	.db #0x1e	; 30
+	.db #0x0e	; 14
 	.db #0x0f	; 15
 	.db #0x1c	; 28
-	.db #0x13	; 19
-	.db #0x19	; 25
+	.db #0x11	; 17
 	.db #0x1c	; 28
-	.db 0x00
-	.db 0x00
-	.db 0x00
-	.db 0x00
+	.db #0x19	; 25
+	.db #0x1f	; 31
+	.db #0x18	; 24
+	.db #0x0e	; 14
 	.db 0x00
 	.db 0x00
 	.db #0x0f	; 15
@@ -2881,13 +2905,17 @@ _stagenames:
 	.db 0x00
 	.db 0x00
 	.db 0x00
+	.db 0x00
+	.db 0x00
+	.db 0x00
+	.db 0x00
 _stnamelengths:
 	.db #0x0e	; 14
 	.db #0x0c	; 12
 	.db #0x0d	; 13
 	.db #0x0a	; 10
 	.db #0x0c	; 12
-	.db #0x08	; 8
+	.db #0x10	; 16
 	.db #0x0b	; 11
 _gameoveroptsy:
 	.db #0x60	; 96
@@ -3468,7 +3496,7 @@ _stage_intro_screen::
 	ld	l, c
 	ld	h, b
 	add	hl, hl
-	add	hl, bc
+	add	hl, hl
 	add	hl, hl
 	add	hl, bc
 	add	hl, hl
@@ -4545,17 +4573,17 @@ _move_passcursor::
 ;menus.c:216: }
 	add	sp, #9
 	ret
-;menus.c:220: void update_pass_field() BANKED {
+;menus.c:219: void update_pass_field() BANKED {
 ;	---------------------------------
 ; Function update_pass_field
 ; ---------------------------------
 	b_update_pass_field	= 1
 _update_pass_field::
-;menus.c:221: for(i = 0; i < 4; i++) {
+;menus.c:220: for(i = 0; i < 4; i++) {
 	ld	hl, #_i
 	ld	(hl), #0x00
 00105$:
-;menus.c:222: set_bkg_tile_xy(6 + i * 2, 3, passentry[i]);
+;menus.c:221: set_bkg_tile_xy(6 + i * 2, 3, passentry[i]);
 	ld	a, #<(_passentry)
 	ld	hl, #_i
 	add	a, (hl)
@@ -4577,17 +4605,17 @@ _update_pass_field::
 	inc	sp
 	call	_set_bkg_tile_xy
 	add	sp, #3
-;menus.c:221: for(i = 0; i < 4; i++) {
+;menus.c:220: for(i = 0; i < 4; i++) {
 	ld	hl, #_i
 	inc	(hl)
 	ld	a, (hl)
 	sub	a, #0x04
 	jr	C, 00105$
-;menus.c:224: if(passidx != 4) {
+;menus.c:223: if(passidx != 4) {
 	ld	a, (#_passidx)
 	sub	a, #0x04
 	ret	Z
-;menus.c:225: move_sprite(6, 61 + passidx * 16, 40);
+;menus.c:224: move_sprite(6, 61 + passidx * 16, 40);
 	ld	a, (#_passidx)
 	swap	a
 	and	a, #0xf0
@@ -4599,16 +4627,16 @@ _update_pass_field::
 	ld	a, #0x28
 	ld	(hl+), a
 	ld	(hl), c
-;menus.c:225: move_sprite(6, 61 + passidx * 16, 40);
-;menus.c:227: }
+;menus.c:224: move_sprite(6, 61 + passidx * 16, 40);
+;menus.c:226: }
 	ret
-;menus.c:230: void add_character() BANKED {
+;menus.c:229: void add_character() BANKED {
 ;	---------------------------------
 ; Function add_character
 ; ---------------------------------
 	b_add_character	= 1
 _add_character::
-;menus.c:231: passentry[passidx] = crsr.row * 9 + crsr.col + 11;
+;menus.c:230: passentry[passidx] = crsr.row * 9 + crsr.col + 11;
 	ld	bc, #_passentry+0
 	ld	a, c
 	ld	hl, #_passidx
@@ -4629,32 +4657,32 @@ _add_character::
 	add	a, l
 	add	a, #0x0b
 	ld	(bc), a
-;menus.c:232: passidx++;
+;menus.c:231: passidx++;
 	ld	hl, #_passidx
 	inc	(hl)
-;menus.c:233: update_pass_field();
+;menus.c:232: update_pass_field();
 	ld	e, #b_update_pass_field
 	ld	hl, #_update_pass_field
 	call	___sdcc_bcall_ehl
-;menus.c:234: se_add_character();
+;menus.c:233: se_add_character();
 	ld	e, #b_se_add_character
 	ld	hl, #_se_add_character
-;menus.c:235: }
+;menus.c:234: }
 	jp  ___sdcc_bcall_ehl
-;menus.c:238: void drop_character() BANKED {
+;menus.c:237: void drop_character() BANKED {
 ;	---------------------------------
 ; Function drop_character
 ; ---------------------------------
 	b_drop_character	= 1
 _drop_character::
-;menus.c:239: if(passidx > 0) {
+;menus.c:238: if(passidx > 0) {
 	ld	hl, #_passidx
 	ld	a, (hl)
 	or	a, a
 	ret	Z
-;menus.c:240: passidx--;
+;menus.c:239: passidx--;
 	dec	(hl)
-;menus.c:241: passentry[passidx] = 42;    // Empty tile
+;menus.c:240: passentry[passidx] = 42;    // Empty tile
 	ld	bc, #_passentry+0
 	ld	a, c
 	add	a, (hl)
@@ -4664,26 +4692,26 @@ _drop_character::
 00110$:
 	ld	a, #0x2a
 	ld	(bc), a
-;menus.c:242: update_pass_field();
+;menus.c:241: update_pass_field();
 	ld	e, #b_update_pass_field
 	ld	hl, #_update_pass_field
 	call	___sdcc_bcall_ehl
-;menus.c:243: se_drop_character();
+;menus.c:242: se_drop_character();
 	ld	e, #b_se_drop_character
 	ld	hl, #_se_drop_character
-;menus.c:245: }
+;menus.c:244: }
 	jp  ___sdcc_bcall_ehl
-;menus.c:248: void reset_password() BANKED {
+;menus.c:247: void reset_password() BANKED {
 ;	---------------------------------
 ; Function reset_password
 ; ---------------------------------
 	b_reset_password	= 1
 _reset_password::
-;menus.c:249: for(i = 0; i < 4; i++) {
+;menus.c:248: for(i = 0; i < 4; i++) {
 	ld	hl, #_i
 	ld	(hl), #0x00
 00102$:
-;menus.c:250: passentry[i] = 42;
+;menus.c:249: passentry[i] = 42;
 	ld	a, #<(_passentry)
 	ld	hl, #_i
 	add	a, (hl)
@@ -4693,35 +4721,35 @@ _reset_password::
 	ld	b, a
 	ld	a, #0x2a
 	ld	(bc), a
-;menus.c:249: for(i = 0; i < 4; i++) {
+;menus.c:248: for(i = 0; i < 4; i++) {
 	inc	(hl)
 	ld	a, (hl)
 	sub	a, #0x04
 	jr	C, 00102$
-;menus.c:252: passidx = 0;
+;menus.c:251: passidx = 0;
 	ld	hl, #_passidx
 	ld	(hl), #0x00
-;menus.c:253: update_pass_field();
+;menus.c:252: update_pass_field();
 	ld	e, #b_update_pass_field
 	ld	hl, #_update_pass_field
 	call	___sdcc_bcall_ehl
-;menus.c:254: se_drop_character();
+;menus.c:253: se_drop_character();
 	ld	e, #b_se_drop_character
 	ld	hl, #_se_drop_character
-;menus.c:255: }
+;menus.c:254: }
 	jp  ___sdcc_bcall_ehl
-;menus.c:258: UINT8 get_stage_from_password() BANKED {
+;menus.c:257: UINT8 get_stage_from_password() BANKED {
 ;	---------------------------------
 ; Function get_stage_from_password
 ; ---------------------------------
 	b_get_stage_from_password	= 1
 _get_stage_from_password::
-;menus.c:259: for(i = 0; i < 6; i++) {
+;menus.c:258: for(i = 0; i < 6; i++) {
 	ld	hl, #_i
 	ld	(hl), #0x00
 	ld	bc, #_passwords+0
 00104$:
-;menus.c:260: if(compare_password(passwords[i])) {
+;menus.c:259: if(compare_password(passwords[i])) {
 	ld	hl, #_i
 	ld	l, (hl)
 	ld	h, #0x00
@@ -4738,33 +4766,33 @@ _get_stage_from_password::
 	pop	bc
 	or	a, a
 	jr	Z, 00105$
-;menus.c:261: return i;   // Password array index matches stage number
+;menus.c:260: return i;   // Password array index matches stage number
 	ld	hl, #_i
 	ld	e, (hl)
 	ret
 00105$:
-;menus.c:259: for(i = 0; i < 6; i++) {
+;menus.c:258: for(i = 0; i < 6; i++) {
 	ld	hl, #_i
 	inc	(hl)
 	ld	a, (hl)
 	sub	a, #0x06
 	jr	C, 00104$
-;menus.c:264: return wrongpassind;  // Could not find entered password
+;menus.c:263: return wrongpassind;  // Could not find entered password
 	ld	hl, #_wrongpassind
 	ld	e, (hl)
-;menus.c:265: }
+;menus.c:264: }
 	ret
-;menus.c:268: UBYTE compare_password(UINT8 * pass) BANKED {
+;menus.c:267: UBYTE compare_password(UINT8 * pass) BANKED {
 ;	---------------------------------
 ; Function compare_password
 ; ---------------------------------
 	b_compare_password	= 1
 _compare_password::
-;menus.c:269: for(citr = 0; citr < 4; citr++) {
+;menus.c:268: for(citr = 0; citr < 4; citr++) {
 	ld	hl, #_citr
 	ld	(hl), #0x00
 00104$:
-;menus.c:270: if(passentry[citr] != pass[citr]) {
+;menus.c:269: if(passentry[citr] != pass[citr]) {
 	ld	a, #<(_passentry)
 	ld	hl, #_citr
 	add	a, (hl)
@@ -4788,21 +4816,21 @@ _compare_password::
 	ld	a, (de)
 	sub	a, c
 	jr	Z, 00105$
-;menus.c:271: return 0;   // Letter mismatch
+;menus.c:270: return 0;   // Letter mismatch
 	ld	e, #0x00
 	ret
 00105$:
-;menus.c:269: for(citr = 0; citr < 4; citr++) {
+;menus.c:268: for(citr = 0; citr < 4; citr++) {
 	ld	hl, #_citr
 	inc	(hl)
 	ld	a, (hl)
 	sub	a, #0x04
 	jr	C, 00104$
-;menus.c:274: return 1;
+;menus.c:273: return 1;
 	ld	e, #0x01
-;menus.c:275: }
+;menus.c:274: }
 	ret
-;menus.c:278: UBYTE confirm_password() BANKED {
+;menus.c:277: UBYTE confirm_password() BANKED {
 ;	---------------------------------
 ; Function confirm_password
 ; ---------------------------------
@@ -4813,7 +4841,7 @@ _confirm_password::
 	ld	(hl), #0x01
 	ld	hl, #(_shadow_OAM + 0x001a)
 	ld	(hl), #0x00
-;menus.c:281: move_sprite(5, passconfoptsx[1], passconfy);
+;menus.c:280: move_sprite(5, passconfoptsx[1], passconfy);
 	ld	hl, #_passconfy
 	ld	b, (hl)
 	ld	hl, #(_passconfoptsx + 0x0001)
@@ -4824,20 +4852,20 @@ _confirm_password::
 	ld	a, b
 	ld	(hl+), a
 	ld	(hl), c
-;menus.c:282: while(1) {
+;menus.c:281: while(1) {
 00107$:
-;menus.c:283: custom_delay(7);
+;menus.c:282: custom_delay(7);
 	ld	a, #0x07
 	push	af
 	inc	sp
 	call	_custom_delay
 	inc	sp
-;menus.c:284: if(joypad() & (J_LEFT | J_RIGHT | J_SELECT)) {
+;menus.c:283: if(joypad() & (J_LEFT | J_RIGHT | J_SELECT)) {
 	call	_joypad
 	ld	a, e
 	and	a, #0x43
 	jr	Z, 00104$
-;menus.c:285: move_sprite(5, passconfoptsx[shadow_OAM[5].x == passconfoptsx[0] ? 1 : 0], passconfy);
+;menus.c:284: move_sprite(5, passconfoptsx[shadow_OAM[5].x == passconfoptsx[0] ? 1 : 0], passconfy);
 	ld	hl, #_passconfy
 	ld	c, (hl)
 	ld	a, (#(_shadow_OAM + 0x0015) + 0)
@@ -4859,15 +4887,15 @@ _confirm_password::
 	ld	a, c
 	ld	(hl+), a
 	ld	(hl), b
-;menus.c:286: se_move_cursor();
+;menus.c:285: se_move_cursor();
 	ld	e, #b_se_move_cursor
 	ld	hl, #_se_move_cursor
 	call	___sdcc_bcall_ehl
-;menus.c:287: waitpadup();
+;menus.c:286: waitpadup();
 	call	_waitpadup
 	jr	00105$
 00104$:
-;menus.c:288: } else if(joypad() & (J_A |  J_START)) {
+;menus.c:287: } else if(joypad() & (J_A |  J_START)) {
 	call	_joypad
 	ld	a, e
 	and	a, #0x90
@@ -4875,7 +4903,7 @@ _confirm_password::
 ;F:/Game_Boy_Dev_Tools/gbdk/include/gb/gb.h:1145: shadow_OAM[nb].tile=tile;
 	ld	hl, #(_shadow_OAM + 0x0016)
 	ld	(hl), #0x00
-;menus.c:290: return shadow_OAM[5].x == passconfoptsx[1];
+;menus.c:289: return shadow_OAM[5].x == passconfoptsx[1];
 	ld	hl, #(_shadow_OAM + 0x0015)
 	ld	c, (hl)
 	ld	hl, #(_passconfoptsx + 0x0001)
@@ -4889,24 +4917,24 @@ _confirm_password::
 	ld	e, a
 	ret
 00105$:
-;menus.c:292: manage_sound_chnls();
+;menus.c:291: manage_sound_chnls();
 	call	_manage_sound_chnls
-;menus.c:294: }
+;menus.c:293: }
 	jr	00107$
-;menus.c:297: void anim_cursor_blink() BANKED {
+;menus.c:296: void anim_cursor_blink() BANKED {
 ;	---------------------------------
 ; Function anim_cursor_blink
 ; ---------------------------------
 	b_anim_cursor_blink	= 1
 _anim_cursor_blink::
-;menus.c:298: if(menuanimcnt == 0) {
+;menus.c:297: if(menuanimcnt == 0) {
 	ld	a, (#_menuanimcnt)
 	or	a, a
 	jr	NZ, 00102$
-;menus.c:299: menuanimcnt = blinkanimdur;
+;menus.c:298: menuanimcnt = blinkanimdur;
 	ld	a, (#_blinkanimdur)
 	ld	(#_menuanimcnt),a
-;menus.c:300: set_sprite_tile(6, shadow_OAM[6].tile == 0 ? 3 : 0);
+;menus.c:299: set_sprite_tile(6, shadow_OAM[6].tile == 0 ? 3 : 0);
 	ld	a, (#(_shadow_OAM + 0x001a) + 0)
 	or	a, a
 	jr	NZ, 00107$
@@ -4918,25 +4946,25 @@ _anim_cursor_blink::
 ;F:/Game_Boy_Dev_Tools/gbdk/include/gb/gb.h:1145: shadow_OAM[nb].tile=tile;
 	ld	hl, #(_shadow_OAM + 0x001a)
 	ld	(hl), c
-;menus.c:300: set_sprite_tile(6, shadow_OAM[6].tile == 0 ? 3 : 0);
+;menus.c:299: set_sprite_tile(6, shadow_OAM[6].tile == 0 ? 3 : 0);
 	ret
 00102$:
-;menus.c:302: menuanimcnt--;
+;menus.c:301: menuanimcnt--;
 	ld	hl, #_menuanimcnt
 	dec	(hl)
-;menus.c:304: }
+;menus.c:303: }
 	ret
-;menus.c:308: UINT8 password_menu() {
+;menus.c:306: UINT8 password_menu() {
 ;	---------------------------------
 ; Function password_menu
 ; ---------------------------------
 	b_password_menu	= 1
 _password_menu::
 	dec	sp
-;menus.c:309: menuanimcnt = blinkanimdur;
+;menus.c:307: menuanimcnt = blinkanimdur;
 	ld	a, (#_blinkanimdur)
 	ld	(#_menuanimcnt),a
-;menus.c:310: UINT8 matchedpassstage = wrongpassind;
+;menus.c:308: UINT8 matchedpassstage = wrongpassind;
 	ld	a, (#_wrongpassind)
 	ldhl	sp,	#0
 	ld	(hl), a
@@ -4944,18 +4972,18 @@ _password_menu::
 	ldh	a, (_SCX_REG+0)
 	add	a, #0xfb
 	ldh	(_SCX_REG+0),a
-;menus.c:312: init_common_menu_props();
+;menus.c:310: init_common_menu_props();
 	ld	e, #b_init_common_menu_props
 	ld	hl, #_init_common_menu_props
 	call	___sdcc_bcall_ehl
-;menus.c:313: set_bkg_data(42, 10, passwscreentiles);
+;menus.c:311: set_bkg_data(42, 10, passwscreentiles);
 	ld	hl, #_passwscreentiles
 	push	hl
 	ld	de, #0x0a2a
 	push	de
 	call	_set_bkg_data
 	add	sp, #4
-;menus.c:314: set_bkg_tiles(0, 0, 20, 18, passwscreenmap);
+;menus.c:312: set_bkg_tiles(0, 0, 20, 18, passwscreenmap);
 	ld	hl, #_passwscreenmap
 	push	hl
 	ld	de, #0x1214
@@ -4971,7 +4999,7 @@ _password_menu::
 ;F:/Game_Boy_Dev_Tools/gbdk/include/gb/gb.h:1145: shadow_OAM[nb].tile=tile;
 	ld	hl, #(_shadow_OAM + 0x0002)
 	ld	(hl), #0x00
-;menus.c:316: init_passcursor(&crsr, 17, 76);
+;menus.c:314: init_passcursor(&crsr, 17, 76);
 	ld	de, #0x4c11
 	push	de
 	ld	hl, #_crsr
@@ -4980,13 +5008,13 @@ _password_menu::
 	ld	hl, #_init_passcursor
 	call	___sdcc_bcall_ehl
 	add	sp, #4
-;menus.c:317: reset_password();
+;menus.c:315: reset_password();
 	ld	e, #b_reset_password
 	ld	hl, #_reset_password
 	call	___sdcc_bcall_ehl
-;menus.c:318: anim_reverse_blackout();
+;menus.c:316: anim_reverse_blackout();
 	call	_anim_reverse_blackout
-;menus.c:320: while(matchedpassstage == wrongpassind) {
+;menus.c:318: while(matchedpassstage == wrongpassind) {
 00119$:
 	ld	hl, #_wrongpassind
 	ld	c, (hl)
@@ -4994,7 +5022,7 @@ _password_menu::
 	ld	a, (hl)
 	sub	a, c
 	jp	NZ,00121$
-;menus.c:321: switch(joypad()) {
+;menus.c:319: switch(joypad()) {
 	call	_joypad
 	ld	a, e
 	cp	a, #0x01
@@ -5010,9 +5038,9 @@ _password_menu::
 	sub	a, #0x20
 	jp	Z,00110$
 	jp	00111$
-;menus.c:322: case J_LEFT:
+;menus.c:320: case J_LEFT:
 00101$:
-;menus.c:323: move_passcursor(&crsr, -1, 0);
+;menus.c:321: move_passcursor(&crsr, -1, 0);
 	xor	a, a
 	ld	d,a
 	ld	e,#0xff
@@ -5023,11 +5051,11 @@ _password_menu::
 	ld	hl, #_move_passcursor
 	call	___sdcc_bcall_ehl
 	add	sp, #4
-;menus.c:324: break;
+;menus.c:322: break;
 	jr	00111$
-;menus.c:325: case J_RIGHT:
+;menus.c:323: case J_RIGHT:
 00102$:
-;menus.c:326: move_passcursor(&crsr, 1, 0);
+;menus.c:324: move_passcursor(&crsr, 1, 0);
 	xor	a, a
 	ld	d,a
 	ld	e,#0x01
@@ -5038,11 +5066,11 @@ _password_menu::
 	ld	hl, #_move_passcursor
 	call	___sdcc_bcall_ehl
 	add	sp, #4
-;menus.c:327: break;
+;menus.c:325: break;
 	jr	00111$
-;menus.c:328: case J_UP:
+;menus.c:326: case J_UP:
 00103$:
-;menus.c:329: move_passcursor(&crsr, 0, -1);
+;menus.c:327: move_passcursor(&crsr, 0, -1);
 	ld	a, #0xff
 	push	af
 	inc	sp
@@ -5055,11 +5083,11 @@ _password_menu::
 	ld	hl, #_move_passcursor
 	call	___sdcc_bcall_ehl
 	add	sp, #4
-;menus.c:330: break;
+;menus.c:328: break;
 	jr	00111$
-;menus.c:331: case J_DOWN:
+;menus.c:329: case J_DOWN:
 00104$:
-;menus.c:332: move_passcursor(&crsr, 0, 1);
+;menus.c:330: move_passcursor(&crsr, 0, 1);
 	ld	a, #0x01
 	push	af
 	inc	sp
@@ -5072,254 +5100,254 @@ _password_menu::
 	ld	hl, #_move_passcursor
 	call	___sdcc_bcall_ehl
 	add	sp, #4
-;menus.c:333: break;
+;menus.c:331: break;
 	jr	00111$
-;menus.c:334: case J_A:
+;menus.c:332: case J_A:
 00105$:
-;menus.c:335: if(crsr.row == 2 && crsr.col == 8) {
+;menus.c:333: if(crsr.row == 2 && crsr.col == 8) {
 	ld	a, (#(_crsr + 0x0002) + 0)
 	sub	a, #0x02
 	jr	NZ, 00107$
 	ld	a, (#(_crsr + 0x0003) + 0)
 	sub	a, #0x08
 	jr	NZ, 00107$
-;menus.c:336: drop_character();
+;menus.c:334: drop_character();
 	ld	e, #b_drop_character
 	ld	hl, #_drop_character
 	call	___sdcc_bcall_ehl
 	jr	00108$
 00107$:
-;menus.c:338: add_character();
+;menus.c:336: add_character();
 	ld	e, #b_add_character
 	ld	hl, #_add_character
 	call	___sdcc_bcall_ehl
 00108$:
-;menus.c:340: waitpadup();
+;menus.c:338: waitpadup();
 	call	_waitpadup
-;menus.c:341: break;
+;menus.c:339: break;
 	jr	00111$
-;menus.c:342: case J_B:
+;menus.c:340: case J_B:
 00110$:
-;menus.c:343: drop_character();
+;menus.c:341: drop_character();
 	ld	e, #b_drop_character
 	ld	hl, #_drop_character
 	call	___sdcc_bcall_ehl
-;menus.c:344: waitpadup();
+;menus.c:342: waitpadup();
 	call	_waitpadup
-;menus.c:346: }
+;menus.c:344: }
 00111$:
-;menus.c:347: if(passidx == 4) {   // Full password entered
+;menus.c:345: if(passidx == 4) {   // Full password entered
 	ld	a, (#_passidx)
 	sub	a, #0x04
 	jr	NZ, 00118$
-;menus.c:348: if(confirm_password()) {
+;menus.c:346: if(confirm_password()) {
 	ld	e, #b_confirm_password
 	ld	hl, #_confirm_password
 	call	___sdcc_bcall_ehl
 	ld	a, e
 	or	a, a
 	jr	Z, 00115$
-;menus.c:349: matchedpassstage = get_stage_from_password();
+;menus.c:347: matchedpassstage = get_stage_from_password();
 	ld	e, #b_get_stage_from_password
 	ld	hl, #_get_stage_from_password
 	call	___sdcc_bcall_ehl
 	ldhl	sp,	#0
 	ld	(hl), e
-;menus.c:350: if(matchedpassstage == wrongpassind) {
+;menus.c:348: if(matchedpassstage == wrongpassind) {
 	ld	hl, #_wrongpassind
 	ld	c, (hl)
 	ldhl	sp,	#0
 	ld	a, (hl)
 	sub	a, c
 	jr	NZ, 00118$
-;menus.c:351: reset_password();
+;menus.c:349: reset_password();
 	ld	e, #b_reset_password
 	ld	hl, #_reset_password
 	call	___sdcc_bcall_ehl
-;menus.c:352: se_wrong_password();
+;menus.c:350: se_wrong_password();
 	ld	e, #b_se_wrong_password
 	ld	hl, #_se_wrong_password
 	call	___sdcc_bcall_ehl
 	jr	00118$
 00115$:
-;menus.c:355: reset_password();
+;menus.c:353: reset_password();
 	ld	e, #b_reset_password
 	ld	hl, #_reset_password
 	call	___sdcc_bcall_ehl
 00118$:
-;menus.c:358: anim_cursor_blink();
+;menus.c:356: anim_cursor_blink();
 	ld	e, #b_anim_cursor_blink
 	ld	hl, #_anim_cursor_blink
 	call	___sdcc_bcall_ehl
-;menus.c:359: manage_sound_chnls();
+;menus.c:357: manage_sound_chnls();
 	call	_manage_sound_chnls
-;menus.c:360: custom_delay(7);
+;menus.c:358: custom_delay(7);
 	ld	a, #0x07
 	push	af
 	inc	sp
 	call	_custom_delay
 	inc	sp
-;menus.c:361: wait_vbl_done();
+;menus.c:359: wait_vbl_done();
 	call	_wait_vbl_done
 	jp	00119$
 00121$:
-;menus.c:364: se_choose_entry();
+;menus.c:362: se_choose_entry();
 	ld	e, #b_se_choose_entry
 	ld	hl, #_se_choose_entry
 	call	___sdcc_bcall_ehl
-;menus.c:365: reset_all_sprites();
+;menus.c:363: reset_all_sprites();
 	call	_reset_all_sprites
-;menus.c:366: anim_blackout();
+;menus.c:364: anim_blackout();
 	call	_anim_blackout
 ;F:/Game_Boy_Dev_Tools/gbdk/include/gb/gb.h:826: SCX_REG=x, SCY_REG=y;
 	ld	a, #0x00
 	ldh	(_SCX_REG+0),a
 	ld	a, #0x00
 	ldh	(_SCY_REG+0),a
-;menus.c:368: return matchedpassstage;
+;menus.c:366: return matchedpassstage;
 	ldhl	sp,	#0
 	ld	e, (hl)
-;menus.c:369: }
+;menus.c:367: }
 	inc	sp
 	ret
-;menus.c:374: void se_choose_entry() BANKED {
+;menus.c:372: void se_choose_entry() BANKED {
 ;	---------------------------------
 ; Function se_choose_entry
 ; ---------------------------------
 	b_se_choose_entry	= 1
 _se_choose_entry::
-;menus.c:375: mute_music_pl_chnl(0);
+;menus.c:373: mute_music_pl_chnl(0);
 	xor	a, a
 	push	af
 	inc	sp
 	call	_mute_music_pl_chnl
 	inc	sp
-;menus.c:376: NR10_REG = 0x64;
+;menus.c:374: NR10_REG = 0x64;
 	ld	a, #0x64
 	ldh	(_NR10_REG+0),a
-;menus.c:377: NR11_REG = 0x88;
+;menus.c:375: NR11_REG = 0x88;
 	ld	a, #0x88
 	ldh	(_NR11_REG+0),a
-;menus.c:378: NR12_REG = 0xF3;
+;menus.c:376: NR12_REG = 0xF3;
 	ld	a, #0xf3
 	ldh	(_NR12_REG+0),a
-;menus.c:379: NR13_REG = 0x3E;
+;menus.c:377: NR13_REG = 0x3E;
 	ld	a, #0x3e
 	ldh	(_NR13_REG+0),a
-;menus.c:380: NR14_REG = 0x86;
+;menus.c:378: NR14_REG = 0x86;
 	ld	a, #0x86
 	ldh	(_NR14_REG+0),a
-;menus.c:381: }
+;menus.c:379: }
 	ret
-;menus.c:384: void se_move_cursor() BANKED {
+;menus.c:382: void se_move_cursor() BANKED {
 ;	---------------------------------
 ; Function se_move_cursor
 ; ---------------------------------
 	b_se_move_cursor	= 1
 _se_move_cursor::
-;menus.c:385: mute_music_pl_chnl(0);
+;menus.c:383: mute_music_pl_chnl(0);
 	xor	a, a
 	push	af
 	inc	sp
 	call	_mute_music_pl_chnl
 	inc	sp
-;menus.c:386: NR10_REG = 0x00;
+;menus.c:384: NR10_REG = 0x00;
 	ld	a, #0x00
 	ldh	(_NR10_REG+0),a
-;menus.c:387: NR11_REG = 0xCB;
+;menus.c:385: NR11_REG = 0xCB;
 	ld	a, #0xcb
 	ldh	(_NR11_REG+0),a
-;menus.c:388: NR12_REG = 0xF2;
+;menus.c:386: NR12_REG = 0xF2;
 	ld	a, #0xf2
 	ldh	(_NR12_REG+0),a
-;menus.c:389: NR13_REG = 0x9F;
+;menus.c:387: NR13_REG = 0x9F;
 	ld	a, #0x9f
 	ldh	(_NR13_REG+0),a
-;menus.c:390: NR14_REG = 0x86;
+;menus.c:388: NR14_REG = 0x86;
 	ld	a, #0x86
 	ldh	(_NR14_REG+0),a
-;menus.c:391: }
+;menus.c:389: }
 	ret
-;menus.c:394: void se_wrong_password() BANKED {
+;menus.c:392: void se_wrong_password() BANKED {
 ;	---------------------------------
 ; Function se_wrong_password
 ; ---------------------------------
 	b_se_wrong_password	= 1
 _se_wrong_password::
-;menus.c:395: mute_music_pl_chnl(0);
+;menus.c:393: mute_music_pl_chnl(0);
 	xor	a, a
 	push	af
 	inc	sp
 	call	_mute_music_pl_chnl
 	inc	sp
-;menus.c:396: NR10_REG = 0x0F;
+;menus.c:394: NR10_REG = 0x0F;
 	ld	a, #0x0f
 	ldh	(_NR10_REG+0),a
-;menus.c:397: NR11_REG = 0xFF;
+;menus.c:395: NR11_REG = 0xFF;
 	ld	a, #0xff
 	ldh	(_NR11_REG+0),a
-;menus.c:398: NR12_REG = 0xF2;
+;menus.c:396: NR12_REG = 0xF2;
 	ld	a, #0xf2
 	ldh	(_NR12_REG+0),a
-;menus.c:399: NR13_REG = 0x53;
+;menus.c:397: NR13_REG = 0x53;
 	ld	a, #0x53
 	ldh	(_NR13_REG+0),a
-;menus.c:400: NR14_REG = 0x83;
+;menus.c:398: NR14_REG = 0x83;
 	ld	a, #0x83
 	ldh	(_NR14_REG+0),a
-;menus.c:401: }
+;menus.c:399: }
 	ret
-;menus.c:404: void se_add_character() BANKED {
+;menus.c:402: void se_add_character() BANKED {
 ;	---------------------------------
 ; Function se_add_character
 ; ---------------------------------
 	b_se_add_character	= 1
 _se_add_character::
-;menus.c:405: mute_music_pl_chnl(1);
+;menus.c:403: mute_music_pl_chnl(1);
 	ld	a, #0x01
 	push	af
 	inc	sp
 	call	_mute_music_pl_chnl
 	inc	sp
-;menus.c:406: NR21_REG = 0x41;
+;menus.c:404: NR21_REG = 0x41;
 	ld	a, #0x41
 	ldh	(_NR21_REG+0),a
-;menus.c:407: NR22_REG = 0xF2;
+;menus.c:405: NR22_REG = 0xF2;
 	ld	a, #0xf2
 	ldh	(_NR22_REG+0),a
-;menus.c:408: NR23_REG = 0x36;
+;menus.c:406: NR23_REG = 0x36;
 	ld	a, #0x36
 	ldh	(_NR23_REG+0),a
-;menus.c:409: NR24_REG = 0x87;
+;menus.c:407: NR24_REG = 0x87;
 	ld	a, #0x87
 	ldh	(_NR24_REG+0),a
-;menus.c:410: }
+;menus.c:408: }
 	ret
-;menus.c:413: void se_drop_character() BANKED {
+;menus.c:411: void se_drop_character() BANKED {
 ;	---------------------------------
 ; Function se_drop_character
 ; ---------------------------------
 	b_se_drop_character	= 1
 _se_drop_character::
-;menus.c:414: mute_music_pl_chnl(3);
+;menus.c:412: mute_music_pl_chnl(3);
 	ld	a, #0x03
 	push	af
 	inc	sp
 	call	_mute_music_pl_chnl
 	inc	sp
-;menus.c:415: NR41_REG = 0x3A;
+;menus.c:413: NR41_REG = 0x3A;
 	ld	a, #0x3a
 	ldh	(_NR41_REG+0),a
-;menus.c:416: NR42_REG = 0xF3;
+;menus.c:414: NR42_REG = 0xF3;
 	ld	a, #0xf3
 	ldh	(_NR42_REG+0),a
-;menus.c:417: NR43_REG = 0x11;
+;menus.c:415: NR43_REG = 0x11;
 	ld	a, #0x11
 	ldh	(_NR43_REG+0),a
-;menus.c:418: NR44_REG = 0xC0;
+;menus.c:416: NR44_REG = 0xC0;
 	ld	a, #0xc0
 	ldh	(_NR44_REG+0),a
-;menus.c:419: }
+;menus.c:417: }
 	ret
 	.area _CODE_1
 	.area _CABS (ABS)

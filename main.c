@@ -57,7 +57,7 @@ const UINT8 placmntxpos = 167;  // Initial x position of stage enemies
 // Stages data
 extern const UINT8 stage1road[], stage2road[], stage3road[], stage4road[], stage5road[], stage6road[];
 extern const Placement stage1objs[], stage2objs[], stage3objs[], stage4objs[], stage5objs[], stage6objs[];
-extern const UINT8 scorpbossexpl[5][2], jggrbossexpl[7][2], mechbossexpl[4][2], genrlbossexpl[5][2];
+extern const UINT8 scorpbossexpl[5][2], jggrbossexpl[7][2], mechbossexpl[4][2], genrlbossexpl[5][2], defsysbossexpl[6][2];
 extern UINT8 jgrbkgposx, jgrposx;
 
 const Stage stages[] = {{stage1road, 17, stage1objs, deserttiles, 39, desertmap, 0, 1, 2, &deserttheme},
@@ -209,7 +209,6 @@ void explode_machine(Machine * mch) NONBANKED;
 Machine * create_explosion(UINT8 x, UINT8 y) NONBANKED;
 void anim_explode_boss(const UINT8 explarr[][2], UINT8 numexpl, UINT8 hasscroll, UINT8 offsx, UINT8 offsy) NONBANKED;
 void take_damage(Machine * mch, UINT8 dmgamt) NONBANKED;
-void add_to_player_shield(UINT8 amt) NONBANKED;
 void check_iframes() NONBANKED;
 void destroy_machine(Machine * mch) NONBANKED;
 void check_projectile_collsn(Machine * mch, Projectile * prj) NONBANKED;
@@ -227,7 +226,7 @@ void exec_triturret_pattern(Machine * mch) BANKED;
 void exec_seeker_pattern(Machine * mch) BANKED;
 UBYTE cooldown_enemy(Machine * mch, UINT8 period) NONBANKED;
 void hud_init() NONBANKED;
-void hud_upd_shield(INT8 hpbef, INT8 hpaft) NONBANKED;
+void hud_upd_shield(UINT8 hpamt) NONBANKED;
 inline void hud_upd_lives() NONBANKED;
 void hud_draw_pause() NONBANKED;
 void hud_clear_pause() NONBANKED;
@@ -293,7 +292,9 @@ void genrlboss_loop() BANKED;
 void genrl_hit_anim() BANKED;
 void genrl_clear_sequence() BANKED;
 void init_defsysboss() BANKED;
+void defsys_hit_anim() BANKED;
 void defsysboss_loop() BANKED;
+void defsys_clear_sequence() BANKED;
 
 
 
@@ -451,7 +452,7 @@ void respawn_player() {
     pl->hboffx = 3;
     pl->hboffy = 1;
     ascendflg = 1;
-    hud_upd_shield(0, 4);
+    hud_upd_shield(4);
     if(fallinholeflg) {
         fallinholeflg = 0;
         pl->groundflg = 0;
@@ -1002,7 +1003,7 @@ void destroy_machine(Machine * mch) {
 void take_damage(Machine * mch, UINT8 dmgamt) {
     mch->shield -= dmgamt;
     if(pl == mch) {
-        hud_upd_shield(pl->shield + dmgamt, pl->shield);
+        hud_upd_shield(pl->shield < 0 ? 0 : pl->shield);
         if(is_alive(pl)) {
             iframeflg = 1; // Starting iframe period
             if(plgun == 2) {
@@ -1032,17 +1033,6 @@ void take_damage(Machine * mch, UINT8 dmgamt) {
             hitmchptr = mch;
         }
         se_get_hit();
-    }
-}
-
-
-void add_to_player_shield(UINT8 amt) {  // Used for increasing player shield value
-    if(pl->shield + amt > 4) {
-        hud_upd_shield(pl->shield, 4);
-        pl->shield = 4; // Shield max capacity is always 4
-    } else {
-        hud_upd_shield(pl->shield, pl->shield + amt);
-        pl->shield += amt;
     }
 }
 
@@ -1223,18 +1213,12 @@ void hud_init() NONBANKED {
 }
 
 
-void hud_upd_shield(INT8 hpbef, INT8 hpaft) {
-    UINT8 hptiletresh = hpaft + 2;
-    if(hpbef > hpaft) { // Has taken damage
-        hptiletresh = hpaft < 0 ? 2 : hpaft + 2;  // HP bar lower tile boundary
-        for(UINT8 hpcnt = hpbef + 2; hpcnt > hptiletresh; hpcnt--) {
-            set_win_tile_xy(hpcnt, 0, 0x0F);
-        }
-    } else {    // Gotten a powerup or respawns after lost life
-        hptiletresh = hpaft + 3;
-        for(UINT8 hpcnt = hpbef + 3; hpcnt < hptiletresh; hpcnt++) {
-            set_win_tile_xy(hpcnt, 0, 0x0E);
-        }
+void hud_upd_shield(UINT8 hpamt) {
+    if(hpamt != 0) {
+        fill_win_rect(3, 0, hpamt, 1, 0x0E);
+    }
+    if(hpamt != 4) {
+        fill_win_rect(3 + hpamt, 0, 4 - hpamt, 1, 0x0F);
     }
 }
 
@@ -1361,7 +1345,7 @@ void stage_loop() {
 
 
 void pause_game() {
-    if(stageclearflg == 0 || stagenum != 0) {  // Case for boss 1
+    if(stageclearflg == 0 || (stagenum != 0 && stagenum != 5 && stagenum != 6)) {
         HIDE_SPRITES;
     }
     stop_song();
@@ -1698,6 +1682,9 @@ void check_boss_damaged() NONBANKED {
                 case 4:
                     genrl_hit_anim();
                     break;
+                case 5:
+                    defsys_hit_anim();
+                    break;
             }
         }
         if(hitanimtmr == 0) {
@@ -1735,6 +1722,12 @@ void boss_clear_sequence(UINT8 stnum) NONBANKED {
             anim_explode_boss(genrlbossexpl, 5, 1, 124, 56);
             genrl_clear_sequence();
             break;
+        case 5:
+            SWITCH_ROM_MBC1(5);
+            anim_explode_boss(defsysbossexpl, 6, 0, 0, 0);
+            defsys_clear_sequence();
+            break;
+            
     }
     
     prevbank = _current_bank;
@@ -1782,6 +1775,7 @@ void play_boss() NONBANKED {
         }
     }
     reset_all_sprites();
+    move_bkg(0, 0);
 }
 
 
