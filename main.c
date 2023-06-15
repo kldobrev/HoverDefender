@@ -295,7 +295,10 @@ void init_defsysboss() BANKED;
 void defsys_hit_anim() BANKED;
 void defsysboss_loop() BANKED;
 void defsys_clear_sequence() BANKED;
-
+void init_encore_boss() BANKED;
+void final_boss_loops() BANKED;
+void play_pre_encore_cutscene() BANKED;
+void final_boss_hit_anim() BANKED;
 
 
 UINT8 get_OAM_free_tile_idx() {
@@ -390,7 +393,7 @@ void init_stage_road() NONBANKED { // Layout initial road tiles to start the sta
     SWITCH_ROM_MBC1(2);
     set_bkg_data(33, 28, roadtiles);
     SWITCH_ROM_MBC1(prevbank);
-    for(roadbuildidx = 0; roadbuildidx < 7; roadbuildidx++) {
+    for(roadbuildidx = 0; roadbuildidx != 7; roadbuildidx++) {
         set_bkg_tiles(roadbuildidx * 3, 10, 3, 7, goodroadmap);
     }
     camtileidx = 18;
@@ -1392,14 +1395,14 @@ void anim_stage_end() {
     clear_all_projectiles();
     pl->cyccount = 0;
     while(1) {
-        build_road();
+        build_boss_road();
         incr_bkg_x_coords(5);
         if(lockmvmnt == 2) {    // Wait until the end of the jumping animation
             anim_jump();
-        } else if(pl->x < 168) {
-            move_machine(pl, 1, 0);
-        } else {
+        } else if(pl->x > 167 && pl->x < 200) {
             break;  // Animation has finished
+        } else {
+            move_machine(pl, 1, 0);
         }
         wait_vbl_done();
     }
@@ -1635,6 +1638,10 @@ void init_boss(UINT8 stnum) NONBANKED {
         case 5:
             init_defsysboss();
             break;
+        case 6:
+            play_pre_encore_cutscene();
+            init_encore_boss();
+            break;
     }
 }
 
@@ -1658,6 +1665,9 @@ void boss_loop(UINT8 stnum) NONBANKED {
             break;
         case 5:
             defsysboss_loop();
+            break;
+        case 6:
+            final_boss_loops();
             break;
     }
 }
@@ -1684,6 +1694,9 @@ void check_boss_damaged() NONBANKED {
                     break;
                 case 5:
                     defsys_hit_anim();
+                    break;
+                default:
+                    final_boss_hit_anim();
                     break;
             }
         }
@@ -1832,7 +1845,8 @@ void main() NONBANKED {
         }*/
         crntstage = stages + stagenum;
         init_game();
-        stageclearflg = bossclearflg = 0;
+        stageclearflg = stagenum < 6 ? 0 : 1;
+        bossclearflg = 0;
         while(1) {
             unmute_all_channels();
             if(pllives == 0) {
@@ -1850,10 +1864,11 @@ void main() NONBANKED {
             } else if(bossclearflg == 0) {
                 play_boss();
             } else {    // Current stage and boss both cleared
-                stageclearflg = bossclearflg = 0;
                 stagenum++;
                 crntstage++;    // Next stage data
-                if(stagenum == 6) { // Has passed currently available levels
+                bossclearflg = 0;
+                stageclearflg = stagenum == 6 ? 1 : 0;
+                if(stagenum == 7) { // Has passed currently available levels
                     demo_end_screen();
                     init_game();
                     stagenum = 0;

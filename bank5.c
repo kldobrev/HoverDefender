@@ -1,6 +1,5 @@
 #include <gb/gb.h>
 #include "machine.c"
-#include "placement.c"
 #include "tiles/defsysbosstiles.c"
 #include "maps/defsysbossmap.c"
 #include "maps/defsysbossdoorholemap.c"

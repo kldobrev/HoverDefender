@@ -255,7 +255,7 @@ void reset_password() BANKED {
 
 
 UINT8 get_stage_from_password() BANKED {
-    for(i = 0; i < 6; i++) {
+    for(i = 0; i < 7; i++) {
         if(compare_password(passwords[i])) {
             return i;   // Password array index matches stage number
         }

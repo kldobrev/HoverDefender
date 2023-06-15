@@ -4744,7 +4744,7 @@ _reset_password::
 ; ---------------------------------
 	b_get_stage_from_password	= 1
 _get_stage_from_password::
-;menus.c:258: for(i = 0; i < 6; i++) {
+;menus.c:258: for(i = 0; i < 7; i++) {
 	ld	hl, #_i
 	ld	(hl), #0x00
 	ld	bc, #_passwords+0
@@ -4771,11 +4771,11 @@ _get_stage_from_password::
 	ld	e, (hl)
 	ret
 00105$:
-;menus.c:258: for(i = 0; i < 6; i++) {
+;menus.c:258: for(i = 0; i < 7; i++) {
 	ld	hl, #_i
 	inc	(hl)
 	ld	a, (hl)
-	sub	a, #0x06
+	sub	a, #0x07
 	jr	C, 00104$
 ;menus.c:263: return wrongpassind;  // Could not find entered password
 	ld	hl, #_wrongpassind
