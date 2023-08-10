@@ -137,6 +137,7 @@ const UINT8 pliframeprd = 120; // Iframe duration
 const UINT8 expldur = 32; // Explosion duration
 UINT8 lockmvmnt; // 0 - no locking, 1 - horizontal, 2 - vertical, 3 - both
 Machine * hitmchptr;   // Pointer to the enemy who was hit last. Used during boss fights for animations
+Machine * fsten; // Pointer to the first enemy in the pool. Used extensively during bosses
 UINT8 iframecnt;
 UBYTE iframeflg;
 UBYTE fallinholeflg;
@@ -268,7 +269,7 @@ void play_stage() NONBANKED;
 void play_boss() NONBANKED;
 void init_boss(UINT8 stnum) NONBANKED;
 void boss_loop(UINT8 stnum) NONBANKED;
-void check_boss_damaged() NONBANKED;
+void update_hit_anim_counter() NONBANKED;
 void boss_clear_sequence(UINT8 stnum) NONBANKED;
 void mech_clear_sequence() BANKED;
 void mute_song() NONBANKED;
@@ -284,21 +285,15 @@ void disable_boss_bkg_scroll() BANKED;
 void init_mechbrosboss() BANKED;
 void mechbrosboss_loop() BANKED;
 void destroy_mech(Machine * mech) BANKED;
-void scorpboss_hit_anim() BANKED;
-void mech_hit_anim() BANKED;
-void jggrboss_hit_anim() BANKED;
 void init_genrlboss() BANKED;
 void genrlboss_loop() BANKED;
-void genrl_hit_anim() BANKED;
 void genrl_clear_sequence() BANKED;
 void init_defsysboss() BANKED;
-void defsys_hit_anim() BANKED;
 void defsysboss_loop() BANKED;
 void defsys_clear_sequence() BANKED;
 void init_encore_boss() BANKED;
 void final_boss_loops() BANKED;
 void play_pre_encore_cutscene() BANKED;
-void final_boss_hit_anim() BANKED;
 
 
 UINT8 get_OAM_free_tile_idx() {
@@ -1615,6 +1610,7 @@ void play_stage() NONBANKED {
 
 void init_boss(UINT8 stnum) NONBANKED {
     hitmchptr = NULL;
+    fsten = machines + 1;
     hitanimtmr = 11;
     SWITCH_ROM_MBC1(3);
     set_sprite_data(23, 52, bossspritetiles);
@@ -1639,7 +1635,7 @@ void init_boss(UINT8 stnum) NONBANKED {
             init_defsysboss();
             break;
         case 6:
-            play_pre_encore_cutscene();
+            //play_pre_encore_cutscene();
             init_encore_boss();
             break;
     }
@@ -1673,39 +1669,12 @@ void boss_loop(UINT8 stnum) NONBANKED {
 }
 
 
-void check_boss_damaged() NONBANKED {
-    if(hitmchptr != NULL) {
-        if(hitanimtmr == 10 || hitanimtmr == 0) {
-            switch(stagenum) {
-                case 0:
-                    scorpboss_hit_anim();
-                    break;
-                case 1:
-                    mech_hit_anim();
-                    break;
-                case 2:
-                    jggrboss_hit_anim();
-                    break;
-                case 3:
-                    mech_hit_anim();
-                    break;
-                case 4:
-                    genrl_hit_anim();
-                    break;
-                case 5:
-                    defsys_hit_anim();
-                    break;
-                default:
-                    final_boss_hit_anim();
-                    break;
-            }
-        }
-        if(hitanimtmr == 0) {
-            hitmchptr = NULL;
-            hitanimtmr = 11;
-        }
-        hitanimtmr--;
+void update_hit_anim_counter() NONBANKED {
+    if(hitanimtmr == 0) {
+        hitmchptr = NULL;
+        hitanimtmr = 11;
     }
+    hitanimtmr--;
 }
 
 
@@ -1835,6 +1804,9 @@ void main() NONBANKED {
         main_menu();
         if(menuidx == 1) {
             stagenum = password_menu();
+            if(stagenum == 6) {
+                wait_vbl_done();    // TODO: Menu to choose route (bad/good endings)
+            }
             if(stagenum == 7) { // Unlock extras menu
                 extrasflg = 1;
                 stagenum = 0;

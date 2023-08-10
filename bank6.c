@@ -9,19 +9,33 @@
 #include "maps/encorepremap.c"
 
 
-extern Machine machines[], * crntenemy, * pl, * hitmchptr;
+
+extern Machine machines[], * crntenemy, * pl, * hitmchptr, * fsten;
 extern UINT8 pllives, bossclearflg, lockmvmnt, oamidx, i, citr, cloudposx, sceneryposx, roadposx, stagenum, hitanimtmr, ascendflg, plgroundspeed, cyccount;
 extern UBYTE iframeflg;
 extern const UINT8 enlimit;
 extern const unsigned char goodroadmap[];
 
 
-const INT8 encoreemitterprops[] = {0, 10, -3, 0, 20, 9, 0, 0, 9, 23};
-const INT8 encoreprops[] =   {0, 40, -5, -28, 40, 72, -64, -35, 9, 25};  // HP = 30
+const INT8 encoreemitterprops[] = {0, 9, -3, 0, 20, 9, 0, 0, 9, 23};    // HP = 9
+const INT8 encoreprops[] = {0, 40, -5, -20, 40, 50, -64, -35, 9, 25};  // HP = 30
 const INT8 arcptrnshotspeeds[8][2] = {{-3, 1}, {-3, 2}, {-2, 3}, {-1, 3}, {0, 3}, {1, 3}, {3, 3}, {4, 3}};
+const UINT8 emittersexpl[5][2] = {{132, 56}, {154, 120} ,{132, 120}, {154, 56}, {66, 38}};
+const INT8 ultgenprops[] = {0, 40, 0, 0, 16, 32, 18, 16, 9, 0};
+const INT8 ultgentileposs[7][8][2] = {
+{{0, 0}, {0, 8}, {8, 0}, {8, 8}, {0, 16}, {0, 24}, {8, 16}, {8, 24}},   // Normal/charged facing right
+{{8, 0}, {8, 8}, {0, 0}, {0, 8}, {8, 16}, {8, 24}, {0, 16}, {0, 24}},   // Normal/charged facing left
+{{0, 0}, {0, 8}, {8, 0}, {8, 8}, {16, 8}, {24, 8}, {16, 16}, {24, 16}},   // Diagonal facing right
+{{0, 0}, {8, 0}, {16, 0}, {24, 0}, {0, 8}, {8, 8}, {16, 8}, {24, 8}},   // Horizontal facing right
+{{24, 0}, {24, 8}, {16, 0}, {16, 8}, {8, 8}, {0, 8}, {8, 16}, {0, 16}},   // Diagonal facing left
+{{24, 0}, {16, 0}, {8, 0}, {0, 0}, {24, 8}, {16, 8}, {8, 8}, {0, 8}},   // Horizontal facing left
+{{0, 8}, {0, 16}, {8, 8}, {8, 16}, {16, 16}, {16, 0}, {16, 8}, {8, 0}}    // Defeated facing left
+};
+const UINT8 ultgenptrn1xcoords[2][4] = {{16, 94, 142, 144}, {16, 48, 96, 98}};
+const INT8 pattrn10shots[8][2] = {{1, 3}, {0, 3}, {-1, 4}, {-4, 3}, {-4, 2}, {-4, 1}, {-4, -1}, {-4, -2}};
 
 
-void check_boss_damaged() NONBANKED;
+void update_hit_anim_counter() NONBANKED;
 void init_machine_props(UINT8 x, UINT8 y, const INT8 * mchprops) NONBANKED;
 void set_machine_tile(Machine * mch, UINT8 tlnum) NONBANKED;
 void place_machine(Machine * mch, UINT8 x, UINT8 y) NONBANKED;
@@ -55,23 +69,37 @@ void anim_blackout() NONBANKED;
 void anim_stage_end() NONBANKED;
 void scroll_stage_bkg_ind() NONBANKED;
 void disable_bkg_scroll() NONBANKED;
+void anim_explode_boss(const UINT8 explarr[][2], UINT8 numexpl, UINT8 hasscroll, UINT8 offsx, UINT8 offsy) NONBANKED;
+void custom_delay(UINT8 cycles) NONBANKED;
+void set_machine_sprite_tiles(Machine * mch, UINT8 fsttile) NONBANKED;
+void preserve_boss_shield(Machine * boss) BANKED;
+void check_encore_boss_bkg_collision() BANKED;
 void play_pre_encore_cutscene() BANKED;
-void final_boss_hit_anim() BANKED;
+void init_encore_boss() BANKED;
 void emitter_hit_anim() BANKED;
 void final_boss_loops() BANKED;
-void encore_boss_loop() BANKED;
+void emitters_boss_loop() BANKED;
+void set_ultgen_defeated_tiles() BANKED;
+void set_ultgen_tiles(UINT8 state) BANKED;
+void turn_ultgen(UINT8 state, UINT8 dir) BANKED;
+void move_ultgen(INT8 speedx, INT8 speedy) BANKED;
+void init_phase2() BANKED;
+void final_boss_hit_anim() BANKED;
+void turn_gen_towards_player() BANKED;
+void set_ultgen_default() BANKED;
+void ultgen_boss_loop() BANKED;
 
 
 // COMMON BOSS FUNCTIONS
 
-void preserve_boss_health(Machine * boss) {
+void preserve_boss_shield(Machine * boss) BANKED {
     if(boss->shield < 10) {
         boss->shield = 100; // Simulate invincibility by resetting health
     }
 }
 
 
-void check_encore_boss_bkg_collision() {
+void check_encore_boss_bkg_collision() BANKED {
     if(pl->x + pl->width > 118 && pl->explcount == 0 && bossclearflg == 0) {
         if(iframeflg) {
             move_machine(pl, -plgroundspeed, 0);
@@ -104,19 +132,12 @@ void play_pre_encore_cutscene() BANKED {
 }
 
 
-void final_boss_hit_anim() BANKED {
-    if(hitmchptr->oamtilenums[0] == 8 || hitmchptr->oamtilenums[0] == 12) {
-        emitter_hit_anim();
-    }
-}
-
 void init_encore_boss() BANKED {
     set_bkg_data(41, 64, encoretiles1);
-    set_bkg_data(105, 98, encoretiles2);
+    set_bkg_data(105, 99, encoretiles2);
     set_bkg_tiles(0, 0, 14, 17, encorebossbkgmap);
     set_bkg_tiles(14, 0, 6, 17, encorebossmap);
-    //set_bkg_tiles(14, 6, 6, 7, encorebossnobarriermap); //Phase 2
-    set_sprite_data(23, 42, finalbossspritetiles);
+    set_sprite_data(23, 43, finalbossspritetiles);
     init_machine_props(135, 86, encoreprops);
     init_machine_props(120, 120, encoreemitterprops);
     set_machine_tile(machines + 2, 0);
@@ -136,17 +157,25 @@ void init_encore_boss() BANKED {
 
 
 void emitter_hit_anim() BANKED {
-    set_sprite_tile(hitmchptr->oamtilenums[0], hitanimtmr == 10 ? 24 : 23);
+    if(hitmchptr != (machines + 1)) {
+        set_sprite_tile(hitmchptr->oamtilenums[0], hitanimtmr == 0 ? 23 : 24);
+    }
 }
 
 
-void final_boss_loops() {   // In progress
-    encore_boss_loop();
+void final_boss_loops() BANKED {   // In progress
+    emitters_boss_loop();
+    if(bossclearflg == 1) {
+        bossclearflg = 0; // Resetting for phase 2
+        anim_explode_boss(emittersexpl, 5, 0, 0, 0);
+        init_phase2();
+        ultgen_boss_loop();
+    }
 }
 
 
-void encore_boss_loop() BANKED {
-    UINT8 pattrn = 0, pattrnrep = 0, nextgun = 0;
+void emitters_boss_loop() BANKED {
+    UINT8 pattrn = 0, pattrnrep = 0;
     while(1) {
 
         if((!is_alive(pl)) && pl->explcount == 0) {
@@ -160,7 +189,10 @@ void encore_boss_loop() BANKED {
             } else if(pl->explcount == 0 && (machines + 2)->explcount == 0 &&(machines + 3)->explcount == 0) {
                 hitanimtmr = 0;
                 bossclearflg = 1;
-                check_boss_damaged();
+                if(hitmchptr != NULL) {
+                    emitter_hit_anim();
+                    update_hit_anim_counter();
+                }
                 clear_all_projectiles();
                 return;  // Boss cleared
             }
@@ -200,10 +232,13 @@ void encore_boss_loop() BANKED {
 
         check_encore_boss_bkg_collision();
         incr_cycle_counter();
-        preserve_boss_health(machines + 1);
+        preserve_boss_shield(machines + 1);
         manage_projectiles();
         manage_machines(3);
-        check_boss_damaged();
+        if(hitmchptr != NULL) {
+            emitter_hit_anim();
+            update_hit_anim_counter();
+        }
         manage_sound_chnls();
         manage_player();
         wait_vbl_done();
@@ -211,3 +246,296 @@ void encore_boss_loop() BANKED {
 }
 
 
+void set_ultgen_defeated_tiles() BANKED {
+    for(i = 0; i != 8; i++) {
+        move_sprite(i + 8, fsten->x + ultgentileposs[6][i][0], fsten->y + ultgentileposs[6][i][1]);
+        if(i < 5) {
+            set_sprite_tile(i + 8, i + 59);
+            set_sprite_prop(i + 8, 0);
+        } else {
+            set_sprite_tile(i + 8, i + 25);
+            set_sprite_prop(i + 8, 32);
+        }
+    }
+}
+
+
+void set_ultgen_tiles(UINT8 state) BANKED {
+    if(state != 3) {
+        for(i = 0; i != 8; i++) {
+            set_sprite_tile(i + 8, i + 30 + (8 * state));
+        }
+    } else {
+        for(i = 0; i != 3; i++) {
+            set_sprite_tile(i + 8, i + 54);
+            set_sprite_tile(i + 12, i + 54);
+            set_sprite_prop(i + 12, 64);    // Vertical flip
+        }
+        set_sprite_tile(11, 57);
+        set_sprite_tile(15, 58);
+        set_sprite_prop(15, 64);    // Vertical flip
+    }
+}
+
+
+void turn_ultgen(UINT8 state, UINT8 dir) BANKED {   // direction 0 - facing right, 1 - facing left
+    for(i = 0; i != 8; i++) {
+        if(state == 0 || state == 1) {    // Setting sprite tiles' position
+            move_sprite(i + 8, fsten->x + ultgentileposs[dir][i][0], fsten->y + ultgentileposs[dir][i][1]);
+            fsten->gunoffx = dir == 1 ? -16 : 24;
+        } else {
+            move_sprite(i + 8, fsten->x + ultgentileposs[state + (dir << 1)][i][0], fsten->y + ultgentileposs[state + (dir << 1)][i][1]);
+        }
+        if(state == 3 && (i == 4 || i == 5 || i == 6)) {    // Setting sprite tiles' direction
+            set_sprite_prop(i + 8, dir == 0 ? 64 : 96);
+        } else {
+            set_sprite_prop(i + 8, dir == 0 ? 0 : 32);
+        }
+    }
+}
+
+
+void move_ultgen(INT8 speedx, INT8 speedy) BANKED {
+    fsten->x += speedx;
+    fsten->y += speedy;
+    for(i = 8; i != 16; i++) {
+        scroll_sprite(i, speedx, speedy);
+    }
+}
+
+
+void init_phase2() BANKED {
+    set_sprite_prop(12, 0);
+    set_sprite_prop(17, 0);
+    move_sprite(16, 0, 0);
+    move_sprite(17, 0, 0);
+    set_bkg_tile_xy(8, 3, 203);
+    set_bkg_tile_xy(8, 4, 43);
+    set_bkg_tiles(14, 6, 6, 7, encorebossnobarriermap);
+    oamidx = 8;
+    crntenemy = fsten = machines + 2;
+    hitanimtmr = 11;
+    (machines + 1)->shield =  encoreprops[1];
+    init_machine_props(248, 33, ultgenprops);
+    set_ultgen_tiles(0);
+    turn_ultgen(0, 0);
+    incr_oam_sprite_tile_idx(4);
+    set_sprite_tile(oamidx, 64);
+    move_sprite(oamidx, 170, 1);
+    incr_oam_sprite_tile_idx(1);
+
+    custom_delay(20);
+    while(fsten->x != 98) { // Move ultgen to x: 98, y: 33
+        move_ultgen(1, 0);
+        if(fsten->x == 49) {
+            turn_ultgen(0, 1);
+        }
+        wait_vbl_done();
+    }
+}
+
+
+void final_boss_hit_anim() BANKED {
+    if(stagenum == 6 && hitmchptr == (machines + 1)) {
+        if(hitanimtmr == 0) {
+            set_machine_sprite_tiles(machines + 1, encoreprops[9]);
+            scroll_sprite((machines + 1)->oamtilenums[0], -2, -2);
+            BGP_REG = 0xE4;
+        } else if(hitanimtmr == 10) {
+            set_machine_tile(machines + 1, 0);
+            set_sprite_tile((machines + 1)->oamtilenums[0], 29);
+            scroll_sprite((machines + 1)->oamtilenums[0], 2, 2);
+            BGP_REG = 0xD8;
+        }
+    }
+}
+
+
+void turn_gen_towards_player() BANKED {
+    if(pl->x > fsten->x && get_sprite_prop(fsten->oamtilenums[0]) == 32) {
+        turn_ultgen(0, 0);
+    } else if(pl->x <= fsten->x && get_sprite_prop(fsten->oamtilenums[0]) == 0) {
+        turn_ultgen(0, 1);
+    }
+}
+
+
+void set_ultgen_default() BANKED { // Default props used for multiple phases
+    set_ultgen_tiles(0);
+    turn_ultgen(0, 1);
+    fsten->hboffx = ultgenprops[2];
+    fsten->hboffy = ultgenprops[3];
+    fsten->width = ultgenprops[4];
+    fsten->height = ultgenprops[5];
+}
+
+
+void ultgen_boss_loop() BANKED {
+    (machines + 1)->hboffx = (machines + 1)->hboffy = 0;
+    (machines + 1)->width = (machines + 1)->height = 12;
+    UINT8 pattrn = 0, coordsidx = 1;
+    INT8 pattrnrep = 0;
+
+    while(1) {
+        if((!is_alive(pl)) && pl->explcount == 0) {
+            break;  // Game over
+        }
+
+        (machines + 1)->groundflg = fsten->groundflg = pl->groundflg;
+        if((machines + 1)->shield < 10 && (machines + 1)->explcount == 0) {
+            if(lockmvmnt == 2) {    // Wait until the end of the jumping animation
+                anim_jump();
+            } else if(pl->explcount == 0 && (machines + 1)->explcount == 0) {
+                bossclearflg = 1;
+                if(hitmchptr != NULL) {
+                    final_boss_hit_anim();
+                    update_hit_anim_counter();
+                }
+                clear_all_projectiles();
+                return;  // Boss cleared
+            }
+        }
+
+        if(pattrn == 0 && cooldown_enemy(fsten, 40)) {
+            pattrn = 1;
+            pattrnrep = -1;
+        } else if(pattrn == 1) {
+            move_ultgen(pattrnrep, 0);
+            if(fsten->x == ultgenptrn1xcoords[coordsidx][1]) {
+                fire_projctl_aimed(fsten, 4, 3);
+            } else if(fsten->x == ultgenptrn1xcoords[coordsidx][0]) {
+                fire_projctl_aimed(fsten, 4, 3);
+                pattrnrep = 1;
+            } else if(fsten->x == ultgenptrn1xcoords[coordsidx][2]) {
+                fire_projctl_aimed(fsten, 4, 3);
+            } else if(fsten->x == ultgenptrn1xcoords[coordsidx][3]) {
+                pattrn = 2;
+                pattrnrep = 0;
+            }
+            turn_gen_towards_player();
+        } else if(pattrn == 2) {    // Charge ultgen with sparks
+            if(fsten->cyccount == 0) {
+                move_sprite(23, (machines + 1)->x, (machines + 1)->y);
+                set_sprite_tile(23, 64);
+                fsten->cyccount++;
+            } else if(fsten->cyccount != 27) {
+                scroll_sprite(23, -1, -1);
+                set_sprite_tile(23, get_sprite_tile(23) == 64 ? 65 : 64);
+                fsten->cyccount++;
+            } else if(pattrnrep != 2) {
+                fsten->cyccount = 0;
+                pattrnrep++;
+                set_ultgen_tiles(get_sprite_tile(fsten->oamtilenums[0]) == 30 ? 1 : 0);
+            } else {
+                pattrn = 3;
+                pattrnrep = 0;
+                move_sprite(23, 180, 9);    // Move spark offscreen
+            }
+        } else if(pattrn == 3) {    // Move ultgen offscreen
+            if(pattrnrep == 0) {
+                set_ultgen_tiles(1);
+                pattrnrep++;
+            }
+            move_ultgen(0, -1);
+            if(fsten->y == 239) {
+                pattrn = 4;
+                pattrnrep = 0;
+            }
+        } else if(pattrn == 4 && cooldown_enemy(fsten, 40)) {
+            set_ultgen_tiles(2);
+            turn_ultgen(2, 1);
+            fsten->hboffx = 1;
+            fsten->hboffy = 2;
+            fsten->width = 30;
+            fsten->height = 18;
+            move_ultgen(70, 20);    // x: 168, y: 3
+            pattrn = 5;
+        } else if(pattrn == 5) {    // Fly ultgen from top right to bottom left
+            move_ultgen(-5, 4);
+            if(fsten->y == 155) {   // x: 234
+                pattrn = 6;
+            }
+        } else if(pattrn == 6) {
+            turn_ultgen(2, 0);
+            move_ultgen(-60, 104);  // x : 174, y: 3
+            pattrn = 7;
+        } else if(pattrn == 7) {    // Fly ultgen from top left to bottom right
+            move_ultgen(5, 4);
+            if(fsten->y == 163) {
+                pattrn = 8;
+            }
+        } else if(pattrn == 8 && cooldown_enemy(fsten, 40)) {
+            set_ultgen_default();
+            move_ultgen(-10, 76);   // x: 108, y: 239
+            pattrn = 9;
+        } else if(pattrn == 9) {
+            move_ultgen(0, 1);
+            if(fsten->y == 75) {  // x: 108, y: 75
+                fsten->gunoffx = -9;
+                pattrn = 10;
+            }
+        } else if(pattrn == 10) {
+            if(cooldown_enemy(fsten, 20)) {
+                fire_projctl(fsten, 1, pattrn10shots[pattrnrep][0], pattrn10shots[pattrnrep][1]);
+                pattrnrep++;
+            }
+            if(pattrnrep == 8) {
+                pattrnrep = 0;
+                pattrn = 11;
+            }
+        } else if(pattrn == 11) {
+            move_ultgen(1, 0);
+            if(fsten->x == 168) {  // x: 168, y: 75
+                set_ultgen_tiles(3);
+                turn_ultgen(3, 1);
+                move_ultgen(0, 39);
+                fsten->width = 32;
+                fsten->height = 16;
+                pattrn = 12;
+            }
+        } else if(pattrn == 12) {
+            if(pattrnrep == 0) {
+                move_ultgen(-5, 0);
+                if(fsten->x == 229) {  // x: 229, y: 114
+                    turn_ultgen(3, 0);
+                    move_ultgen(0, -16);  // x: 229, y: 98
+                    pattrnrep = 1;
+                }
+            } else if(pattrnrep == 1) {
+                move_ultgen(5, 0);
+                if(fsten->x == 168) {  // x: 168, y: 98
+                    turn_ultgen(3, 1);
+                    move_ultgen(0, 32);  // x: 168, y: 130
+                    pattrnrep = 2;
+                }
+            } else if(pattrnrep == 2) {
+                move_ultgen(-5, 0);
+                if(fsten->x == 229) {  // x: 229, y: 130
+                    move_ultgen(125, 93);  // x: 98, y: 223
+                    set_ultgen_tiles(0);
+                    turn_ultgen(0, 1);
+                    pattrnrep = 0;
+                    pattrn = 13;
+                }
+            } 
+        } else if(pattrn == 13) {
+            move_ultgen(0, 1);
+            if(fsten->y == 33) {  // x: 98, y: 33
+                pattrn = 0;
+            }
+        }
+
+        check_encore_boss_bkg_collision();
+        incr_cycle_counter();
+        preserve_boss_shield(fsten);
+        manage_projectiles();
+        manage_machines(2);
+        if(hitmchptr != NULL) {
+            final_boss_hit_anim();
+            update_hit_anim_counter();
+        }
+        manage_sound_chnls();
+        manage_player();
+        wait_vbl_done();
+    }
+}

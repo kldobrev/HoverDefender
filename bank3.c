@@ -9,7 +9,7 @@
 #include "maps/juggernautbossmap2.c"
 
 
-extern Machine machines[], * crntenemy, * pl, * hitmchptr;
+extern Machine machines[], * crntenemy, * pl, * hitmchptr, * fsten;
 extern UINT8 pllives, bossclearflg, lockmvmnt, oamidx, i, citr, cloudposx, sceneryposx, roadposx, stagenum, hitanimtmr, ascendflg, plgroundspeed, cyccount;
 extern UBYTE iframeflg;
 extern const UINT8 enlimit;
@@ -27,13 +27,12 @@ const INT8 jgrgunprops[] = {0, 18, 0, 0, 16, 8, 1, 9, 9, 44};
 const INT8 backhboffx = -10, fronthboffx = 16;
 UINT8 chargeidx = 255;    // Charge sprite tile index
 UINT8 jgrbkgposx = 255, jgrposx;
-Machine * fstmch = machines + 1;
 const UBYTE bombptrns[3][5] = {{0, 0, 1, 1, 1}, {1, 1, 0, 0, 1}, {1, 0, 0, 1, 1}};  // Bomb drop patterns
 const INT8 jgrxoffsets[7] = {-74, -60, -46, -32, -18, 1, 16};    // Hatches and gun offsets
 
 
 
-void check_boss_damaged() NONBANKED;
+void update_hit_anim_counter() NONBANKED;
 void init_machine_props(UINT8 x, UINT8 y, const INT8 * mchprops) NONBANKED;
 void set_machine_tile(Machine * mch, UINT8 tlnum) NONBANKED;
 void place_machine(Machine * mch, UINT8 x, UINT8 y) NONBANKED;
@@ -54,8 +53,6 @@ void init_stage(UBYTE hasscenery, UBYTE hasscroll) NONBANKED;
 void init_scorpboss_gun(UINT8 x, UINT8 y) BANKED;
 void init_scorpboss() BANKED;
 void scorpboss_loop() BANKED;
-void set_pincer_tiles(Machine * mch) BANKED;
-void set_stinger_tiles() BANKED;
 void scorpboss_hit_anim() BANKED;
 void flip_mech(Machine * mch) BANKED;
 void init_mechboss(UINT8 x, UINT8 y) BANKED;
@@ -96,9 +93,9 @@ void destroy_mech(Machine * mech) BANKED;
 
 void init_scorpboss_gun(UINT8 x, UINT8 y) BANKED {
     init_machine_props(x, y, scorpgunprops);
-    set_pincer_tiles(crntenemy - 1);
+    set_machine_tile(crntenemy - 1, 0);
+    set_sprite_tile((crntenemy - 1)->oamtilenums[0], 25);
 }
-
 
 
 void init_scorpboss() BANKED {
@@ -108,42 +105,27 @@ void init_scorpboss() BANKED {
 
     // Initialize Stinger
     init_machine_props(121, 96, stingprops);
-    set_stinger_tiles();
-    place_machine(crntenemy - 1, 121, 96);
+    set_machine_tile(fsten, 0);
+    set_sprite_tile(fsten->oamtilenums[0], 23);
+    set_sprite_tile(fsten->oamtilenums[2], 24);
+    place_machine(fsten, 121, 96);
 
     // Initialize Right gun
     init_scorpboss_gun(100, 105);
 
     // Initialize Left gun
     init_scorpboss_gun(96, 136);
-    fstmch = machines + 1;
 }
-
-
-
-void set_stinger_tiles() BANKED {
-    set_machine_tile(fstmch, 0);
-    set_sprite_tile(fstmch->oamtilenums[0], hitanimtmr == 10 ? 26 : 23);
-    set_sprite_tile(fstmch->oamtilenums[2], hitanimtmr == 10 ? 27 : 24);
-}
-
-
-
-void set_pincer_tiles(Machine * mch) BANKED {
-    set_machine_tile(mch, 0);
-    set_sprite_tile(mch->oamtilenums[0], hitanimtmr == 10 ? 28 : 25);
-}
-
 
 
 void scorpboss_hit_anim() BANKED {
-    if(hitmchptr == fstmch) {
-        set_stinger_tiles();
+    if(hitmchptr == fsten) {
+        set_sprite_tile(fsten->oamtilenums[0], hitanimtmr == 0 ? 23 : 26);
+        set_sprite_tile(fsten->oamtilenums[2], hitanimtmr == 0 ? 24 : 27);
     } else {
-        set_pincer_tiles(hitmchptr);
+        set_sprite_tile(hitmchptr->oamtilenums[0], hitanimtmr == 0 ? 25 : 28);
     }
 }
-
 
 
 void scorpboss_loop() BANKED {
@@ -163,7 +145,7 @@ void scorpboss_loop() BANKED {
         }
 
         if(pattrn == 0) {  // Initial time for the player to adjust before boss attacks
-            if(cooldown_enemy(fstmch, 0)) {
+            if(cooldown_enemy(fsten, 0)) {
                 pattrn = 1;
             }
         }
@@ -180,27 +162,27 @@ void scorpboss_loop() BANKED {
                 pattrn++;
             }
         } else if(pattrn == 3) {  // Stinger pattern
-            if(is_alive(fstmch)) {
-                fstmch->groundflg = pl->groundflg;
-                if(fstmch->cyccount == 0) {
-                    move_machine(fstmch, -2, 2);
-                    if(fstmch->y == 114) { // Rewrite
-                        fstmch->cyccount++;
+            if(is_alive(fsten)) {
+                fsten->groundflg = pl->groundflg;
+                if(fsten->cyccount == 0) {
+                    move_machine(fsten, -2, 2);
+                    if(fsten->y == 114) { // Rewrite
+                        fsten->cyccount++;
                     }
-                } else if(fstmch->cyccount == 1) {
-                    move_machine(fstmch, -4, 0);
-                    if(fstmch->x < 16) {
-                        fstmch->cyccount++;
+                } else if(fsten->cyccount == 1) {
+                    move_machine(fsten, -4, 0);
+                    if(fsten->x < 16) {
+                        fsten->cyccount++;
                     }
-                } else if(fstmch->cyccount == 2) {
-                    move_machine(fstmch, 2, -2);
-                    if(fstmch->y == 96) {
-                        fstmch->cyccount++;
+                } else if(fsten->cyccount == 2) {
+                    move_machine(fsten, 2, -2);
+                    if(fsten->y == 96) {
+                        fsten->cyccount++;
                     }
                 } else {
-                    move_machine(fstmch, 4, 0);
-                    if(fstmch->x == 121) {
-                        fstmch->cyccount = 0;
+                    move_machine(fsten, 4, 0);
+                    if(fsten->x == 121) {
+                        fsten->cyccount = 0;
                         pattrn = 1;  // Reset boss pattern
                     }
                 }
@@ -212,13 +194,16 @@ void scorpboss_loop() BANKED {
         incr_cycle_counter();
         manage_projectiles();
         manage_machines(3);
-        check_boss_damaged();
+        if(hitmchptr != NULL) {
+            scorpboss_hit_anim();
+            update_hit_anim_counter();
+        }
 
-        if(bossclearflg == 0 && (!(is_alive(fstmch) || is_alive(machines + 2) || is_alive(machines + 3))) ) {
+        if(bossclearflg == 0 && (!(is_alive(fsten) || is_alive(machines + 2) || is_alive(machines + 3))) ) {
             bossclearflg = 1;
         }
 
-        if(bossclearflg == 1 && fstmch->explcount == 0 && machines[2].explcount == 0 && machines[3].explcount == 0 ) {
+        if(bossclearflg == 1 && fsten->explcount == 0 && machines[2].explcount == 0 && machines[3].explcount == 0 ) {
             if(lockmvmnt == 2) {    // Wait until the end of the jumping animation
                 anim_jump();
             } else if(pl->explcount == 0) {
@@ -246,9 +231,7 @@ void move_mech(Machine * mech, INT8 x, INT8 y) BANKED {
 }
 
 
-
 void init_mechboss(UINT8 x, UINT8 y) BANKED {
-    fstmch = machines + 1;
     for(i = 0; i < 6; i++) {    // Resetting sprite properties
         set_sprite_prop((crntenemy - 1)->oamtilenums[0] + i, 0);
     }
@@ -261,7 +244,6 @@ void init_mechboss(UINT8 x, UINT8 y) BANKED {
 }
 
 
-
 void flip_mech(Machine * mch) BANKED {
     UINT8 sprdir = get_sprite_prop(mch->oamtilenums[0]) == 32 ? 0 : 32; // Assign opposite sprite direction
     const UINT8 * mechtiles = sprdir == 32 ? mechbackwtiles : mechforwtiles;
@@ -271,7 +253,6 @@ void flip_mech(Machine * mch) BANKED {
         set_sprite_tile(mch->oamtilenums[0] + i, mch->oamtilenums[0] == 4 ? mechtiles[i] : mechtiles[i] + 19);
     }
 }
-
 
 
 void charge_gun(Machine * mch, UINT8 phase) BANKED {
@@ -293,23 +274,21 @@ void charge_gun(Machine * mch, UINT8 phase) BANKED {
 }
 
 
-
 void mech_hit_anim() BANKED {
     UINT8 sprdir = get_sprite_prop(hitmchptr->oamtilenums[0]);
     const UINT8 * mechtiles = sprdir == 32 ? mechbackwtiles : mechforwtiles;
     for(i = 0; i < 6; i++) {
-        set_sprite_tile(hitmchptr->oamtilenums[0] + i, hitanimtmr == 10 ? mechtiles[i] + 6 : (hitmchptr->oamtilenums[0] == 4 ? mechtiles[i] : mechtiles[i] + 19));
+        set_sprite_tile(hitmchptr->oamtilenums[0] + i, hitanimtmr == 0 ? (hitmchptr->oamtilenums[0] == 4 ? mechtiles[i] : mechtiles[i] + 19) : mechtiles[i] + 6);
     }
 }
 
 
-
 void mechboss_loop() BANKED {
-    flip_mech(fstmch);
+    flip_mech(fsten);
     do {    // Intro
-        move_mech(fstmch, -1, 0);
+        move_mech(fsten, -1, 0);
         wait_vbl_done();
-    } while(fstmch->x != 143);
+    } while(fsten->x != 143);
 
     UINT8 ptrn = 0, mechdir = 1;  // mechdir: 0 - left, 1 - right
     INT8 mechspx = 0, mechspy = 0;
@@ -319,13 +298,16 @@ void mechboss_loop() BANKED {
             break;  // Game over
         }
 
-        if(fstmch->shield < 36 && is_alive(pl)) { // Boss HP = 15 regular hits
+        if(fsten->shield < 36 && is_alive(pl)) { // Boss HP = 15 regular hits
             if(lockmvmnt == 2) {    // Wait until the end of the jumping animation
                 anim_jump();
             } else if(pl->explcount == 0) {
                 bossclearflg = 1;
                 hitanimtmr = 0;
-                check_boss_damaged();   // Making sure mech sprite is reset to normal before ending sequence
+                if(hitmchptr != NULL) {
+                    mech_hit_anim();
+                    update_hit_anim_counter();   // Making sure mech sprite is reset to normal before ending sequence
+                }
                 clear_all_projectiles();
                 return;  // Boss cleared
             }
@@ -335,89 +317,91 @@ void mechboss_loop() BANKED {
         incr_bkg_x_coords(4);
         incr_cycle_counter();
 
-        if(fstmch->x == 143 && fstmch->y == 64) {
+        if(fsten->x == 143 && fsten->y == 64) {
             if(ptrn == 0) {
-                charge_gun(fstmch, 0);
+                charge_gun(fsten, 0);
                 ptrn = 1;
             }
-            if(ptrn == 1 && cooldown_enemy(fstmch, 20)) {
-                charge_gun(fstmch, 1);
+            if(ptrn == 1 && cooldown_enemy(fsten, 20)) {
+                charge_gun(fsten, 1);
                 ptrn = 2;
-            } else if(ptrn == 2 && cooldown_enemy(fstmch, 20)) {
-                charge_gun(fstmch, 2);
+            } else if(ptrn == 2 && cooldown_enemy(fsten, 20)) {
+                charge_gun(fsten, 2);
                 ptrn = 3;
-            } else if(ptrn == 3 && cooldown_enemy(fstmch, 20)) {
-                charge_gun(fstmch, 3);
+            } else if(ptrn == 3 && cooldown_enemy(fsten, 20)) {
+                charge_gun(fsten, 3);
                 if(pl->x < 120) {
-                    fire_projctl_aimed(fstmch, 4, 4);
+                    fire_projctl_aimed(fsten, 4, 4);
                 } else {
-                    fire_projctl_aimed(fstmch, 4, 3);
+                    fire_projctl_aimed(fsten, 4, 3);
                 }
                 ptrn = 4;
-            } else if(ptrn == 4 && cooldown_enemy(fstmch, 50)) {
+            } else if(ptrn == 4 && cooldown_enemy(fsten, 50)) {
                 mechspy = -3;
                 mechdir = 0;
                 ptrn = 0;
             }
-        } else if(fstmch->x == 143 && fstmch->y == 46) {
+        } else if(fsten->x == 143 && fsten->y == 46) {
             mechspx = mechdir == 0 ? -3 : 0;
             mechspy = mechdir == 0 ? -1 : 3;
-            if(fstmch->gunoffx == fronthboffx) {
-                flip_mech(fstmch);
+            if(fsten->gunoffx == fronthboffx) {
+                flip_mech(fsten);
             } 
-        } else if(fstmch->x == 80 && fstmch->y == 25) {
+        } else if(fsten->x == 80 && fsten->y == 25) {
             ptrn = ptrn == 0 ? 1 : ptrn;
-            if(ptrn == 1 && cooldown_enemy(fstmch, 25)) {
-                if((pl->x > fstmch->x && fstmch->gunoffx == backhboffx) || (pl->x < fstmch->x && fstmch->gunoffx == fronthboffx)) {
-                    flip_mech(fstmch);  // Face towards the player
+            if(ptrn == 1 && cooldown_enemy(fsten, 25)) {
+                if((pl->x > fsten->x && fsten->gunoffx == backhboffx) || (pl->x < fsten->x && fsten->gunoffx == fronthboffx)) {
+                    flip_mech(fsten);  // Face towards the player
                 }
-                fire_projctl_aimed(fstmch, 1, 1);
+                fire_projctl_aimed(fsten, 1, 1);
                 ptrn = 2;
-            } else if(ptrn == 2 && cooldown_enemy(fstmch, 25)) {
+            } else if(ptrn == 2 && cooldown_enemy(fsten, 25)) {
                 mechspx = mechdir == 0 ? -3 : 3;
                 mechspy = 1;
                 ptrn = 0;
             }
-        } else if(fstmch->x == 17 && fstmch->y == 46) {
+        } else if(fsten->x == 17 && fsten->y == 46) {
             mechspx = mechdir == 0 ? 0 : 3;
             mechspy = mechdir == 0 ? 3 : -1;
-            if(fstmch->gunoffx == backhboffx) {
-                flip_mech(fstmch);
+            if(fsten->gunoffx == backhboffx) {
+                flip_mech(fsten);
             } 
-        } else if(fstmch->x == 17 && fstmch->y == 64) {
+        } else if(fsten->x == 17 && fsten->y == 64) {
             ptrn = ptrn == 0 ? 1 : ptrn;
-            if(ptrn == 1 && cooldown_enemy(fstmch, 10)) {
-                fire_projctl(fstmch, 1, 2, 0);
+            if(ptrn == 1 && cooldown_enemy(fsten, 10)) {
+                fire_projctl(fsten, 1, 2, 0);
                 ptrn = 2;
-            } else if(ptrn == 2 && cooldown_enemy(fstmch, 10)) {
-                fire_projctl(fstmch, 1, 2, 1);
+            } else if(ptrn == 2 && cooldown_enemy(fsten, 10)) {
+                fire_projctl(fsten, 1, 2, 1);
                 ptrn = 3;
-            } else if(ptrn == 3 && cooldown_enemy(fstmch, 10)) {
-                fire_projctl(fstmch, 1, 1, 2);
+            } else if(ptrn == 3 && cooldown_enemy(fsten, 10)) {
+                fire_projctl(fsten, 1, 1, 2);
                 ptrn = 4;
-            } else if(ptrn == 4 && cooldown_enemy(fstmch, 10)) {
-                fire_projctl(fstmch, 1, 0, 2);
+            } else if(ptrn == 4 && cooldown_enemy(fsten, 10)) {
+                fire_projctl(fsten, 1, 0, 2);
                 ptrn = 5;
-            } else if(ptrn == 5 && cooldown_enemy(fstmch, 20)) {
+            } else if(ptrn == 5 && cooldown_enemy(fsten, 20)) {
                 mechspy = -3;
                 mechdir = 1;
                 ptrn = 0;
             }
         }
         if(ptrn == 0) {
-            move_mech(fstmch, mechspx, mechspy);
+            move_mech(fsten, mechspx, mechspy);
         }
 
         
         manage_projectiles();
         manage_machines(1);
-        check_boss_damaged();
+        if(hitmchptr != NULL) {
+            mech_hit_anim();
+            update_hit_anim_counter();
+        }
         manage_sound_chnls();
         manage_player();
         wait_vbl_done();
     }
 }
-
 
 
 void mech_clear_sequence() BANKED {
@@ -427,8 +411,8 @@ void mech_clear_sequence() BANKED {
         build_boss_road();
         incr_bkg_x_coords(4);
     
-        move_mech(fstmch, 1, 0);
-        if(fstmch->x > 168) {
+        move_mech(fsten, 1, 0);
+        if(fsten->x > 168) {
             break;  // Boss has left the screen
         }
 
@@ -448,9 +432,7 @@ void move_jggr_in_distance(UINT8 posx) BANKED {
 }
 
 
-
 void init_jggrrboss() BANKED {
-    fstmch = machines + 1;
     jgrposx = 170;
     jgrbkgposx = 0;
     fill_bkg_rect(0, 1, 32, 4, 0);
@@ -461,39 +443,35 @@ void init_jggrrboss() BANKED {
     move_jggr_in_distance(248);
 
     init_machine_props(255, 56, jgrgunprops);
-    set_machine_tile(fstmch, 0);
+    set_machine_tile(fsten, 0);
 }
-
 
 
 void jggrboss_hit_anim() BANKED {
-    set_sprite_tile(hitmchptr->oamtilenums[0], hitanimtmr == 10 ? 45 : 44);
+    set_sprite_tile(hitmchptr->oamtilenums[0], hitanimtmr == 0 ? 44 : 45);
 }
-
 
 
 void open_hatch(UINT8 hatchnum) BANKED {
-    fstmch->gunoffx = jgrxoffsets[hatchnum];
-    fire_projctl(fstmch, 3, 0, 2);
+    fsten->gunoffx = jgrxoffsets[hatchnum];
+    fire_projctl(fsten, 3, 0, 2);
 }
 
 
-
 void jggrr_open_hatch_above_player() BANKED {
-    if(citr != 7 && pl->x < fstmch->x + jgrxoffsets[citr] && 
-    pl->x + 8 > fstmch->x + jgrxoffsets[citr]) {
+    if(citr != 7 && pl->x < fsten->x + jgrxoffsets[citr] && 
+    pl->x + 8 > fsten->x + jgrxoffsets[citr]) {
         if(citr == 5) { // Do this inside a function
-            fstmch->gunoffx = jgrgunprops[6];
-            fstmch->gunoffy = jgrgunprops[7];
-            fire_projctl(fstmch, 4, 0, 2);
+            fsten->gunoffx = jgrgunprops[6];
+            fsten->gunoffy = jgrgunprops[7];
+            fire_projctl(fsten, 4, 0, 2);
         } else {
-            fstmch->gunoffy = 4;
+            fsten->gunoffy = 4;
             open_hatch(citr);
         }
         citr++;
     }
 }
-
 
 
 void exec_bombing_ptrn(UINT8 ptrnnum) BANKED {
@@ -505,7 +483,6 @@ void exec_bombing_ptrn(UINT8 ptrnnum) BANKED {
 }
 
 
-
 void disable_boss_bkg_scroll() BANKED {
     __critical {
         cloudposx = sceneryposx = roadposx = jgrbkgposx = 0;
@@ -514,7 +491,6 @@ void disable_boss_bkg_scroll() BANKED {
         disable_interrupts();
     }
 }
-
 
 
 void jggrrboss_loop() BANKED {
@@ -530,11 +506,11 @@ void jggrrboss_loop() BANKED {
             break;  // Game over
         }
 
-        if(fstmch->shield < 1) {
+        if(fsten->shield < 1) {
             jgrspeed = 0;
             if(lockmvmnt == 2) {    // Wait until the end of the jumping animation
                 anim_jump();
-            } else if(pl->explcount == 0 && fstmch->explcount == 0) {
+            } else if(pl->explcount == 0 && fsten->explcount == 0) {
                 bossclearflg = 1;
                 clear_all_projectiles();
                 return;  // Boss cleared
@@ -542,7 +518,7 @@ void jggrrboss_loop() BANKED {
         }
 
         jgrposx -= jgrspeed;
-        move_machine(fstmch, -jgrspeed, 0);
+        move_machine(fsten, -jgrspeed, 0);
 
         if(pattrn == 0) {  // Moving
             jgrspeed = 1;
@@ -551,7 +527,7 @@ void jggrrboss_loop() BANKED {
             }
             if(jgrposx == 168) {
                 set_bkg_tiles(20, 1, 8, 5, juggernautbossmap1);
-                set_sprite_tile(fstmch->oamtilenums[0], 44);
+                set_sprite_tile(fsten->oamtilenums[0], 44);
                 citr = 0;
             } else if(jgrposx == 104) {
                 set_bkg_tiles(28, 1, 9, 5, juggernautbossmap2);
@@ -563,20 +539,20 @@ void jggrrboss_loop() BANKED {
             }
         } else if(pattrn == 1) {
             jgrspeed = 0;
-            if(cooldown_enemy(fstmch, 40)) {
-                if(pl->x + pl->width > fstmch->x) {  // Change bombing pattern based on player location
-                    fstmch->gunoffx = jgrgunprops[6];
-                    fstmch->gunoffy = jgrgunprops[7];
+            if(cooldown_enemy(fsten, 40)) {
+                if(pl->x + pl->width > fsten->x) {  // Change bombing pattern based on player location
+                    fsten->gunoffx = jgrgunprops[6];
+                    fsten->gunoffy = jgrgunprops[7];
                     if(pl->x == 140 && pl->y == 127) {
-                        fire_projctl(fstmch, 4, 4, 5);   // Edge case
+                        fire_projctl(fsten, 4, 4, 5);   // Edge case
                     } else {
-                        fire_projctl_aimed(fstmch, 4, 5);
+                        fire_projctl_aimed(fsten, 4, 5);
                     }
-                    fstmch->gunoffx = jgrxoffsets[6];
-                    fstmch->gunoffy = 4;
-                    fire_projctl(fstmch, 3, 0, 2);
+                    fsten->gunoffx = jgrxoffsets[6];
+                    fsten->gunoffy = 4;
+                    fire_projctl(fsten, 3, 0, 2);
                 } else {
-                    fstmch->gunoffy = 4;
+                    fsten->gunoffy = 4;
                     exec_bombing_ptrn(attkcnt - 1);
                 }
                 attkcnt += bombatkdir;
@@ -602,8 +578,8 @@ void jggrrboss_loop() BANKED {
             }
             if(jgrposx == 127) {
                 fill_bkg_rect(28, 1, 9, 5, 0);
-                set_sprite_tile(fstmch->oamtilenums[0], 127);
-                move_machine(fstmch, 0, -36);
+                set_sprite_tile(fsten->oamtilenums[0], 127);
+                move_machine(fsten, 0, -36);
                 pattrn = 3;
             }
         } else if(pattrn == 3) {      // Flying backwards in the distance
@@ -611,7 +587,7 @@ void jggrrboss_loop() BANKED {
                 move_jggr_in_distance(shadow_OAM[4].x + 3);
             } else if(jgrposx == 180) {
                 move_jggr_in_distance(248);
-                move_machine(fstmch, 0, 36);
+                move_machine(fsten, 0, 36);
                 attkcnt = attkcnt == 127 ? 0 : 127;   // Pattern for next bombing
                 pattrn = 0;
             }
@@ -628,7 +604,10 @@ void jggrrboss_loop() BANKED {
 
         manage_projectiles();
         manage_machines(1);
-        check_boss_damaged();
+        if(hitmchptr != NULL) {
+            jggrboss_hit_anim();
+            update_hit_anim_counter();
+        }
         manage_sound_chnls();
         manage_player();
         wait_vbl_done();
@@ -643,10 +622,9 @@ void jggrrboss_loop() BANKED {
 void init_mechbrosboss() BANKED {
     init_mechboss(249, 64);
     init_mechboss(167, 64);
-    fstmch = machines + 1;
+    fsten = machines + 1;
     flip_mech(machines + 2);
 }
-
 
 
 void destroy_mech(Machine * mech) BANKED {
@@ -656,7 +634,6 @@ void destroy_mech(Machine * mech) BANKED {
     }
     mech->explcount = mech->cyccount = mech->x = mech->y = mech->shield = 0;
 }
-
 
 
 UINT8 explode_mech(Machine * mch, Machine ** prevexpl, UINT8 explleft) BANKED {
@@ -672,13 +649,11 @@ UINT8 explode_mech(Machine * mch, Machine ** prevexpl, UINT8 explleft) BANKED {
 }
 
 
-
 void move_active_mech(Machine * mech, INT8 x, INT8 y) BANKED {
     if(mech->shield > 35) {
         move_mech(mech, x, y);
     }
 }
-
 
 
 UINT8 fire_charged_aimed_shot(Machine * mech, UINT8 initnum, UINT8 crntpatnum) BANKED {
@@ -693,7 +668,6 @@ UINT8 fire_charged_aimed_shot(Machine * mech, UINT8 initnum, UINT8 crntpatnum) B
 }
 
 
-
 void stop_charging() BANKED {
     if(shadow_OAM[chargeidx].y != 0) {
         move_sprite(chargeidx, 0, 0);
@@ -701,83 +675,81 @@ void stop_charging() BANKED {
 }
 
 
-
 UINT8 exec_limited_pattern(UINT8 crntptrn) BANKED {
     if(crntptrn > 39 && crntptrn < 45) {
-        return fire_charged_aimed_shot(fstmch, 40, crntptrn);
+        return fire_charged_aimed_shot(fsten, 40, crntptrn);
     } else if(crntptrn == 45) {    // Start of patterns for 1 mech standing
-        move_active_mech(fstmch, 4, -4);
-        if(fstmch->x == 56 && fstmch->y == 24) {
+        move_active_mech(fsten, 4, -4);
+        if(fsten->x == 56 && fsten->y == 24) {
             return 46;
         }
     } else if(crntptrn == 46) {
-        move_active_mech(fstmch, 4, 0);
-        if(fstmch->x == 84) {
-            flip_mech(fstmch);
+        move_active_mech(fsten, 4, 0);
+        if(fsten->x == 84) {
+            flip_mech(fsten);
             return 47;
         }
-    } else if(crntptrn == 47 && cooldown_enemy(fstmch, 10)) {
-        fire_projctl(fstmch, 1, -2, 3);
+    } else if(crntptrn == 47 && cooldown_enemy(fsten, 10)) {
+        fire_projctl(fsten, 1, -2, 3);
         return 48;
-    } else if(crntptrn == 48 && cooldown_enemy(fstmch, 10)) {
-        fire_projctl(fstmch, 1, -1, 3);
-        flip_mech(fstmch);
+    } else if(crntptrn == 48 && cooldown_enemy(fsten, 10)) {
+        fire_projctl(fsten, 1, -1, 3);
+        flip_mech(fsten);
         return 49;
-    } else if(crntptrn == 49 && cooldown_enemy(fstmch, 10)) {
-        fire_projctl(fstmch, 1, 1, 3);
+    } else if(crntptrn == 49 && cooldown_enemy(fsten, 10)) {
+        fire_projctl(fsten, 1, 1, 3);
         return 50;
-    } else if(crntptrn == 50 && cooldown_enemy(fstmch, 10)) {
-        fire_projctl(fstmch, 1, 2, 3);
-        flip_mech(fstmch);
+    } else if(crntptrn == 50 && cooldown_enemy(fsten, 10)) {
+        fire_projctl(fsten, 1, 2, 3);
+        flip_mech(fsten);
         return 51;
     } else if(crntptrn == 51) {
-        move_active_mech(fstmch, 4, 0);
-        if(fstmch->x == 104) {
+        move_active_mech(fsten, 4, 0);
+        if(fsten->x == 104) {
             return 52;
         }
     } else if(crntptrn == 52) {
-        move_active_mech(fstmch, 4, 4);
-        if(fstmch->x == 144 && fstmch->y == 64) {
+        move_active_mech(fsten, 4, 4);
+        if(fsten->x == 144 && fsten->y == 64) {
             return 53;
         }
     } else if(crntptrn > 52 && crntptrn < 58) {
-        return fire_charged_aimed_shot(fstmch, 53, crntptrn);
+        return fire_charged_aimed_shot(fsten, 53, crntptrn);
     } else if(crntptrn == 58) {
-        move_active_mech(fstmch, -4, -4);
-        if(fstmch->x == 104 && fstmch->y == 24) {
+        move_active_mech(fsten, -4, -4);
+        if(fsten->x == 104 && fsten->y == 24) {
             return 59;
         }
     } else if(crntptrn == 59) {
-        move_active_mech(fstmch, -4, 0);
-        if(fstmch->x == 84) {
-            flip_mech(fstmch);
+        move_active_mech(fsten, -4, 0);
+        if(fsten->x == 84) {
+            flip_mech(fsten);
             return 60;
         }
-    } else if(crntptrn == 60 && cooldown_enemy(fstmch, 10)) {
-        fire_projctl(fstmch, 1, 2, 3);
-        flip_mech(fstmch);
+    } else if(crntptrn == 60 && cooldown_enemy(fsten, 10)) {
+        fire_projctl(fsten, 1, 2, 3);
+        flip_mech(fsten);
         return 61;
-    } else if(crntptrn == 61 && cooldown_enemy(fstmch, 10)) {
-        fire_projctl(fstmch, 1, 0, 3);
+    } else if(crntptrn == 61 && cooldown_enemy(fsten, 10)) {
+        fire_projctl(fsten, 1, 0, 3);
         return 62;
-    } else if(crntptrn == 62 && cooldown_enemy(fstmch, 10)) {
-        fire_projctl(fstmch, 1, -2, 3);
+    } else if(crntptrn == 62 && cooldown_enemy(fsten, 10)) {
+        fire_projctl(fsten, 1, -2, 3);
         return 63;
     } else if(crntptrn == 63) {
-        move_active_mech(fstmch, -4, 0);
-        if(fstmch->x == 56) {
-            flip_mech(fstmch);
+        move_active_mech(fsten, -4, 0);
+        if(fsten->x == 56) {
+            flip_mech(fsten);
             return 64;
         }
     } else if(crntptrn == 64) {
-        move_active_mech(fstmch, -4, 4);
-        if(fstmch->x == 16 && fstmch->y == 64) {
+        move_active_mech(fsten, -4, 4);
+        if(fsten->x == 16 && fsten->y == 64) {
             return 40;
         }
     }
     return crntptrn;
 }
-
 
 
 UINT8 exec_mechbros_pattern(Machine * mech1, Machine * mech2, UINT8 ptrnnum) BANKED {
@@ -870,7 +842,6 @@ UINT8 exec_mechbros_pattern(Machine * mech1, Machine * mech2, UINT8 ptrnnum) BAN
 }
 
 
-
 void readjust_position(Machine * mech) BANKED {
     if(mech->y != 24) {
         move_mech(mech, 0, -2);
@@ -887,13 +858,12 @@ void mechbrosboss_loop() BANKED {
     UINT8 pattrn = 0, swappattrns = 0;
     
     do {    // Intro
-        move_mech(fstmch, 1, 0);
+        move_mech(fsten, 1, 0);
         move_mech(sndmch, -1, 0);
         wait_vbl_done();
-    } while(fstmch->x != 16 && sndmch->x != 144);
+    } while(fsten->x != 16 && sndmch->x != 144);
 
-    Machine * fstprevexpl = fstmch, * sndprevexpl = sndmch;
-
+    Machine * fstprevexpl = fsten, * sndprevexpl = sndmch;
     while(1) {
 
         build_boss_road();
@@ -906,31 +876,33 @@ void mechbrosboss_loop() BANKED {
 
         if(fstexplcnt == 255 || sndexplcnt == 255) {    // At least 1 mech is destroyed
             if(pattrn == 35) {
-                if(fstmch->shield < 36) {
-                    fstmch = sndmch;    // Mech 1 has been destroyed
+                if(fsten->shield < 36) {
+                    fsten = sndmch;    // Mech 1 has been destroyed
                 }
-                fstmch->cyccount = 0;   // Resetting cycle if mech is stuck in  a cooldown period
+                fsten->cyccount = 0;   // Resetting cycle if mech is stuck in  a cooldown period
                 pattrn = 63;  // Switching patterns for 1 active mech
             }
-
             
-            if(fstmch->shield < 36) {
+            if(fsten->shield < 36) {
                 if(lockmvmnt == 2) {    // Wait until the end of the jumping animation
                     anim_jump();
                 } else if(pl->explcount == 0) {
                     stop_charging();
                     bossclearflg = 1;
                     hitanimtmr = 0;
-                    check_boss_damaged();   // Making sure mech sprite is reset to normal before ending sequence
-                    hitmchptr = fstmch; // Used to refer to the correct mech during explosion
+                    if(hitmchptr != NULL) {
+                        mech_hit_anim();
+                        update_hit_anim_counter();   // Making sure mech sprite is reset to normal before ending sequence
+                    }
+                    hitmchptr = fsten; // Used to refer to the correct mech during explosion
                     clear_all_projectiles();
                     return;
                 }
             }
         }
 
-        if(fstmch->shield < 36 && fstexplcnt != 255) {    // Explode mech 1
-            fstexplcnt = explode_mech(fstmch, &fstprevexpl, fstexplcnt);
+        if(fsten->shield < 36 && fstexplcnt != 255) {    // Explode mech 1
+            fstexplcnt = explode_mech(fsten, &fstprevexpl, fstexplcnt);
             if(fstprevexpl->explcount == 1 && fstexplcnt == 3 && sndexplcnt != 255) {
                 stop_charging();
                 if(get_sprite_prop(sndmch->oamtilenums[0]) == 0) {
@@ -947,27 +919,27 @@ void mechbrosboss_loop() BANKED {
             sndexplcnt = explode_mech(sndmch, &sndprevexpl, sndexplcnt);
             if(sndprevexpl->explcount == 1 && sndexplcnt == 3 && fstexplcnt != 255) {
                 stop_charging();
-                if(get_sprite_prop(fstmch->oamtilenums[0]) == 0) {
-                    flip_mech(fstmch);
+                if(get_sprite_prop(fsten->oamtilenums[0]) == 0) {
+                    flip_mech(fsten);
                 }
                 pattrn = 35;
             }
             if(pattrn == 35) {
-                readjust_position(fstmch);
+                readjust_position(fsten);
             }
         }
 
         if(pattrn < 35) {   // Patterns for both mechs active
             if(sndmch->x == 16) {
                 swappattrns = 1;
-            } else if(fstmch->x == 16) {
+            } else if(fsten->x == 16) {
                 swappattrns = 0;
             }
 
             if(swappattrns == 0) {
-                pattrn = exec_mechbros_pattern(fstmch, sndmch, pattrn);
+                pattrn = exec_mechbros_pattern(fsten, sndmch, pattrn);
             } else {
-                pattrn = exec_mechbros_pattern(sndmch, fstmch, pattrn);
+                pattrn = exec_mechbros_pattern(sndmch, fsten, pattrn);
             }
         } else {
             pattrn = exec_limited_pattern(pattrn);
@@ -975,7 +947,11 @@ void mechbrosboss_loop() BANKED {
 
         manage_projectiles();
         manage_machines(enlimit);
-        check_boss_damaged();
+        if(hitmchptr != NULL) {
+            mech_hit_anim();
+            mech_hit_anim();
+        }
+        update_hit_anim_counter();
         manage_sound_chnls();
         manage_player();
         wait_vbl_done();
