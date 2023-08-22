@@ -1205,6 +1205,8 @@ void hud_init() NONBANKED {
     SWITCH_ROM_MBC1(2);
     set_win_data(0, 20, hudtiles);
     set_win_tiles(0, 0, 18, 1, hudmap);
+    hud_upd_lives();
+    hud_draw_gun();
     SWITCH_ROM_MBC1(prevbank);
     move_win(15, 134);
     SHOW_WIN;
@@ -1255,13 +1257,13 @@ void init_game() NONBANKED {
     plspeed = plgroundspeed;
     pllives = 3;
     plgun = 0;
-    iframecnt = 0;
     numkills = 0;
 }
 
 
 void init_stage(UBYTE hasscroll) NONBANKED {
     roadposx = sceneryposx = cloudposx = iframeflg = 0;
+    iframecnt = iframeflg = 0;
     oamidx = 0;
     prjcnt = abtncnt = 0;
     crntpjct = projectiles;
@@ -1315,8 +1317,6 @@ void init_stage(UBYTE hasscroll) NONBANKED {
 
     hud_init();
     SWITCH_ROM_MBC1(crntstage->stagebank);
-    hud_upd_lives();
-    hud_draw_gun();
 }
 
 
@@ -1635,7 +1635,6 @@ void init_boss(UINT8 stnum) NONBANKED {
             init_defsysboss();
             break;
         case 6:
-            //play_pre_encore_cutscene();
             init_encore_boss();
             break;
     }
@@ -1709,7 +1708,6 @@ void boss_clear_sequence(UINT8 stnum) NONBANKED {
             anim_explode_boss(defsysbossexpl, 6, 0, 0, 0);
             defsys_clear_sequence();
             break;
-            
     }
     
     prevbank = _current_bank;
@@ -1744,6 +1742,7 @@ void play_boss() NONBANKED {
     if(bossclearflg == 1) {
         stop_song();
         unmute_all_channels();
+        set_machine_sprite_tiles(pl, 1);    // Resetting player sprite in case of blinking during iframes
         boss_clear_sequence(stagenum);
     }
     anim_blackout();
@@ -1817,8 +1816,7 @@ void main() NONBANKED {
         }*/
         crntstage = stages + stagenum;
         init_game();
-        stageclearflg = stagenum < 6 ? 0 : 1;
-        bossclearflg = 0;
+        stageclearflg = bossclearflg = 0;
         while(1) {
             unmute_all_channels();
             if(pllives == 0) {
@@ -1832,14 +1830,19 @@ void main() NONBANKED {
                 }
             } else if(stageclearflg == 0) {
                 stage_intro_screen(stagenum);
-                play_stage();
+                if(stagenum != 6) {
+                    play_stage();
+                } else {
+                    init_stage(1);
+                    play_pre_encore_cutscene();
+                    stageclearflg = 1;
+                }
             } else if(bossclearflg == 0) {
                 play_boss();
             } else {    // Current stage and boss both cleared
                 stagenum++;
                 crntstage++;    // Next stage data
-                bossclearflg = 0;
-                stageclearflg = stagenum == 6 ? 1 : 0;
+                stageclearflg = bossclearflg = 0;
                 if(stagenum == 7) { // Has passed currently available levels
                     demo_end_screen();
                     init_game();

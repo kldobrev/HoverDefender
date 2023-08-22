@@ -1,8 +1,8 @@
 /*
 
- MISCTILES.H
+ MAPFRAMETILES.C
 
- Include File.
+ Tile Source File.
 
  Info:
   Form                 : All tiles as one unit.
@@ -10,7 +10,7 @@
   Compression          : None.
   Counter              : None.
   Tile size            : 8 x 8
-  Tiles                : 0 to 4
+  Tiles                : 0 to 1
 
   Palette colors       : None.
   SGB Palette          : None.
@@ -22,14 +22,13 @@
 
 */
 
-#ifndef __misctiles_h_INCLUDE
-#define __misctiles_h_INCLUDE
-
-/* Bank of tiles. */
-#define misctilesBank 0
 /* Start of tile array. */
-extern const unsigned char misctiles[];
+const unsigned char mapframetiles[] =
+{
+  0xFF,0xFF,0x00,0x00,0x00,0x00,0x00,0x00,
+  0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+  0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+  0x00,0x00,0x00,0x00,0x00,0x00,0xFF,0xFF
+};
 
-#endif
-
-/* End of MISCTILES.H */
+/* End of MAPFRAMETILES.C */

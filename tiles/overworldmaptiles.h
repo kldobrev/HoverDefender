@@ -1,6 +1,6 @@
 /*
 
- MISCTILES.H
+ OVERWORLDMAPTILES.H
 
  Include File.
 
@@ -10,7 +10,7 @@
   Compression          : None.
   Counter              : None.
   Tile size            : 8 x 8
-  Tiles                : 0 to 4
+  Tiles                : 0 to 97
 
   Palette colors       : None.
   SGB Palette          : None.
@@ -22,14 +22,14 @@
 
 */
 
-#ifndef __misctiles_h_INCLUDE
-#define __misctiles_h_INCLUDE
+#ifndef __overworldmaptiles_h_INCLUDE
+#define __overworldmaptiles_h_INCLUDE
 
 /* Bank of tiles. */
-#define misctilesBank 0
+#define overworldmaptilesBank 0
 /* Start of tile array. */
-extern const unsigned char misctiles[];
+extern const unsigned char overworldmaptiles[];
 
 #endif
 
-/* End of MISCTILES.H */
+/* End of OVERWORLDMAPTILES.H */

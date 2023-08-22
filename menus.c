@@ -3,8 +3,13 @@
 #include "tiles/titlelogotiles.c"
 #include "tiles/fonttiles.c"
 #include "tiles/passwscreentiles.c"
+#include "tiles/overworldmaptiles.c"
+#include "tiles/mapframetiles.c"
+#include "tiles/airbasemaptiles.c"
 #include "maps/titlelogomap.c"
 #include "maps/passwscreenmap.c"
+#include "maps/overworldmap.c"
+#include "maps/airbasemap.c"
 #include "hUGEDriver.h"
 
 
@@ -25,8 +30,10 @@ const UINT8 mainoptsy[] = {88, 104, 120};
 const UINT8 passconfoptsx[] = {19, 83};
 const UINT8 passconfy = 128, blinkanimdur = 3;
 const UINT8 wrongpassind = 99;  // Incorrect password indicator
+const UINT8 introscrdurr = 200;
 const UINT8 passwords[][4] = {{11, 12, 13, 14}, {30, 11, 27, 23}, {33, 16, 24, 13}, {15, 25, 21, 28}, 
-{28, 32, 13, 36}, {32, 20, 14, 35}, {31, 28, 30, 18}};
+{28, 32, 13, 36}, {32, 20, 14, 35}, {18, 33, 35, 28}};
+const UINT8 mapcrsrcoords[7][2] = {{23, 115}, {76, 76}, {127, 106}, {17, 86}, {54, 84}, {71, 93}, {93, 95}};
 UINT8 passidx, passentry[4], menuanimcnt;
 
 typedef struct Passcursor {
@@ -74,7 +81,7 @@ void init_common_menu_props() BANKED {
     set_bkg_data(0, 1, blanktile);
     set_bkg_data(1, 41, fonttiles);
     fill_bkg_rect(0, 0, 32, 18, 0x00);
-    set_sprite_data(1, 3, misctiles);
+    set_sprite_data(1, 5, misctiles);
     set_sprite_tile(0, 1);
 }
 
@@ -135,12 +142,32 @@ void get_menu_pl_input(UINT8 * entries, UINT8 numentries) BANKED {
 
 void stage_intro_screen(UINT8 stnum) BANKED {
     init_common_menu_props();
+    set_sprite_tile(0, 4);
+    set_bkg_data(43, 2, mapframetiles);
     const unsigned char stagesign[] = {0x1D, 0x1E, 0x0B, 0x11, 0x0F};
-    set_bkg_tiles(6, 4, 5, 1, stagesign);
-    set_bkg_tile_xy(12, 4, stnum + 2);
-    set_bkg_tiles((20 - stnamelengths[stnum]) / 2, 7, stnamelengths[stnum], 1, *(stagenames + stnum));
+    if(stnum < 3) {
+        set_bkg_data(45, 98, overworldmaptiles);
+        set_bkg_tiles(0, 3, 20, 11, overworldmap);
+    } else {
+        set_bkg_data(45, 116, airbasemaptiles);
+        set_bkg_tiles(0, 3, 20, 11, airbasemap);
+    }
+    set_bkg_tiles(6, 1, 5, 1, stagesign);
+    set_bkg_tile_xy(12, 1, stnum + 2);
+    set_bkg_tiles((20 - stnamelengths[stnum]) / 2, 15, stnamelengths[stnum], 1, *(stagenames + stnum));
+    fill_bkg_rect(0, 2, 20, 1, 44);
+    fill_bkg_rect(0, 14, 20, 1, 43);
+    move_sprite(0, mapcrsrcoords[stnum][0], mapcrsrcoords[stnum][1]);
     anim_reverse_blackout();
-    custom_delay(70);
+    for(i =  0; i != introscrdurr; i++) {
+        if(i % 16 == 0) {
+            set_sprite_tile(0, get_sprite_tile(0) == 4 ? 5 : 4);
+        }
+        if(joypad() & J_START) {
+            break;
+        }
+        wait_vbl_done();
+    }
     anim_blackout();
 }
 

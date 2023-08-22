@@ -1,6 +1,6 @@
 /*
 
- MISCTILES.H
+ AIRBASEMAPTILES.H
 
  Include File.
 
@@ -10,7 +10,7 @@
   Compression          : None.
   Counter              : None.
   Tile size            : 8 x 8
-  Tiles                : 0 to 4
+  Tiles                : 1 to 116
 
   Palette colors       : None.
   SGB Palette          : None.
@@ -22,14 +22,14 @@
 
 */
 
-#ifndef __misctiles_h_INCLUDE
-#define __misctiles_h_INCLUDE
+#ifndef __airbasemaptiles_h_INCLUDE
+#define __airbasemaptiles_h_INCLUDE
 
 /* Bank of tiles. */
-#define misctilesBank 0
+#define airbasemaptilesBank 0
 /* Start of tile array. */
-extern const unsigned char misctiles[];
+extern const unsigned char airbasemaptiles[];
 
 #endif
 
-/* End of MISCTILES.H */
+/* End of AIRBASEMAPTILES.H */

@@ -52,7 +52,6 @@ void anim_jump() NONBANKED;
 void clear_all_projectiles() NONBANKED;
 void manage_sound_chnls() NONBANKED;
 void manage_player() NONBANKED;
-void init_stage(UBYTE hasscenery, UBYTE hasscroll) NONBANKED;
 void incr_oam_sprite_tile_idx(INT8 steps) NONBANKED;
 void move_machine(Machine * mch, INT8 speedx, INT8 speedy) NONBANKED;
 void incr_bkg_x_coords(UINT8 roadsp) NONBANKED;
@@ -113,15 +112,11 @@ void check_encore_boss_bkg_collision() BANKED {
 // FINAL BOSS FUNCTIONS
 
 void play_pre_encore_cutscene() BANKED {
-    STAT_REG = 0x45;
-    LYC_REG = 0x00;
-    add_LCD(scroll_stage_bkg_ind);    
-    enable_interrupts();
-    set_interrupts(VBL_IFLAG | LCD_IFLAG);
     set_bkg_data(41, 64, encoretiles1);
     for(i = 0; i != 32; i += 8) {
         set_bkg_tiles(i, 0, 8, 10, encorepremap);
     }
+    HIDE_WIN;
     anim_reverse_blackout();
     anim_stage_end();
     anim_blackout();
@@ -512,8 +507,7 @@ void ultgen_boss_loop() BANKED {
                 move_ultgen(-5, 0);
                 if(fsten->x == 229) {  // x: 229, y: 130
                     move_ultgen(125, 93);  // x: 98, y: 223
-                    set_ultgen_tiles(0);
-                    turn_ultgen(0, 1);
+                    set_ultgen_default();
                     pattrnrep = 0;
                     pattrn = 13;
                 }
