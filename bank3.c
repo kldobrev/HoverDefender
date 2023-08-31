@@ -50,6 +50,7 @@ void clear_all_projectiles() NONBANKED;
 void manage_sound_chnls() NONBANKED;
 void manage_player() NONBANKED;
 void init_stage(UBYTE hasscenery, UBYTE hasscroll) NONBANKED;
+void set_machine_sprite_tiles(Machine * mch, UINT8 fsttile) NONBANKED;
 void init_scorpboss_gun(UINT8 x, UINT8 y) BANKED;
 void init_scorpboss() BANKED;
 void scorpboss_loop() BANKED;
@@ -208,6 +209,7 @@ void scorpboss_loop() BANKED {
                 anim_jump();
             } else if(pl->explcount == 0) {
                 clear_all_projectiles();
+                set_machine_sprite_tiles(pl, 1);
                 break;  // Boss cleared
             }
         }
@@ -292,6 +294,7 @@ void mechboss_loop() BANKED {
 
     UINT8 ptrn = 0, mechdir = 1;  // mechdir: 0 - left, 1 - right
     INT8 mechspx = 0, mechspy = 0;
+
     while(1) {
 
         if((!is_alive(pl)) && pl->explcount == 0) {
@@ -309,6 +312,7 @@ void mechboss_loop() BANKED {
                     update_hit_anim_counter();   // Making sure mech sprite is reset to normal before ending sequence
                 }
                 clear_all_projectiles();
+                set_machine_sprite_tiles(pl, 1);
                 return;  // Boss cleared
             }
         }
@@ -513,6 +517,7 @@ void jggrrboss_loop() BANKED {
             } else if(pl->explcount == 0 && fsten->explcount == 0) {
                 bossclearflg = 1;
                 clear_all_projectiles();
+                set_machine_sprite_tiles(pl, 1);
                 return;  // Boss cleared
             }
         }
@@ -896,6 +901,7 @@ void mechbrosboss_loop() BANKED {
                     }
                     hitmchptr = fsten; // Used to refer to the correct mech during explosion
                     clear_all_projectiles();
+                    set_machine_sprite_tiles(pl, 1);
                     return;
                 }
             }
@@ -949,9 +955,8 @@ void mechbrosboss_loop() BANKED {
         manage_machines(enlimit);
         if(hitmchptr != NULL) {
             mech_hit_anim();
-            mech_hit_anim();
+            update_hit_anim_counter();
         }
-        update_hit_anim_counter();
         manage_sound_chnls();
         manage_player();
         wait_vbl_done();

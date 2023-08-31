@@ -62,6 +62,7 @@ void scroll_boss_bkg() NONBANKED;
 Machine * create_explosion(UINT8 x, UINT8 y) NONBANKED;
 void mute_music_pl_chnl(UINT8 chnum) NONBANKED;
 void init_stage_road() NONBANKED;
+void set_machine_sprite_tiles(Machine * mch, UINT8 fsttile) NONBANKED;
 void set_currnt_gun(UINT8 gunidx, const INT8 gunsoffs[][2]) BANKED;
 void set_genrl_tiles(UINT8 tileidx) BANKED;
 void se_teleport(UINT8 vol) BANKED;
@@ -290,6 +291,7 @@ void genrlboss_loop() BANKED {
                     update_hit_anim_counter();   // Making sure mech sprite is reset to normal before ending sequence
                 }
                 clear_all_projectiles();
+                set_machine_sprite_tiles(pl, 1);
                 return;  // Boss cleared
             }
         }
@@ -392,6 +394,7 @@ void defsysboss_loop() BANKED {
                     update_hit_anim_counter();
                 }
                 clear_all_projectiles();
+                set_machine_sprite_tiles(pl, 1);
                 return;  // Boss cleared
             }
         }

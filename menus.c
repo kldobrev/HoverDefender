@@ -54,10 +54,9 @@ void main_menu() BANKED;
 void get_menu_pl_input(UINT8 * entries, UINT8 numentries) BANKED;
 void stage_intro_screen(UINT8 stnum) BANKED;
 void game_over_menu(UINT8 stnum) BANKED;
-void demo_end_screen() BANKED;
 UINT8 password_menu() BANKED;
 void init_game() NONBANKED;
-void reset_all_sprites() NONBANKED;
+void reset_sprites(UINT8 fstsprite, UINT8 lastsprite) NONBANKED;
 void init_passcursor(Passcursor * cr, UINT8 x, UINT8 y) BANKED;
 void move_passcursor(Passcursor * cr, INT8 dirctx, INT8 dircty) BANKED;
 void update_pass_field() BANKED;
@@ -111,13 +110,13 @@ void main_menu() BANKED {
     }
     stop_song();
     se_choose_entry();
-    reset_all_sprites();
+    reset_sprites(0, 40);
     anim_blackout();
 }
 
 
 void get_menu_pl_input(UINT8 * entries, UINT8 numentries) BANKED {
-    menuidx = 0; // First option set be default
+    menuidx = 0; // First option set by default
     while(1) {
         if(joypad() & (J_DOWN | J_SELECT)) {
             menuidx = menuidx + 1 == numentries ? 0 : menuidx + 1;
@@ -188,23 +187,7 @@ void game_over_menu(UINT8 stnum) BANKED {
     play_song(&gameovertheme, 1);
     anim_reverse_blackout();
     get_menu_pl_input(gameoveroptsy, 2);
-    reset_all_sprites();
-    anim_blackout();
-}
-
-
-void demo_end_screen() BANKED {    // DEMO CODE
-    init_common_menu_props();
-    unsigned char tnx1sign[] = {0x1E, 0x12, 0x0B, 0x18, 0x15, 0x00, 0x23, 0x19, 0x1F, 0x00, 0x10, 0x19, 0x1C};
-    unsigned char tnx2sign[] =  {0x1A, 0x16, 0x0B, 0x23, 0x13, 0x18, 0x11, 0x27};
-    unsigned char tnx3sign[] = {0x17, 0x19, 0x1C, 0x0F, 0x00, 0x1C, 0x19, 0x0B, 0x0E, 0x00, 0x0B, 0x0D, 0x1E, 0x13, 0x19, 0x18};
-    unsigned char tnx4sign[] = {0x0D, 0x19, 0x17, 0x13, 0x18, 0x11, 0x00, 0x1D, 0x19, 0x19, 0x18, 0x27};
-    set_bkg_tiles(3, 3, 13, 1, tnx1sign);
-    set_bkg_tiles(6, 5, 8, 1, tnx2sign);
-    set_bkg_tiles(2, 11, 16, 1, tnx3sign);
-    set_bkg_tiles(4, 13, 12, 1, tnx4sign);
-    anim_reverse_blackout();
-    waitpad(J_START);
+    reset_sprites(0, 40);
     anim_blackout();
 }
 
@@ -387,7 +370,7 @@ UINT8 password_menu() {
     }
 
     se_choose_entry();
-    reset_all_sprites();
+    reset_sprites(0, 40);
     anim_blackout();
     move_bkg(0, 0);
     return matchedpassstage;
