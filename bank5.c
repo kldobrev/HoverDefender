@@ -338,20 +338,20 @@ void genrl_clear_sequence() BANKED {
 // BOSS 6 FUNCTIONS
 
 void init_defsysboss() BANKED {
-    set_bkg_data(128, 55, defsysbosstiles);
+    set_bkg_data(160, 55, defsysbosstiles);
     move_bkg(128, 0);
-    fill_bkg_rect(21, 0, 9, 1, 62);
-    fill_bkg_rect(21, 1, 9, 1, 63);
-    fill_bkg_rect(25, 2, 8, 8, 61);
-    set_bkg_tile_xy(25, 2, 82);
-    set_bkg_tile_xy(26, 2, 83);
-    set_bkg_tile_xy(27, 2, 84);
+    fill_bkg_rect(21, 0, 9, 1, 94);
+    fill_bkg_rect(21, 1, 9, 1, 95);
+    fill_bkg_rect(25, 2, 8, 8, 93);
+    set_bkg_tile_xy(25, 2, 114);
+    set_bkg_tile_xy(26, 2, 115);
+    set_bkg_tile_xy(27, 2, 116);
     for(i = 16; i != 34; i +=3) {
         set_bkg_tiles(i, 10, 3, 7, goodroadmap);
     }
     set_bkg_tiles(0, 0, 4, 16, defsysbossmap);
     set_bkg_tiles(25, 3, 3, 2, defsysbossceilgunmap);
-    fill_bkg_rect(16, 10, 16, 1, 182);
+    fill_bkg_rect(16, 10, 16, 1, 214);
     init_machine_props(154, 80, defsysprops);
     set_machine_tile(fsten, 0);
     set_sprite_tile(4, defsysprops[9]);

@@ -126,7 +126,7 @@ void check_encore_boss_bkg_collision() BANKED {
 // FINAL BOSS FUNCTIONS
 
 void play_pre_encore_cutscene() BANKED {
-    set_bkg_data(41, 64, encoretiles1);
+    set_bkg_data(73, 64, encoretiles1);
     for(i = 0; i != 32; i += 8) {
         set_bkg_tiles(i, 0, 8, 10, encorepremap);
     }
@@ -142,8 +142,8 @@ void play_pre_encore_cutscene() BANKED {
 
 
 void init_encore_boss() BANKED {
-    set_bkg_data(41, 64, encoretiles1);
-    set_bkg_data(105, 99, encoretiles2);
+    set_bkg_data(73, 64, encoretiles1);
+    set_bkg_data(137, 99, encoretiles2);
     set_bkg_tiles(0, 0, 14, 17, encorebossbkgmap);
     set_bkg_tiles(14, 0, 6, 17, encorebossmap);
     set_sprite_data(23, 47, finalbossspritetiles);
@@ -324,8 +324,8 @@ void init_phase2() BANKED {
     set_sprite_prop(17, 0);
     move_sprite(16, 0, 0);
     move_sprite(17, 0, 0);
-    set_bkg_tile_xy(8, 3, 203);
-    set_bkg_tile_xy(8, 4, 43);
+    set_bkg_tile_xy(8, 3, 235);
+    set_bkg_tile_xy(8, 4, 75);
     set_bkg_tiles(14, 6, 6, 7, encorebossnobarriermap);
     oamidx = 8;
     crntenemy = fsten = machines + 2;

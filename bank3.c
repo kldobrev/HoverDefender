@@ -101,7 +101,7 @@ void init_scorpboss_gun(UINT8 x, UINT8 y) BANKED {
 
 void init_scorpboss() BANKED {
     //init_stage(1, 0);
-    set_bkg_data(100, 40, scorpbosstiles);
+    set_bkg_data(132, 40, scorpbosstiles);
     set_bkg_tiles(11, 10, 9, 6, scorpbossmap);
 
     // Initialize Stinger
@@ -440,7 +440,7 @@ void init_jggrrboss() BANKED {
     jgrposx = 170;
     jgrbkgposx = 0;
     fill_bkg_rect(0, 1, 32, 4, 0);
-    set_bkg_data(116, 68, juggernautbosstiles);
+    set_bkg_data(148, 68, juggernautbosstiles);
     set_sprite_tile(4, 46);
     set_sprite_tile(5, 47);
     incr_oam_sprite_tile_idx(2);

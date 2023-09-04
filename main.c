@@ -60,6 +60,7 @@ extern const Placement stage1objs[], stage2objs[], stage3objs[], stage4objs[], s
 extern const UINT8 scorpbossexpl[5][2], jggrbossexpl[7][2], mechbossexpl[4][2], genrlbossexpl[5][2], defsysbossexpl[6][2], ultgenexplcrdsground[4][2], ultgenbossexpl[5][2];
 extern UINT8 jgrbkgposx, jgrposx;
 
+const UINT8 pausesign[5] = {0x22, 0x13, 0x27, 0x25, 0x17};
 const Stage stages[] = {{stage1road, 17, stage1objs, deserttiles, 39, desertmap, 0, 1, 2, &deserttheme},
 {stage2road, 25, stage2objs, citytiles, 46, citymap, 1, 1, 2, &citytheme},
 {stage3road, 27, stage3objs, mountaintiles, 61, mountainmap, 1, 1, 2, &mountaintheme},
@@ -155,6 +156,7 @@ UINT8 hitanimtmr;  // Damage animation timer when boss is hit
 UINT8 plgun, numkills;
 UINT8 menuidx, gamemode, extrasflg;
 UINT8 cycrulecheck; // Keeping track of cyles, used for optimization purposes
+const UINT8 numkillsthresh[3] = {10, 20, 20};   // Number of kills required to get a gun upgrade and an extra life
 
 
 
@@ -227,9 +229,8 @@ void exec_triturret_pattern(Machine * mch) BANKED;
 void exec_seeker_pattern(Machine * mch) BANKED;
 UBYTE cooldown_enemy(Machine * mch, UINT8 period) NONBANKED;
 void hud_init() NONBANKED;
-void hud_upd_shield(UINT8 hpamt) NONBANKED;
+void hud_upd_shield() NONBANKED;
 inline void hud_upd_lives() NONBANKED;
-void hud_draw_pause() NONBANKED;
 void hud_clear_pause() NONBANKED;
 inline void hud_draw_gun() NONBANKED;
 void init_game() NONBANKED;
@@ -374,11 +375,11 @@ void reset_sprites(UINT8 fstsprite, UINT8 lastsprite) NONBANKED {
 void init_stage_bkg(UINT8 stnum) NONBANKED {
     const Stage * stg = stages + stnum;
     SWITCH_ROM_MBC1(stg->stagebank);
-    set_bkg_data(61, stg->bkgtilesnum, stg->bkgtiles);
+    set_bkg_data(93, stg->bkgtilesnum, stg->bkgtiles);
     set_bkg_tiles(0, stnum == 2 && stageclearflg == 1 ? 4 : stg->hasclouds, 32, 10 - stg->hasclouds, stg->bkgmap);
     if(stg->hasclouds) {
         SWITCH_ROM_MBC1(2);
-        set_bkg_data(20, 13, cloudtiles);
+        set_bkg_data(52, 13, cloudtiles);
         set_bkg_tiles(0, 0, 32, 1, cloudmap);
         SWITCH_ROM_MBC1(stg->stagebank);
     }
@@ -388,7 +389,7 @@ void init_stage_bkg(UINT8 stnum) NONBANKED {
 void init_stage_road() NONBANKED { // Layout initial road tiles to start the stage
     prevbank = _current_bank;
     SWITCH_ROM_MBC1(2);
-    set_bkg_data(33, 28, roadtiles);
+    set_bkg_data(65, 28, roadtiles);
     SWITCH_ROM_MBC1(prevbank);
     for(roadbuildidx = 0; roadbuildidx != 7; roadbuildidx++) {
         set_bkg_tiles(roadbuildidx * 3, 10, 3, 7, goodroadmap);
@@ -425,8 +426,6 @@ void place_machine(Machine * mch, UINT8 x, UINT8 y) NONBANKED {
 
 
 void init_player() NONBANKED {
-    pl = machines; // First element of the array is the player
-    pl->shield = 4;
     pl->groundflg = 1;
     pl->hboffx = 3;
     pl->hboffy = 1;
@@ -452,7 +451,7 @@ void respawn_player() {
     pl->hboffx = 3;
     pl->hboffy = 1;
     ascendflg = 1;
-    hud_upd_shield(4);
+    hud_upd_shield();
     if(fallinholeflg) {
         fallinholeflg = 0;
         pl->groundflg = 0;
@@ -999,33 +998,37 @@ void destroy_machine(Machine * mch) NONBANKED {
 void take_damage(Machine * mch, UINT8 dmgamt) NONBANKED {
     mch->shield -= dmgamt;
     if(pl == mch) {
-        hud_upd_shield(pl->shield < 0 ? 0 : pl->shield);
         if(is_alive(pl)) {
             iframeflg = 1; // Starting iframe period
             if(plgun == 2) {
                 plgun = 1;  // Reverting to second gun when less than full health
-                hud_draw_gun();
             }
         } else {    // Lost life
             lockmvmnt = 3;
             pllives--;
-            plgun = numkills = 0;  // Back to regular gun on death
+            pl->shield = plgun = numkills = 0;  // Back to regular gun on death
             hud_upd_lives();
-            hud_draw_gun();
         }
+        hud_upd_shield();
+        hud_draw_gun();
     }
     if(!is_alive(mch)) {
         if(mch != pl) {
             numkills++;
-            if(numkills == 10 && plgun == 0) {
+            if(numkills == numkillsthresh[plgun]) {
                 plgun = pl->shield == 4 ? 2 : 1; // On 10 kills upgrade gun depending on health
+                numkills = 0;
                 hud_draw_gun();
+                if(pllives != 9) {
+                    pllives++;
+                }
+                hud_upd_lives();
                 se_wpn_upgrd();
             }
         }
         init_explosion(mch);
     } else {
-        if(mch->type == 9 && hitmchptr == NULL) {
+        if(mch->type == 9 && hitmchptr == NULL) {   // Initiate boss hit animation
             hitmchptr = mch;
         }
         se_get_hit();
@@ -1200,9 +1203,12 @@ UBYTE cooldown_enemy(Machine * mch, UINT8 period) NONBANKED { // Coolwon period 
 
 void hud_init() NONBANKED {
     prevbank = _current_bank;
+    SWITCH_ROM_MBC1(1);
+    set_bkg_data(9, 43, fonttiles);
     SWITCH_ROM_MBC1(2);
-    set_win_data(0, 20, hudtiles);
+    set_win_data(0, 9, hudtiles);
     set_win_tiles(0, 0, 18, 1, hudmap);
+    hud_upd_shield();
     hud_upd_lives();
     hud_draw_gun();
     SWITCH_ROM_MBC1(prevbank);
@@ -1211,41 +1217,32 @@ void hud_init() NONBANKED {
 }
 
 
-void hud_upd_shield(UINT8 hpamt) NONBANKED {
-    if(hpamt != 0) {
-        fill_win_rect(3, 0, hpamt, 1, 0x0E);
+void hud_upd_shield() NONBANKED {
+    if(pl->shield != 0) {
+        fill_win_rect(3, 0, pl->shield, 1, 0x03);
     }
-    if(hpamt != 4) {
-        fill_win_rect(3 + hpamt, 0, 4 - hpamt, 1, 0x0F);
+    if(pl->shield != 4) {
+        fill_win_rect(3 + pl->shield, 0, 4 - pl->shield, 1, 0x04);
     }
 }
 
 
 inline void hud_upd_lives() {
-    set_win_tile_xy(17, 0, pllives + 1);  // Tile offset 1
-}
-
-
-void hud_draw_pause() NONBANKED {
-    set_win_tile_xy(8, 0, 0x08);
-    set_win_tile_xy(9, 0, 0x05);
-    set_win_tile_xy(10, 0, 0x0A);
-    set_win_tile_xy(11, 0, 0x09);
-    set_win_tile_xy(12, 0, 0x06);
+    set_win_tile_xy(17, 0, pllives + 9);  // Tile offset 9
 }
 
 
 void hud_clear_pause() NONBANKED {
     set_win_tile_xy(8, 0, 0x00);
-    set_win_tile_xy(9, 0, 0x0C);
-    set_win_tile_xy(11, 0, 0x0D);
+    set_win_tile_xy(9, 0, 0x01);
+    set_win_tile_xy(11, 0, 0x02);
     set_win_tile_xy(12, 0, 0x00);
     hud_draw_gun();
     SHOW_SPRITES;
 }
 
 inline void hud_draw_gun() NONBANKED {
-    set_win_tile_xy(10, 0, 17 + plgun); // Tile offset 17
+    set_win_tile_xy(10, 0, 6 + plgun); // Tile offset 6
 }
 
 // STAGE PROCESSING
@@ -1254,6 +1251,8 @@ inline void hud_draw_gun() NONBANKED {
 void init_game() NONBANKED {
     plspeed = plgroundspeed;
     pllives = 3;
+    pl = machines; // First element of the array is the player
+    pl->shield = 4;
     plgun = 0;
     numkills = 0;
 }
@@ -1345,7 +1344,7 @@ void pause_game() NONBANKED {
         HIDE_SPRITES;
     }
     stop_song();
-    hud_draw_pause();
+    set_win_tiles(8, 0, 5, 1, pausesign);   // Drawing PAUSE
     se_pause();
     waitpadup();
     custom_delay(10);
@@ -1584,6 +1583,7 @@ void se_charge_gun(UINT8 addfreq) NONBANKED {
 
 
 // STAGE/MENU LOADING
+
 
 
 void play_stage() NONBANKED {

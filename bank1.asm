@@ -2208,14 +2208,126 @@ _passwscreentiles:
 	.db #0x00	; 0
 	.db #0x00	; 0
 	.db #0x00	; 0
+	.db #0xff	; 255
+	.db #0x00	; 0
+	.db #0xff	; 255
+	.db #0xff	; 255
 	.db #0x00	; 0
 	.db #0x00	; 0
 	.db #0x00	; 0
 	.db #0x00	; 0
-	.db #0x7c	; 124
-	.db #0x7c	; 124
 	.db #0x00	; 0
 	.db #0x00	; 0
+	.db #0x00	; 0
+	.db #0x00	; 0
+	.db #0xff	; 255
+	.db #0xff	; 255
+	.db #0xff	; 255
+	.db #0x00	; 0
+	.db #0x00	; 0
+	.db #0x00	; 0
+	.db #0x00	; 0
+	.db #0x00	; 0
+	.db #0x00	; 0
+	.db #0x00	; 0
+	.db #0x00	; 0
+	.db #0x00	; 0
+	.db #0x00	; 0
+	.db #0x00	; 0
+	.db #0x00	; 0
+	.db #0x00	; 0
+	.db #0x1f	; 31
+	.db #0x1f	; 31
+	.db #0x3f	; 63
+	.db #0x20	; 32
+	.db #0x30	; 48	'0'
+	.db #0x20	; 32
+	.db #0x30	; 48	'0'
+	.db #0x20	; 32
+	.db #0x30	; 48	'0'
+	.db #0x20	; 32
+	.db #0x30	; 48	'0'
+	.db #0x20	; 32
+	.db #0x00	; 0
+	.db #0x00	; 0
+	.db #0x00	; 0
+	.db #0x00	; 0
+	.db #0xf8	; 248
+	.db #0xf8	; 248
+	.db #0xfc	; 252
+	.db #0x04	; 4
+	.db #0x0c	; 12
+	.db #0x04	; 4
+	.db #0x0c	; 12
+	.db #0x04	; 4
+	.db #0x0c	; 12
+	.db #0x04	; 4
+	.db #0x0c	; 12
+	.db #0x04	; 4
+	.db #0x30	; 48	'0'
+	.db #0x20	; 32
+	.db #0x30	; 48	'0'
+	.db #0x20	; 32
+	.db #0x30	; 48	'0'
+	.db #0x20	; 32
+	.db #0x30	; 48	'0'
+	.db #0x20	; 32
+	.db #0x3f	; 63
+	.db #0x20	; 32
+	.db #0x1f	; 31
+	.db #0x1f	; 31
+	.db #0x00	; 0
+	.db #0x00	; 0
+	.db #0x00	; 0
+	.db #0x00	; 0
+	.db #0x0c	; 12
+	.db #0x04	; 4
+	.db #0x0c	; 12
+	.db #0x04	; 4
+	.db #0x0c	; 12
+	.db #0x04	; 4
+	.db #0x0c	; 12
+	.db #0x04	; 4
+	.db #0xfc	; 252
+	.db #0x04	; 4
+	.db #0xf8	; 248
+	.db #0xf8	; 248
+	.db #0x00	; 0
+	.db #0x00	; 0
+	.db #0x00	; 0
+	.db #0x00	; 0
+	.db #0x30	; 48	'0'
+	.db #0x20	; 32
+	.db #0x30	; 48	'0'
+	.db #0x20	; 32
+	.db #0x30	; 48	'0'
+	.db #0x20	; 32
+	.db #0x30	; 48	'0'
+	.db #0x20	; 32
+	.db #0x30	; 48	'0'
+	.db #0x20	; 32
+	.db #0x30	; 48	'0'
+	.db #0x20	; 32
+	.db #0x30	; 48	'0'
+	.db #0x20	; 32
+	.db #0x30	; 48	'0'
+	.db #0x20	; 32
+	.db #0x0c	; 12
+	.db #0x04	; 4
+	.db #0x0c	; 12
+	.db #0x04	; 4
+	.db #0x0c	; 12
+	.db #0x04	; 4
+	.db #0x0c	; 12
+	.db #0x04	; 4
+	.db #0x0c	; 12
+	.db #0x04	; 4
+	.db #0x0c	; 12
+	.db #0x04	; 4
+	.db #0x0c	; 12
+	.db #0x04	; 4
+	.db #0x0c	; 12
+	.db #0x04	; 4
 	.db #0x00	; 0
 	.db #0x00	; 0
 	.db #0x10	; 16
@@ -2238,126 +2350,14 @@ _passwscreentiles:
 	.db #0x00	; 0
 	.db #0x00	; 0
 	.db #0x00	; 0
-	.db #0x1f	; 31
-	.db #0x1f	; 31
-	.db #0x3f	; 63
-	.db #0x20	; 32
-	.db #0x30	; 48	'0'
-	.db #0x20	; 32
-	.db #0x30	; 48	'0'
-	.db #0x20	; 32
-	.db #0x30	; 48	'0'
-	.db #0x20	; 32
 	.db #0x00	; 0
 	.db #0x00	; 0
 	.db #0x00	; 0
 	.db #0x00	; 0
 	.db #0x00	; 0
 	.db #0x00	; 0
-	.db #0xf8	; 248
-	.db #0xf8	; 248
-	.db #0xfc	; 252
-	.db #0x04	; 4
-	.db #0x0c	; 12
-	.db #0x04	; 4
-	.db #0x0c	; 12
-	.db #0x04	; 4
-	.db #0x0c	; 12
-	.db #0x04	; 4
-	.db #0x30	; 48	'0'
-	.db #0x20	; 32
-	.db #0x30	; 48	'0'
-	.db #0x20	; 32
-	.db #0x30	; 48	'0'
-	.db #0x20	; 32
-	.db #0x3f	; 63
-	.db #0x20	; 32
-	.db #0x1f	; 31
-	.db #0x1f	; 31
-	.db #0x00	; 0
-	.db #0x00	; 0
-	.db #0x00	; 0
-	.db #0x00	; 0
-	.db #0x00	; 0
-	.db #0x00	; 0
-	.db #0x0c	; 12
-	.db #0x04	; 4
-	.db #0x0c	; 12
-	.db #0x04	; 4
-	.db #0x0c	; 12
-	.db #0x04	; 4
-	.db #0xfc	; 252
-	.db #0x04	; 4
-	.db #0xf8	; 248
-	.db #0xf8	; 248
-	.db #0x00	; 0
-	.db #0x00	; 0
-	.db #0x00	; 0
-	.db #0x00	; 0
-	.db #0x00	; 0
-	.db #0x00	; 0
-	.db #0x30	; 48	'0'
-	.db #0x20	; 32
-	.db #0x30	; 48	'0'
-	.db #0x20	; 32
-	.db #0x30	; 48	'0'
-	.db #0x20	; 32
-	.db #0x30	; 48	'0'
-	.db #0x20	; 32
-	.db #0x30	; 48	'0'
-	.db #0x20	; 32
-	.db #0x30	; 48	'0'
-	.db #0x20	; 32
-	.db #0x30	; 48	'0'
-	.db #0x20	; 32
-	.db #0x30	; 48	'0'
-	.db #0x20	; 32
-	.db #0x0c	; 12
-	.db #0x04	; 4
-	.db #0x0c	; 12
-	.db #0x04	; 4
-	.db #0x0c	; 12
-	.db #0x04	; 4
-	.db #0x0c	; 12
-	.db #0x04	; 4
-	.db #0x0c	; 12
-	.db #0x04	; 4
-	.db #0x0c	; 12
-	.db #0x04	; 4
-	.db #0x0c	; 12
-	.db #0x04	; 4
-	.db #0x0c	; 12
-	.db #0x04	; 4
-	.db #0x00	; 0
-	.db #0x00	; 0
-	.db #0x00	; 0
-	.db #0x00	; 0
-	.db #0x00	; 0
-	.db #0x00	; 0
-	.db #0xff	; 255
-	.db #0xff	; 255
-	.db #0xff	; 255
-	.db #0x00	; 0
-	.db #0x00	; 0
-	.db #0x00	; 0
-	.db #0x00	; 0
-	.db #0x00	; 0
-	.db #0x00	; 0
-	.db #0x00	; 0
-	.db #0x00	; 0
-	.db #0x00	; 0
-	.db #0x00	; 0
-	.db #0x00	; 0
-	.db #0x00	; 0
-	.db #0x00	; 0
-	.db #0xff	; 255
-	.db #0x00	; 0
-	.db #0xff	; 255
-	.db #0xff	; 255
-	.db #0x00	; 0
-	.db #0x00	; 0
-	.db #0x00	; 0
-	.db #0x00	; 0
+	.db #0x7c	; 124
+	.db #0x7c	; 124
 	.db #0x00	; 0
 	.db #0x00	; 0
 _overworldmaptiles:
@@ -5963,13 +5963,13 @@ _passwscreenmap:
 	.db #0x00	; 0
 	.db #0x00	; 0
 	.db #0x2c	; 44
-	.db #0x32	; 50	'2'
-	.db #0x32	; 50	'2'
-	.db #0x32	; 50	'2'
-	.db #0x32	; 50	'2'
-	.db #0x32	; 50	'2'
-	.db #0x32	; 50	'2'
-	.db #0x32	; 50	'2'
+	.db #0x2b	; 43
+	.db #0x2b	; 43
+	.db #0x2b	; 43
+	.db #0x2b	; 43
+	.db #0x2b	; 43
+	.db #0x2b	; 43
+	.db #0x2b	; 43
 	.db #0x2d	; 45
 	.db #0x00	; 0
 	.db #0x00	; 0
@@ -5983,13 +5983,13 @@ _passwscreenmap:
 	.db #0x00	; 0
 	.db #0x00	; 0
 	.db #0x30	; 48	'0'
-	.db #0x2a	; 42
+	.db #0x33	; 51	'3'
 	.db #0x00	; 0
-	.db #0x2a	; 42
+	.db #0x33	; 51	'3'
 	.db #0x00	; 0
-	.db #0x2a	; 42
+	.db #0x33	; 51	'3'
 	.db #0x00	; 0
-	.db #0x2a	; 42
+	.db #0x33	; 51	'3'
 	.db #0x31	; 49	'1'
 	.db #0x00	; 0
 	.db #0x00	; 0
@@ -6003,13 +6003,13 @@ _passwscreenmap:
 	.db #0x00	; 0
 	.db #0x00	; 0
 	.db #0x2e	; 46
-	.db #0x33	; 51	'3'
-	.db #0x33	; 51	'3'
-	.db #0x33	; 51	'3'
-	.db #0x33	; 51	'3'
-	.db #0x33	; 51	'3'
-	.db #0x33	; 51	'3'
-	.db #0x33	; 51	'3'
+	.db #0x2a	; 42
+	.db #0x2a	; 42
+	.db #0x2a	; 42
+	.db #0x2a	; 42
+	.db #0x2a	; 42
+	.db #0x2a	; 42
+	.db #0x2a	; 42
 	.db #0x2f	; 47
 	.db #0x00	; 0
 	.db #0x00	; 0
@@ -6058,23 +6058,23 @@ _passwscreenmap:
 	.db #0x00	; 0
 	.db #0x00	; 0
 	.db #0x2c	; 44
-	.db #0x32	; 50	'2'
-	.db #0x32	; 50	'2'
-	.db #0x32	; 50	'2'
-	.db #0x32	; 50	'2'
-	.db #0x32	; 50	'2'
-	.db #0x32	; 50	'2'
-	.db #0x32	; 50	'2'
-	.db #0x32	; 50	'2'
-	.db #0x32	; 50	'2'
-	.db #0x32	; 50	'2'
-	.db #0x32	; 50	'2'
-	.db #0x32	; 50	'2'
-	.db #0x32	; 50	'2'
-	.db #0x32	; 50	'2'
-	.db #0x32	; 50	'2'
-	.db #0x32	; 50	'2'
-	.db #0x32	; 50	'2'
+	.db #0x2b	; 43
+	.db #0x2b	; 43
+	.db #0x2b	; 43
+	.db #0x2b	; 43
+	.db #0x2b	; 43
+	.db #0x2b	; 43
+	.db #0x2b	; 43
+	.db #0x2b	; 43
+	.db #0x2b	; 43
+	.db #0x2b	; 43
+	.db #0x2b	; 43
+	.db #0x2b	; 43
+	.db #0x2b	; 43
+	.db #0x2b	; 43
+	.db #0x2b	; 43
+	.db #0x2b	; 43
+	.db #0x2b	; 43
 	.db #0x2d	; 45
 	.db #0x00	; 0
 	.db #0x30	; 48	'0'
@@ -6174,7 +6174,7 @@ _passwscreenmap:
 	.db #0x00	; 0
 	.db #0x24	; 36
 	.db #0x00	; 0
-	.db #0x2b	; 43
+	.db #0x32	; 50	'2'
 	.db #0x31	; 49	'1'
 	.db #0x00	; 0
 	.db #0x30	; 48	'0'
@@ -6218,23 +6218,23 @@ _passwscreenmap:
 	.db #0x31	; 49	'1'
 	.db #0x00	; 0
 	.db #0x2e	; 46
-	.db #0x33	; 51	'3'
-	.db #0x33	; 51	'3'
-	.db #0x33	; 51	'3'
-	.db #0x33	; 51	'3'
-	.db #0x33	; 51	'3'
-	.db #0x33	; 51	'3'
-	.db #0x33	; 51	'3'
-	.db #0x33	; 51	'3'
-	.db #0x33	; 51	'3'
-	.db #0x33	; 51	'3'
-	.db #0x33	; 51	'3'
-	.db #0x33	; 51	'3'
-	.db #0x33	; 51	'3'
-	.db #0x33	; 51	'3'
-	.db #0x33	; 51	'3'
-	.db #0x33	; 51	'3'
-	.db #0x33	; 51	'3'
+	.db #0x2a	; 42
+	.db #0x2a	; 42
+	.db #0x2a	; 42
+	.db #0x2a	; 42
+	.db #0x2a	; 42
+	.db #0x2a	; 42
+	.db #0x2a	; 42
+	.db #0x2a	; 42
+	.db #0x2a	; 42
+	.db #0x2a	; 42
+	.db #0x2a	; 42
+	.db #0x2a	; 42
+	.db #0x2a	; 42
+	.db #0x2a	; 42
+	.db #0x2a	; 42
+	.db #0x2a	; 42
+	.db #0x2a	; 42
 	.db #0x2f	; 47
 	.db #0x00	; 0
 	.db #0x00	; 0
@@ -8420,7 +8420,7 @@ _drop_character::
 	ret	Z
 ;menus.c:249: passidx--;
 	dec	(hl)
-;menus.c:250: passentry[passidx] = 42;    // Empty tile
+;menus.c:250: passentry[passidx] = 51;    // Empty tile
 	ld	bc, #_passentry+0
 	ld	a, c
 	add	a, (hl)
@@ -8428,7 +8428,7 @@ _drop_character::
 	jr	NC, 00110$
 	inc	b
 00110$:
-	ld	a, #0x2a
+	ld	a, #0x33
 	ld	(bc), a
 ;menus.c:251: update_pass_field();
 	ld	e, #b_update_pass_field
@@ -8449,7 +8449,7 @@ _reset_password::
 	ld	hl, #_i
 	ld	(hl), #0x00
 00102$:
-;menus.c:259: passentry[i] = 42;
+;menus.c:259: passentry[i] = 51;
 	ld	a, #<(_passentry)
 	ld	hl, #_i
 	add	a, (hl)
@@ -8457,7 +8457,7 @@ _reset_password::
 	ld	a, #>(_passentry)
 	adc	a, #0x00
 	ld	b, a
-	ld	a, #0x2a
+	ld	a, #0x33
 	ld	(bc), a
 ;menus.c:258: for(i = 0; i < 4; i++) {
 	inc	(hl)

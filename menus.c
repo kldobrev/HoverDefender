@@ -247,7 +247,7 @@ void add_character() BANKED {
 void drop_character() BANKED {
     if(passidx > 0) {
         passidx--;
-        passentry[passidx] = 42;    // Empty tile
+        passentry[passidx] = 51;    // Empty tile
         update_pass_field();
         se_drop_character();
     }
@@ -256,7 +256,7 @@ void drop_character() BANKED {
 
 void reset_password() BANKED {
     for(i = 0; i < 4; i++) {
-        passentry[i] = 42;
+        passentry[i] = 51;
     }
     passidx = 0;
     update_pass_field();
