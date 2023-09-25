@@ -313,6 +313,7 @@ void mechboss_loop() BANKED {
                 }
                 clear_all_projectiles();
                 set_machine_sprite_tiles(pl, 1);
+                set_sprite_tile(chargeidx, 0);
                 return;  // Boss cleared
             }
         }
@@ -409,7 +410,6 @@ void mechboss_loop() BANKED {
 
 
 void mech_clear_sequence() BANKED {
-    set_sprite_tile(chargeidx, 0);
     while(1) {
         
         build_boss_road();

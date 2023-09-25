@@ -57,7 +57,7 @@ const UINT8 placmntxpos = 167;  // Initial x position of stage enemies
 // Stages data
 extern const UINT8 stage1road[], stage2road[], stage3road[], stage4road[], stage5road[], stage6road[];
 extern const Placement stage1objs[], stage2objs[], stage3objs[], stage4objs[], stage5objs[], stage6objs[];
-extern const UINT8 scorpbossexpl[5][2], jggrbossexpl[7][2], mechbossexpl[4][2], genrlbossexpl[5][2], defsysbossexpl[6][2], ultgenexplcrdsground[4][2], ultgenbossexpl[5][2];
+extern const UINT8 scorpbossexpl[5][2], jggrbossexpl[7][2], mechbossexpl[4][2], genrlbossexpl[5][2], defsysbossexpl[6][2], ultgenexplcrdsground[4][2], ultgenbossexpl[5][2], emittersexpl[5][2];
 extern UINT8 jgrbkgposx, jgrposx;
 
 const UINT8 pausesign[5] = {0x22, 0x13, 0x27, 0x25, 0x17};
@@ -281,6 +281,7 @@ void mechboss_loop() BANKED;
 void init_jggrrboss() BANKED;
 void jggrrboss_loop() BANKED;
 void incr_boss_bkg_x_coords(UINT8 roadsp, UINT8 jgrspeed) NONBANKED;
+void show_textbox(UINT8 dialidx) NONBANKED;
 void disable_boss_bkg_scroll() BANKED;
 void init_mechbrosboss() BANKED;
 void mechbrosboss_loop() BANKED;
@@ -291,11 +292,16 @@ void genrl_clear_sequence() BANKED;
 void init_defsysboss() BANKED;
 void defsysboss_loop() BANKED;
 void defsys_clear_sequence() BANKED;
-void init_encore_boss() BANKED;
-void final_boss_loops() BANKED;
+void init_emitters_boss() BANKED;
+void emitters_boss_loop() BANKED;
+void init_ultgen_boss() BANKED;
+void ultgen_boss_loop() BANKED;
 void play_pre_encore_cutscene() BANKED;
+void ending_sequence_prep() BANKED;
 void ultgen_flash_sparks(INT8 coordsarr[][2], UINT8 arrlen) BANKED;
 void anim_airbase_destr(UBYTE moveplflg) BANKED;
+void scroll_textbox(UINT8 dialidx) BANKED;
+
 
 
 UINT8 get_OAM_free_tile_idx() NONBANKED {
@@ -492,8 +498,6 @@ void init_machine_props(UINT8 x, UINT8 y, const INT8 * mchprops) NONBANKED {
     place_machine(crntenemy, x, y);
     itr_enemies_ptr();
 }
-
-
 
 
 inline UBYTE collides_with_sidewalk(INT8 vspeed) NONBANKED {
@@ -1632,7 +1636,7 @@ void init_boss(UINT8 stnum) NONBANKED {
             init_defsysboss();
             break;
         case 6:
-            init_encore_boss();
+            init_emitters_boss();
             break;
     }
 }
@@ -1659,7 +1663,15 @@ void boss_loop(UINT8 stnum) NONBANKED {
             defsysboss_loop();
             break;
         case 6:
-            final_boss_loops();
+            emitters_boss_loop();
+            if(bossclearflg == 1) {
+                bossclearflg = 0; // Resetting for phase 2
+                SWITCH_ROM_MBC1(6);
+                anim_explode_boss(emittersexpl, 5, 0, 0, 0);
+                init_ultgen_boss();
+                show_textbox(18);
+                ultgen_boss_loop();
+            }
             break;
     }
 }
@@ -1675,6 +1687,9 @@ void update_hit_anim_counter() NONBANKED {
 
 
 void boss_clear_sequence(UINT8 stnum) NONBANKED {
+    if(stagenum < 3) {
+        show_textbox((stagenum * 2) + bossclearflg);
+    }
     switch(stnum) { // Unique boss clear animations
         case 0:
             SWITCH_ROM_MBC1(3);
@@ -1691,6 +1706,7 @@ void boss_clear_sequence(UINT8 stnum) NONBANKED {
             fill_bkg_rect(20, 1, 17, 5, 0);
             break;
         case 3:
+            show_textbox(fsten->oamtilenums[0] == 4 ? 13 : 14); // Show text depending on last standing mech
             SWITCH_ROM_MBC1(3);
             anim_explode_boss(mechbossexpl, 4, 1, hitmchptr->x, hitmchptr->y);
             destroy_mech(hitmchptr);
@@ -1698,18 +1714,25 @@ void boss_clear_sequence(UINT8 stnum) NONBANKED {
         case 4:
             SWITCH_ROM_MBC1(5);
             anim_explode_boss(genrlbossexpl, 5, 1, 124, 56);
+            show_textbox(15);
             genrl_clear_sequence();
+            show_textbox(16);
             break;
         case 5:
             SWITCH_ROM_MBC1(5);
             anim_explode_boss(defsysbossexpl, 6, 0, 0, 0);
             defsys_clear_sequence();
+            show_textbox(17);
             break;
         case 6:
+            show_textbox(19);
+            ending_sequence_prep();
+            show_textbox(20);
             SWITCH_ROM_MBC1(6);
             ultgen_flash_sparks(ultgenexplcrdsground, 4);
             anim_explode_boss(ultgenbossexpl, 5, 0, fsten->x, fsten->y);
             reset_sprites(8, 24);
+            show_textbox(21);
             anim_airbase_destr(0);
     }
     
@@ -1736,7 +1759,10 @@ void boss_clear_sequence(UINT8 stnum) NONBANKED {
 void play_boss() NONBANKED {
     init_stage(stagenum, crntstage->bossbkgscrolls);
     init_boss(stagenum);
+    SWITCH_ROM_MBC1(1);
+    set_win_data(253, 3, misctiles);
     anim_stage_start();
+    show_textbox((stagenum * 2) + bossclearflg);
     if(stagenum < 3) {
         SWITCH_ROM_MBC1(3);
         play_song(&bosstheme);
@@ -1791,6 +1817,12 @@ void play_song(const hUGESong_t * song) NONBANKED {
 void stop_song() NONBANKED {
     mute_song();
     remove_VBL(hUGE_dosound);
+}
+
+
+void show_textbox(UINT8 dialidx) NONBANKED {
+    scroll_textbox(dialidx);
+    hud_init();
 }
 
 

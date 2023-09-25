@@ -17,8 +17,8 @@ extern const UINT8 enlimit;
 extern const unsigned char goodroadmap[];
 
 
-const INT8 encoreemitterprops[] = {0, 9, -3, 0, 20, 9, 0, 0, 9, 23};
-const INT8 encoreprops[] = {0, 40, -5, -20, 40, 50, -64, -35, 9, 25};  // HP = 30
+const INT8 encoreemitterprops[] = {0, 10, -3, 0, 20, 9, 0, 0, 9, 23};
+const INT8 encoreprops[] = {0, 120, -5, -20, 40, 50, -64, -35, 9, 25};  // HP = 30
 const INT8 arcptrnshotspeeds[8][2] = {{-3, 1}, {-3, 2}, {-2, 3}, {-1, 3}, {0, 3}, {1, 3}, {3, 3}, {4, 3}};
 const UINT8 emittersexpl[5][2] = {{132, 56}, {154, 120} ,{132, 120}, {154, 56}, {66, 38}};
 const INT8 ultgenprops[] = {0, 40, 0, 0, 16, 32, 18, 16, 9, 0};
@@ -78,21 +78,21 @@ void explode_machine(Machine * mch) NONBANKED;
 void preserve_boss_shield(Machine * boss) BANKED;
 void check_encore_boss_bkg_collision() BANKED;
 void play_pre_encore_cutscene() BANKED;
-void init_encore_boss() BANKED;
+void init_emitters_boss() BANKED;
 void emitter_hit_anim() BANKED;
-void final_boss_loops() BANKED;
 void emitters_boss_loop() BANKED;
 void set_ultgen_defeated_tiles() BANKED;
 void set_ultgen_tiles(UINT8 state) BANKED;
 void turn_ultgen(UINT8 state, UINT8 dir) BANKED;
 void move_ultgen(INT8 speedx, INT8 speedy) BANKED;
 void place_ultgen(UINT8 x, UINT8 y) BANKED;
-void init_phase2() BANKED;
+void init_ultgen_boss() BANKED;
 void final_boss_hit_anim() BANKED;
 void turn_gen_towards_player() BANKED;
 void set_ultgen_default() BANKED;
 void ultgen_boss_loop() BANKED;
-void ending_sequence_prep(UINT8 lastptrn) BANKED;
+void ultgen_spark_overload() BANKED;
+void ending_sequence_prep() BANKED;
 void ultgen_flash_sparks(INT8 coordsarr[][2], UINT8 arrlen) BANKED;
 void manage_explosions() BANKED;
 void anim_airbase_destr(UBYTE moveplflg) BANKED;
@@ -141,7 +141,7 @@ void play_pre_encore_cutscene() BANKED {
 }
 
 
-void init_encore_boss() BANKED {
+void init_emitters_boss() BANKED {
     set_bkg_data(73, 64, encoretiles1);
     set_bkg_data(137, 99, encoretiles2);
     set_bkg_tiles(0, 0, 14, 17, encorebossbkgmap);
@@ -168,17 +168,6 @@ void init_encore_boss() BANKED {
 void emitter_hit_anim() BANKED {
     if(hitmchptr != (machines + 1)) {
         set_sprite_tile(hitmchptr->oamtilenums[0], hitanimtmr == 0 ? 23 : 24);
-    }
-}
-
-
-void final_boss_loops() BANKED {
-    emitters_boss_loop();
-    if(bossclearflg == 1) {
-        bossclearflg = 0; // Resetting for phase 2
-        anim_explode_boss(emittersexpl, 5, 0, 0, 0);
-        init_phase2();
-        ultgen_boss_loop();
     }
 }
 
@@ -319,7 +308,7 @@ void place_ultgen(UINT8 x, UINT8 y) BANKED {
 }
 
 
-void init_phase2() BANKED {
+void init_ultgen_boss() BANKED {
     set_sprite_prop(12, 0);
     set_sprite_prop(17, 0);
     move_sprite(16, 0, 0);
@@ -353,7 +342,7 @@ void init_phase2() BANKED {
 void final_boss_hit_anim() BANKED {
     if(hitmchptr == machines + 1) {
         if(hitanimtmr == 0) {
-            set_machine_sprite_tiles(machines + 1, hitmchptr->shield > 9 ? encoreprops[9] : 66);
+            set_machine_sprite_tiles(machines + 1, encoreprops[9]);
             scroll_sprite(hitmchptr->oamtilenums[0], -2, -2);
             BGP_REG = 0xE4;
         } else if(hitanimtmr == 10) {
@@ -396,23 +385,18 @@ void ultgen_boss_loop() BANKED {
         }
 
         (machines + 1)->groundflg = fsten->groundflg = pl->groundflg;
-        if((machines + 1)->shield < 10) {
-            fsten->hboffy = -80;
-            if(lockmvmnt == 2) {    // Wait until the end of the jumping animation
+        if((machines + 1)->shield < 91) {
+            if(get_sprite_tile((machines + 1)->oamtilenums[0]) != 66)  {
+                set_machine_sprite_tiles(machines + 1, 66); // Setting broken core sprite
+            }
+            if(lockmvmnt == 2 & pattrn == 2) {    // Wait until the end of the jumping animation
                 anim_jump();
-            } else if(lockmvmnt != 3) {
+            } else if(pl->explcount == 0 && pattrn == 2) {    // Ending at charge pattern
                 bossclearflg = 1;
-                lockmvmnt = 3;
-            } else if(pl->explcount == 0) {
-                if(hitmchptr != NULL) {
-                    final_boss_hit_anim();
-                    update_hit_anim_counter();
-                } else if(pattrn != 5 && pattrn != 7 && pattrn != 11 && pattrn != 12 && pattrn != 14 && pattrn != 16 && pattrn != 17) {
-                    clear_all_projectiles();
-                    set_machine_sprite_tiles(pl, 1);
-                    ending_sequence_prep(pattrn);
-                    return;  // Boss cleared
-                }
+                clear_all_projectiles();
+                set_machine_sprite_tiles(pl, 1);
+                ultgen_spark_overload();
+                return;  // Boss cleared
             }
         }
 
@@ -557,7 +541,7 @@ void ultgen_boss_loop() BANKED {
         preserve_boss_shield(fsten);
         manage_projectiles();
         manage_machines(2);
-        if(hitmchptr != NULL) {
+        if(hitmchptr != NULL && (machines + 1)->shield > 90) {
             final_boss_hit_anim();
             update_hit_anim_counter();
         }
@@ -568,34 +552,8 @@ void ultgen_boss_loop() BANKED {
 }
 
 
-void ending_sequence_prep(UINT8 lastptrn) BANKED {
+void ultgen_spark_overload() BANKED {
     set_ultgen_tiles(0);
-    turn_ultgen(0, 1);
-    if(lastptrn == 0 || lastptrn == 3 || lastptrn == 17) {
-        while(fsten->y != 33) {
-            move_ultgen(0, 1);
-            wait_vbl_done();
-        }
-    } else if(lastptrn == 1) { // Move ultgen to cutscene start position based on last pattern
-        while(fsten-> x != 98) {
-            move_ultgen(1, 0);
-            wait_vbl_done();
-        }
-    } else if(lastptrn == 2) {
-        wait_vbl_done();
-    } else if(lastptrn == 9) {
-        while(fsten->y < 40) {
-            move_ultgen(0, 1);
-            wait_vbl_done();
-        }
-    } else {
-        place_ultgen(98, 223);
-        while(fsten->y != 33) {
-            move_ultgen(0, 1);
-            wait_vbl_done();
-        }
-    }
-
     move_sprite(23, (machines + 1)->x, (machines + 1)->y);
     set_sprite_tile(23, 64);
     se_ultgen_charge(0);
@@ -611,6 +569,10 @@ void ending_sequence_prep(UINT8 lastptrn) BANKED {
         wait_vbl_done();
     }
     citr = 0;
+}
+
+
+void ending_sequence_prep() BANKED {
     move_sprite(23, 180, 9);    // Move spark offscreen
     ultgen_flash_sparks(sparkcoordsair, 3);
     while(pl->x > 60) {    // Back off player if in the way of the falling ultgen

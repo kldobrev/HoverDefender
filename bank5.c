@@ -12,8 +12,8 @@ extern UBYTE iframeflg;
 extern const UINT8 enlimit;
 extern const unsigned char goodroadmap[];
 
-const INT8 genrlprops[] = {0, 20, 2, 1, 28, 22, 0, 16, 9, 54};
-const INT8 defsysprops[] = {1, 30, 0, 0, 16, 8, 0, 0, 9, 71};
+const INT8 genrlprops[] = {0, 26, 2, 1, 28, 22, 0, 16, 9, 54};
+const INT8 defsysprops[] = {1, 24, 0, 0, 16, 8, 0, 0, 9, 71};
 const UINT8 genrltilemaps[8][11] = {
     {54, 55, 56, 57, 58, 59, 56, 57, 58, 59, 60},
     {54, 55, 69, 0, 58, 59, 69, 0, 58, 59, 0},
