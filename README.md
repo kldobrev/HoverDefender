@@ -20,5 +20,3 @@ A ground/air horizontal shooter for the Nintendo Game Boy, written in C using th
 
 Please get the hoverdefender.gb file from the demo release which offers a full playable stage.
 The latest .gb file from the project directory may contain work in progress and/or be unplayable.
-
-I strongly recommend using the BGB or Emulicious emulators to run the game.

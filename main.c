@@ -68,7 +68,7 @@ const Stage stages[] = {{stage1road, 17, stage1objs, deserttiles, 39, desertmap,
 {stage5road, 33, stage5objs, fortstiles, 104, fortsmap, 1, 0, 4, &tunneltheme},
 {stage6road, 39, stage6objs, fortsinttiles, 67, fortsintmap, 0, 0, 4, &tunneltheme}
 };
-const Stage * crntstage = stages;    // Current stage pointer
+    const Stage * crntstage = stages;    // Current stage pointer
 UINT8 stagenum;     // Current stage counter
 
 INT8 bullspx = 0, bullspy = 0;
@@ -189,7 +189,7 @@ void incr_boss_bkg_x_coords(UINT8 roadsp, UINT8 jgrspeed) NONBANKED;
 void scroll_stage_bkg_outd() NONBANKED;
 void scroll_stage_bkg_ind() NONBANKED;
 void scroll_boss_bkg() NONBANKED;
-void disable_bkg_scroll() NONBANKED;
+void disable_bkg_scroll(UINT8 stageidx) NONBANKED;
 void build_stage() NONBANKED;
 void build_road() NONBANKED;
 void build_hole() NONBANKED;
@@ -301,6 +301,7 @@ void ending_sequence_prep() BANKED;
 void ultgen_flash_sparks(INT8 coordsarr[][2], UINT8 arrlen) BANKED;
 void anim_airbase_destr(UBYTE moveplflg) BANKED;
 void scroll_textbox(UINT8 dialidx) BANKED;
+void display_epilogue() BANKED;
 
 
 
@@ -610,10 +611,10 @@ void scroll_boss_bkg() NONBANKED {
 }
 
 
-void disable_bkg_scroll() NONBANKED {
+void disable_bkg_scroll(UINT8 stageidx) NONBANKED {
     __critical {
         cloudposx = sceneryposx = roadposx = 0;
-        if(crntstage->hasclouds) {
+        if(stages[stageidx].hasclouds) {
             scroll_stage_bkg_outd();
             remove_LCD(scroll_stage_bkg_outd);
         } else {
@@ -1405,8 +1406,9 @@ void anim_stage_end() NONBANKED {
 }
 
 
-void anim_blackout_loop(UINT8 indictr) NONBANKED {   // To be used in loops
-        switch(indictr) {
+void anim_blackout() NONBANKED {  // Used as a standalone call
+    for(UINT8 blkstep = 0; blkstep != 21; blkstep++) {
+        switch(blkstep) {
             case 1:
                 BGP_REG = 0xF9;
                 break;
@@ -1417,11 +1419,14 @@ void anim_blackout_loop(UINT8 indictr) NONBANKED {   // To be used in loops
                 BGP_REG = 0xFF;
                 break;
         }
+        wait_vbl_done();
+    }
 }
 
 
-void anim_reverse_blackout_loop(UINT8 indictr) NONBANKED {   // To be used in loops
-        switch(indictr) {
+void anim_reverse_blackout() NONBANKED {  // Used as a standalone call
+    for(UINT8 blkstep = 0; blkstep != 21; blkstep++) {
+        switch(blkstep) {
             case 1:
                 BGP_REG = 0xFE;
                 break;
@@ -1432,20 +1437,6 @@ void anim_reverse_blackout_loop(UINT8 indictr) NONBANKED {   // To be used in lo
                 BGP_REG = 0xE4;
                 break;
         }
-}
-
-
-void anim_blackout() NONBANKED {  // Used as a standalone call
-    for(UINT8 blkstep = 0; blkstep != 21; blkstep++) {
-        anim_blackout_loop(blkstep);
-        wait_vbl_done();
-    }
-}
-
-
-void anim_reverse_blackout() NONBANKED {  // Used as a standalone call
-    for(UINT8 blkstep = 0; blkstep != 21; blkstep++) {
-        anim_reverse_blackout_loop(blkstep);
         wait_vbl_done();
     }
 }
@@ -1602,7 +1593,7 @@ void play_stage() NONBANKED {
     anim_blackout();
     HIDE_WIN;
     reset_sprites(0, 40);
-    disable_bkg_scroll();
+    disable_bkg_scroll(stagenum);
 }
 
 
@@ -1783,7 +1774,7 @@ void play_boss() NONBANKED {
         if(stagenum == 2) {
             disable_boss_bkg_scroll();
         } else {
-            disable_bkg_scroll();
+            disable_bkg_scroll(stagenum);
         }
     }
     reset_sprites(0, 40);
@@ -1831,7 +1822,6 @@ void main() NONBANKED {
     DISPLAY_ON;
     SHOW_BKG;
     SHOW_SPRITES;
-
     unmute_all_channels();
     anim_blackout();
     gamemode = extrasflg = 0;
@@ -1854,6 +1844,7 @@ void main() NONBANKED {
         crntstage = stages + stagenum;
         init_game();
         stageclearflg = bossclearflg = 0;
+
         while(1) {  // Game loop
             unmute_all_channels();
             if(pllives == 0) {
@@ -1888,9 +1879,12 @@ void main() NONBANKED {
                         HIDE_WIN;
                         anim_reverse_blackout();
                         anim_airbase_destr(1);
+                        disable_bkg_scroll(areaidx);
                         anim_blackout();
                     }
-                    break;
+                    SWITCH_ROM_MBC1(1);
+                    set_bkg_data(1, 43, fonttiles);
+                    display_epilogue();
                 }
             }
         }

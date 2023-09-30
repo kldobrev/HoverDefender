@@ -6900,8 +6900,8 @@ _passwords:
 	.db #0x23	; 35
 	.db #0x12	; 18
 	.db #0x21	; 33
-	.db #0x23	; 35
-	.db #0x1c	; 28
+	.db #0x15	; 21
+	.db #0x1b	; 27
 _mapcrsrcoords:
 	.db #0x17	; 23
 	.db #0x73	; 115	's'

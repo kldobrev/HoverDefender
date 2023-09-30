@@ -70,7 +70,6 @@ void anim_reverse_blackout() NONBANKED;
 void anim_blackout() NONBANKED;
 void anim_stage_end() NONBANKED;
 void scroll_stage_bkg_ind() NONBANKED;
-void disable_bkg_scroll() NONBANKED;
 void anim_explode_boss(const UINT8 explarr[][2], UINT8 numexpl, UINT8 hasscroll, UINT8 offsx, UINT8 offsy) NONBANKED;
 void custom_delay(UINT8 cycles) NONBANKED;
 void set_machine_sprite_tiles(Machine * mch, UINT8 fsttile) NONBANKED;
@@ -651,9 +650,6 @@ void anim_airbase_destr(UBYTE moveplflg) BANKED {  // Animate ground shaking and
         wait_vbl_done();
     }
     move_bkg(0, 0);
-    if(moveplflg) {
-        disable_bkg_scroll();
-    }
 }
 
 

@@ -32,7 +32,7 @@ const UINT8 passconfy = 128, blinkanimdur = 3;
 const UINT8 wrongpassind = 99;  // Incorrect password indicator
 const UINT8 introscrdurr = 200;
 const UINT8 passwords[][4] = {{11, 12, 13, 14}, {30, 11, 27, 23}, {33, 16, 24, 13}, {15, 25, 21, 28}, 
-{28, 32, 13, 36}, {32, 20, 14, 35}, {18, 33, 35, 28}};
+{28, 32, 13, 36}, {32, 20, 14, 35}, {18, 33, 21, 27}};
 const UINT8 mapcrsrcoords[7][2] = {{23, 115}, {76, 76}, {127, 106}, {17, 86}, {54, 84}, {71, 93}, {93, 95}};
 UINT8 passidx, passentry[4], menuanimcnt;
 
