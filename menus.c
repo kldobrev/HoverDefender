@@ -28,7 +28,7 @@ const UINT8 stnamelengths[] = {14, 12, 13, 10, 12, 16, 11};
 const UINT8 gameoveroptsy[] = {96, 112, 130};
 const UINT8 mainoptsy[] = {88, 104, 120};
 const UINT8 passconfoptsx[] = {19, 83};
-const UINT8 passconfy = 128, blinkanimdur = 3;
+const UINT8 passconfy = 128, blinkanimdur = 21;
 const UINT8 wrongpassind = 99;  // Incorrect password indicator
 const UINT8 introscrdurr = 200;
 const UINT8 passwords[][4] = {{11, 12, 13, 14}, {30, 11, 27, 23}, {33, 16, 24, 13}, {15, 25, 21, 28}, 
@@ -134,7 +134,7 @@ void get_menu_pl_input(UINT8 * entries, UINT8 numentries) BANKED {
             break;  // Player has made a choice
         }
         manage_sound_chnls();
-        custom_delay(7);
+        wait_vbl_done();
     }
 }
 
@@ -289,12 +289,13 @@ UBYTE confirm_password() BANKED {
     set_sprite_tile(6, 0);
     move_sprite(5, passconfoptsx[1], passconfy);
     while(1) {
-        custom_delay(7);
+        wait_vbl_done();
         if(joypad() & (J_LEFT | J_RIGHT | J_SELECT)) {
             move_sprite(5, passconfoptsx[shadow_OAM[5].x == passconfoptsx[0] ? 1 : 0], passconfy);
             se_move_cursor();
             waitpadup();
         } else if(joypad() & (J_A |  J_START)) {
+            waitpadup();
             set_sprite_tile(5, 0);
             return shadow_OAM[5].x == passconfoptsx[1];
         }
@@ -329,15 +330,19 @@ UINT8 password_menu() {
         switch(joypad()) {
             case J_LEFT:
                 move_passcursor(&crsr, -1, 0);
+                custom_delay(7);
                 break;
             case J_RIGHT:
                 move_passcursor(&crsr, 1, 0);
+                custom_delay(7);
                 break;
             case J_UP:
                 move_passcursor(&crsr, 0, -1);
+                custom_delay(7);
                 break;
             case J_DOWN:
                 move_passcursor(&crsr, 0, 1);
+                custom_delay(7);
                 break;
             case J_A:
                 if(crsr.row == 2 && crsr.col == 8) {
@@ -365,7 +370,6 @@ UINT8 password_menu() {
         }
         anim_cursor_blink();
         manage_sound_chnls();
-        custom_delay(7);
         wait_vbl_done();
     }
 

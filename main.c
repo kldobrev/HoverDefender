@@ -242,7 +242,6 @@ void clear_all_projectiles() NONBANKED;
 void anim_stage_start() NONBANKED;
 void anim_stage_end() NONBANKED;
 void anim_blackout_loop(UINT8 indictr) NONBANKED;
-void anim_reverse_blackout_loop(UINT8 indictr) NONBANKED;
 void anim_blackout() NONBANKED;
 void anim_reverse_blackout() NONBANKED;
 void mute_music_pl_chnl(UINT8 chnum) NONBANKED;
@@ -302,7 +301,7 @@ void ultgen_flash_sparks(INT8 coordsarr[][2], UINT8 arrlen) BANKED;
 void anim_airbase_destr(UBYTE moveplflg) BANKED;
 void scroll_textbox(UINT8 dialidx) BANKED;
 void display_epilogue() BANKED;
-
+void display_credits() BANKED;
 
 
 UINT8 get_OAM_free_tile_idx() NONBANKED {
@@ -1281,13 +1280,13 @@ void init_stage(UINT8 stnum, UBYTE hasscroll) NONBANKED {
     lvlplacptr = (stages + stnum)->enlayout;
 
     roadbuildidx = 0; // Resetting the road index
-    init_stage_bkg(stagenum);
+    init_stage_bkg(stnum);
     init_stage_road();
 
     if(hasscroll) {
         STAT_REG = 0x45;
         LYC_REG = 0x00;
-        if(stagenum == 2 && stageclearflg == 1) {// Case for stage 3 boss
+        if(stnum == 2 && stageclearflg == 1) {// Case for stage 3 boss
             add_LCD(scroll_boss_bkg);
         } else {
             if((stages + stnum)->hasclouds) {
@@ -1826,6 +1825,7 @@ void main() NONBANKED {
     anim_blackout();
     gamemode = extrasflg = 0;
     stagenum = 0;
+
     while(1) {
         main_menu();
         if(menuidx == 1) {
@@ -1874,17 +1874,21 @@ void main() NONBANKED {
                 if(stagenum == 7) { // Has passed currently available levels
                     for(UINT8 areaidx = 5; areaidx != 2; areaidx--) {   // Ending sequence
                         reset_sprites(0, 40);
-                        init_stage(5, 1);
-                        init_stage_bkg(areaidx);
+                        init_stage(areaidx, 1);
                         HIDE_WIN;
                         anim_reverse_blackout();
                         anim_airbase_destr(1);
                         disable_bkg_scroll(areaidx);
                         anim_blackout();
                     }
+
                     SWITCH_ROM_MBC1(1);
                     set_bkg_data(1, 43, fonttiles);
                     display_epilogue();
+                    init_stage(2, 1);
+                    SWITCH_ROM_MBC1(1);
+                    set_bkg_data(73, 86, titlelogotiles);
+                    display_credits();
                 }
             }
         }

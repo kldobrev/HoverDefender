@@ -16,7 +16,6 @@ extern UBYTE iframeflg;
 extern const UINT8 enlimit;
 extern const unsigned char goodroadmap[];
 
-
 const INT8 encoreemitterprops[] = {0, 10, -3, 0, 20, 9, 0, 0, 9, 23};
 const INT8 encoreprops[] = {0, 120, -5, -20, 40, 50, -64, -35, 9, 25};  // HP = 30
 const INT8 arcptrnshotspeeds[8][2] = {{-3, 1}, {-3, 2}, {-2, 3}, {-1, 3}, {0, 3}, {1, 3}, {3, 3}, {4, 3}};
@@ -38,6 +37,8 @@ const UINT8 ultgenexplcrdsair[][2] = {{8, 8}, {0, 17}, {4, 0}, {0, 8}};
 const UINT8 ultgenexplcrdsground[][2] = {{1, 10}, {19, 1}, {5, 7}, {11, 0}};
 const UINT8 ultgenbossexpl[][2] = {{14, 0}, {0, 4}, {9, 2}, {4, 6}, {12, 8}};
 const UINT8 endingexplcoords[12][2] = {{19, 35}, {46, 84}, {112, 55}, {32, 26}, {71, 71}, {139, 48}, {103, 30}, {14, 83}, {59, 62}, {81, 47}, {22, 27}, {108, 78}};
+
+INT8 shakedir = 1;  // Used for shaking background during destruction sequences
 
 
 void update_hit_anim_counter() NONBANKED;
@@ -94,6 +95,7 @@ void ultgen_spark_overload() BANKED;
 void ending_sequence_prep() BANKED;
 void ultgen_flash_sparks(INT8 coordsarr[][2], UINT8 arrlen) BANKED;
 void manage_explosions() BANKED;
+void shake_stage_bkg_ind() BANKED;
 void anim_airbase_destr(UBYTE moveplflg) BANKED;
 void se_spark() BANKED;
 void se_ultgen_hit_ground() BANKED;
@@ -615,15 +617,21 @@ void manage_explosions() BANKED {   // Animate active explosions
  }
 
 
+void shake_stage_bkg_ind() BANKED {
+    if(citr % 4 == 0) {
+        scroll_bkg(0, shakedir);
+    }
+}
+
+
 void anim_airbase_destr(UBYTE moveplflg) BANKED {  // Animate ground shaking and explosions for final scenes
     UINT8 explidx = 0;
-    INT8 shakedir = 1;
     if(moveplflg) {
+        add_LCD(shake_stage_bkg_ind);
         place_machine(pl, 248, 114);
     }
     
     for(citr = 0; citr != 255; citr++) {
-
         if(moveplflg) {
             build_boss_road();
             incr_bkg_x_coords(5);
@@ -641,13 +649,23 @@ void anim_airbase_destr(UBYTE moveplflg) BANKED {  // Animate ground shaking and
         }
         
         if(citr % 4 == 0) { // Shake background
-            scroll_bkg(0, shakedir);
+            if(!moveplflg) {    // Shake bkg manually when no interrupt functions are running
+                scroll_bkg(0, shakedir);
+                scroll_sprite(4, 0, -shakedir); // Shaking core sprites individually instead of
+                scroll_sprite(5, 0, -shakedir); // using a funtion call like move_machine,
+                scroll_sprite(6, 0, -shakedir); // which is not executing fast enough
+                scroll_sprite(7, 0, -shakedir); // during all the action on screen.
+            }
             shakedir = shakedir == 1 ? -1 : 1;
         }
 
         manage_explosions();
         manage_sound_chnls();
         wait_vbl_done();
+    }
+
+    if(moveplflg) {
+        remove_LCD(shake_stage_bkg_ind);
     }
     move_bkg(0, 0);
 }
