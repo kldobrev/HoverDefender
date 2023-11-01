@@ -11,12 +11,12 @@
 
 
 extern Machine machines[], * crntenemy, * pl, * hitmchptr, * fsten, * machptr;
-extern UINT8 pllives, bossclearflg, lockmvmnt, oamidx, i, citr, cloudposx, sceneryposx, roadposx, stagenum, hitanimtmr, ascendflg, plgroundspeed, cyccount;
+extern UINT8 pllives, bossclearflg, lockmvmnt, oamidx, i, citr, cloudposx, sceneryposx, roadposx, stagenum, hitanimtmr, ascendflg, plgroundspeed;
 extern UBYTE iframeflg;
 extern const UINT8 enlimit;
 extern const unsigned char goodroadmap[];
 
-const INT8 encoreemitterprops[] = {0, 10, -3, 0, 20, 9, 0, 0, 9, 23};
+const INT8 encoreemitterprops[] = {0, 9, -3, 0, 20, 9, 0, 0, 9, 23};
 const INT8 encoreprops[] = {0, 120, -5, -20, 40, 50, -64, -35, 9, 25};  // HP = 30
 const INT8 arcptrnshotspeeds[8][2] = {{-3, 1}, {-3, 2}, {-2, 3}, {-1, 3}, {0, 3}, {1, 3}, {3, 3}, {4, 3}};
 const UINT8 emittersexpl[5][2] = {{132, 56}, {154, 120} ,{132, 120}, {154, 56}, {66, 38}};
@@ -127,7 +127,7 @@ void check_encore_boss_bkg_collision() BANKED {
 // FINAL BOSS FUNCTIONS
 
 void play_pre_encore_cutscene() BANKED {
-    set_bkg_data(73, 64, encoretiles1);
+    set_bkg_data(74, 64, encoretiles1);
     for(i = 0; i != 32; i += 8) {
         set_bkg_tiles(i, 0, 8, 10, encorepremap);
     }
@@ -143,8 +143,8 @@ void play_pre_encore_cutscene() BANKED {
 
 
 void init_emitters_boss() BANKED {
-    set_bkg_data(73, 64, encoretiles1);
-    set_bkg_data(137, 99, encoretiles2);
+    set_bkg_data(74, 64, encoretiles1);
+    set_bkg_data(138, 99, encoretiles2);
     set_bkg_tiles(0, 0, 14, 17, encorebossbkgmap);
     set_bkg_tiles(14, 0, 6, 17, encorebossmap);
     set_sprite_data(23, 47, finalbossspritetiles);
@@ -162,7 +162,7 @@ void init_emitters_boss() BANKED {
     move_sprite(17, 157, 56);
     set_sprite_prop(17, 64);
     incr_oam_sprite_tile_idx(2);
-    wait_vbl_done();
+    anim_reverse_blackout();
 }
 
 
@@ -199,32 +199,32 @@ void emitters_boss_loop() BANKED {
         }
 
         if(pattrn == 0 && cooldown_enemy(machines + 1, 20)) {
-            fire_projctl(machines + 1, 4, arcptrnshotspeeds[pattrnrep][0], arcptrnshotspeeds[pattrnrep][1]);
+            fire_projctl(machines + 1, 3, arcptrnshotspeeds[pattrnrep][0], arcptrnshotspeeds[pattrnrep][1]);
             pattrnrep++;
             if(pattrnrep == 8) {
                 pattrn = 1;
             }
         } else if(pattrn == 1 && cooldown_enemy(machines + 1, 45)) {
-            fire_projctl(machines + 1, 4, -1, 3);
-            fire_projctl(machines + 1, 4, -3, 3);
-            fire_projctl(machines + 1, 4, 0, 3);
-            fire_projctl(machines + 1, 4, 3, 3);
-            fire_projctl(machines + 1, 4, 4, 3);
+            fire_projctl(machines + 1, 3, -1, 3);
+            fire_projctl(machines + 1, 3, -3, 3);
+            fire_projctl(machines + 1, 3, 0, 3);
+            fire_projctl(machines + 1, 3, 3, 3);
+            fire_projctl(machines + 1, 3, 4, 3);
             pattrn = 2;
         } else if(pattrn == 2 && cooldown_enemy(machines + 1, 60)) {
             pattrn = 3;
         } else if(pattrn == 3 && cooldown_enemy(machines + 1, 20)) {
             pattrnrep--;
-            fire_projctl(machines + 1, 4, arcptrnshotspeeds[pattrnrep][0], arcptrnshotspeeds[pattrnrep][1]);
+            fire_projctl(machines + 1, 3, arcptrnshotspeeds[pattrnrep][0], arcptrnshotspeeds[pattrnrep][1]);
             if(pattrnrep == 0) {
                 pattrn = 4;
             }
         } else if(pattrn == 4 && cooldown_enemy(machines + 1, 45)) {
-            fire_projctl(machines + 1, 4, -4, 3);
-            fire_projctl(machines + 1, 4, -2, 3);
-            fire_projctl(machines + 1, 4, 0, 3);
-            fire_projctl(machines + 1, 4, 3, 3);
-            fire_projctl(machines + 1, 4, 4, 3);
+            fire_projctl(machines + 1, 3, -4, 3);
+            fire_projctl(machines + 1, 3, -2, 3);
+            fire_projctl(machines + 1, 3, 0, 3);
+            fire_projctl(machines + 1, 3, 3, 3);
+            fire_projctl(machines + 1, 3, 4, 3);
             pattrn = 5;
         } else if(pattrn == 5 && cooldown_enemy(machines + 1, 60)) {
             pattrn = 0;
@@ -314,8 +314,8 @@ void init_ultgen_boss() BANKED {
     set_sprite_prop(17, 0);
     move_sprite(16, 0, 0);
     move_sprite(17, 0, 0);
-    set_bkg_tile_xy(8, 3, 235);
-    set_bkg_tile_xy(8, 4, 75);
+    set_bkg_tile_xy(8, 3, 236);
+    set_bkg_tile_xy(8, 4, 76);
     set_bkg_tiles(14, 6, 6, 7, encorebossnobarriermap);
     oamidx = 8;
     crntenemy = fsten = machines + 2;
@@ -329,7 +329,7 @@ void init_ultgen_boss() BANKED {
     move_sprite(oamidx, 170, 1);
     incr_oam_sprite_tile_idx(1);
 
-    custom_delay(20);
+    custom_delay(40);
     while(fsten->x != 98) { // Move ultgen to x: 98, y: 33
         move_ultgen(1, 0);
         if(fsten->x == 49) {
@@ -407,12 +407,12 @@ void ultgen_boss_loop() BANKED {
         } else if(pattrn == 1) {
             move_ultgen(pattrnrep, 0);
             if(fsten->x == 48) {
-                fire_projctl_aimed(fsten, 4, 3);
+                fire_projctl_aimed(fsten, 3, 3);
             } else if(fsten->x == 16) {
-                fire_projctl_aimed(fsten, 4, 3);
+                fire_projctl_aimed(fsten, 3, 3);
                 pattrnrep = 1;
             } else if(fsten->x == 96) {
-                fire_projctl_aimed(fsten, 4, 3);
+                fire_projctl_aimed(fsten, 3, 3);
             } else if(fsten->x == 98) {
                 pattrn = 2;
                 pattrnrep = 0;

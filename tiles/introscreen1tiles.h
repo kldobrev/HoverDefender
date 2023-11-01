@@ -1,6 +1,6 @@
 /*
 
- MISCTILES.H
+ INTROSCREEN1TILES.H
 
  Include File.
 
@@ -10,7 +10,7 @@
   Compression          : None.
   Counter              : None.
   Tile size            : 8 x 8
-  Tiles                : 0 to 6
+  Tiles                : 0 to 60
 
   Palette colors       : None.
   SGB Palette          : None.
@@ -22,14 +22,14 @@
 
 */
 
-#ifndef __misctiles_h_INCLUDE
-#define __misctiles_h_INCLUDE
+#ifndef __introscreen1tiles_h_INCLUDE
+#define __introscreen1tiles_h_INCLUDE
 
 /* Bank of tiles. */
-#define misctilesBank 0
+#define introscreen1tilesBank 0
 /* Start of tile array. */
-extern const unsigned char misctiles[];
+extern const unsigned char introscreen1tiles[];
 
 #endif
 
-/* End of MISCTILES.H */
+/* End of INTROSCREEN1TILES.H */

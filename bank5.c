@@ -63,6 +63,7 @@ Machine * create_explosion(UINT8 x, UINT8 y) NONBANKED;
 void mute_music_pl_chnl(UINT8 chnum) NONBANKED;
 void init_stage_road() NONBANKED;
 void set_machine_sprite_tiles(Machine * mch, UINT8 fsttile) NONBANKED;
+void anim_reverse_blackout() NONBANKED;
 void set_currnt_gun(UINT8 gunidx, const INT8 gunsoffs[][2]) BANKED;
 void set_genrl_tiles(UINT8 tileidx) BANKED;
 void se_teleport(UINT8 vol) BANKED;
@@ -192,6 +193,16 @@ void init_genrlboss() BANKED {
     for(i = 10; i != 14; i++) {
         set_sprite_prop(i, 32);
     }
+
+    UINT8 telpranimidx = 6;
+    move_genrl_to_pos(72, 32);
+    anim_reverse_blackout();
+    while(telpranimidx != 255) {    // Intro
+        telpranimidx = teleport_genrl(-1, telpranimidx);
+        manage_machines(1);
+        manage_sound_chnls();
+        wait_vbl_done();
+    }
 }
 
 
@@ -201,7 +212,7 @@ void genrl_hit_anim() BANKED {
 
 
 void genrlboss_loop() BANKED {
-    UINT8 telpranimidx = 255, pattrn = 0, firecount = 0;
+    UINT8 telpranimidx = 255, pattrn = 1, firecount = 0;
     INT8 teleportdir = 0;
     while(1) {
 
@@ -220,9 +231,9 @@ void genrlboss_loop() BANKED {
                 pattrn = 1;
             } else if(pattrn == 1 && cooldown_enemy(fsten, 25)) {
                 set_currnt_gun(1, genrlgunsoffs);
-                fire_projctl(fsten, 4, -gunspgenpttrn1[firecount][0], gunspgenpttrn1[firecount][1]);
+                fire_projctl(fsten, 3, -gunspgenpttrn1[firecount][0], gunspgenpttrn1[firecount][1]);
                 set_currnt_gun(3, genrlgunsoffs);
-                fire_projctl(fsten, 4, gunspgenpttrn1[firecount][0], gunspgenpttrn1[firecount][1]);
+                fire_projctl(fsten, 3, gunspgenpttrn1[firecount][0], gunspgenpttrn1[firecount][1]);
                 firecount++;
                 if(firecount == 6) {
                     firecount = 0;
@@ -236,17 +247,17 @@ void genrlboss_loop() BANKED {
             } else if(pattrn ==  3) {
                 if(firecount == 0 && cooldown_enemy(fsten, 35)) {
                     set_currnt_gun(pl->x < fsten->x + 32 ? 2 : 3, genrlgunsoffs);
-                    fire_projctl_aimed(fsten, 4, 3);
+                    fire_projctl_aimed(fsten, 3, 3);
                     firecount = 1;
                 } else if(firecount == 1 && cooldown_enemy(fsten, 35)) {
                     set_currnt_gun(2, genrlgunsoffs);
-                    fire_projctl(fsten, 4, 3, -1);
-                    fire_projctl(fsten, 4, 3, 0);
-                    fire_projctl(fsten, 4, 3, 1);
+                    fire_projctl(fsten, 3, 3, -1);
+                    fire_projctl(fsten, 3, 3, 0);
+                    fire_projctl(fsten, 3, 3, 1);
                     firecount = 2;
                 } else if(firecount == 2 && cooldown_enemy(fsten, 35)) {
-                    fire_projctl(fsten, 4, 3, -2);
-                    fire_projctl(fsten, 4, 3, 2);
+                    fire_projctl(fsten, 3, 3, -2);
+                    fire_projctl(fsten, 3, 3, 2);
                     firecount = 3;
                 } else if(firecount == 3 && cooldown_enemy(fsten, 35)) {
                     firecount = 0;
@@ -260,16 +271,16 @@ void genrlboss_loop() BANKED {
             } else if(pattrn == 5) {
                 if((firecount == 0 || firecount == 2) && cooldown_enemy(fsten, 35)) {
                     set_currnt_gun(0, genrlgunsoffs);
-                    fire_projctl_aimed(fsten, 4, 3);
+                    fire_projctl_aimed(fsten, 3, 3);
                     firecount++;
                 } else if(firecount == 1 && cooldown_enemy(fsten, 35)) {
-                    fire_projctl(fsten, 4, -3, -2);
-                    fire_projctl(fsten, 4, -3, 0);
-                    fire_projctl(fsten, 4, -3, 2);
+                    fire_projctl(fsten, 3, -3, -2);
+                    fire_projctl(fsten, 3, -3, 0);
+                    fire_projctl(fsten, 3, -3, 2);
                     firecount = 2;
                 } else if(firecount == 3 && cooldown_enemy(fsten, 35)) {
-                    fire_projctl(fsten, 4, -3, -1);
-                    fire_projctl(fsten, 4, -3, 1);
+                    fire_projctl(fsten, 3, -3, -1);
+                    fire_projctl(fsten, 3, -3, 1);
                     firecount = 4;
                 } else if(firecount == 4 && cooldown_enemy(fsten, 35)) {
                     teleportdir = 1;
@@ -338,23 +349,24 @@ void genrl_clear_sequence() BANKED {
 // BOSS 6 FUNCTIONS
 
 void init_defsysboss() BANKED {
-    set_bkg_data(160, 55, defsysbosstiles);
+    set_bkg_data(161, 55, defsysbosstiles);
     move_bkg(128, 0);
-    fill_bkg_rect(21, 0, 9, 1, 94);
-    fill_bkg_rect(21, 1, 9, 1, 95);
-    fill_bkg_rect(25, 2, 8, 8, 93);
-    set_bkg_tile_xy(25, 2, 114);
-    set_bkg_tile_xy(26, 2, 115);
-    set_bkg_tile_xy(27, 2, 116);
+    fill_bkg_rect(21, 0, 9, 1, 95);
+    fill_bkg_rect(21, 1, 9, 1, 96);
+    fill_bkg_rect(25, 2, 8, 8, 94);
+    set_bkg_tile_xy(25, 2, 115);
+    set_bkg_tile_xy(26, 2, 116);
+    set_bkg_tile_xy(27, 2, 117);
     for(i = 16; i != 34; i +=3) {
         set_bkg_tiles(i, 10, 3, 7, goodroadmap);
     }
     set_bkg_tiles(0, 0, 4, 16, defsysbossmap);
     set_bkg_tiles(25, 3, 3, 2, defsysbossceilgunmap);
-    fill_bkg_rect(16, 10, 16, 1, 214);
+    fill_bkg_rect(16, 10, 16, 1, 215);
     init_machine_props(154, 80, defsysprops);
     set_machine_tile(fsten, 0);
     set_sprite_tile(4, defsysprops[9]);
+    anim_reverse_blackout();
 }
 
 
@@ -417,9 +429,9 @@ void defsysboss_loop() BANKED {
             }
         } else if(pattrn == 2 && cooldown_enemy(fsten, 65)) {
             set_currnt_gun(0, defsysgunoffs);
-            fire_projctl(fsten, 4, -3, 2);
-            fire_projctl(fsten, 4, -1, 3);
-            fire_projctl(fsten, 4, 2, 3);
+            fire_projctl(fsten, 3, -3, 2);
+            fire_projctl(fsten, 3, -1, 3);
+            fire_projctl(fsten, 3, 2, 3);
             pattrn++;
         } else if(pattrn == 3 && cooldown_enemy(fsten, 40)) {
             pattrn++;
@@ -438,9 +450,9 @@ void defsysboss_loop() BANKED {
             }
         } else if(pattrn == 5 && cooldown_enemy(fsten, 40)) {
             set_currnt_gun(0, defsysgunoffs);
-            fire_projctl(fsten, 4, -3, 3);
-            fire_projctl(fsten, 4, 0, 3);
-            fire_projctl(fsten, 4, 2, 3);
+            fire_projctl(fsten, 3, -3, 3);
+            fire_projctl(fsten, 3, 0, 3);
+            fire_projctl(fsten, 3, 2, 3);
             pattrn = 0;
         }
 

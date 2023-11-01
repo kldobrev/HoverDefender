@@ -60,7 +60,7 @@ extern const Placement stage1objs[], stage2objs[], stage3objs[], stage4objs[], s
 extern const UINT8 scorpbossexpl[5][2], jggrbossexpl[7][2], mechbossexpl[4][2], genrlbossexpl[5][2], defsysbossexpl[6][2], ultgenexplcrdsground[4][2], ultgenbossexpl[5][2], emittersexpl[5][2];
 extern UINT8 jgrbkgposx, jgrposx;
 
-const UINT8 pausesign[5] = {0x22, 0x13, 0x27, 0x25, 0x17};
+const UINT8 pausesign[5] = {0x23, 0x14, 0x28, 0x26, 0x18};
 const Stage stages[] = {{stage1road, 17, stage1objs, deserttiles, 39, desertmap, 0, 1, 2, &deserttheme},
 {stage2road, 25, stage2objs, citytiles, 46, citymap, 1, 1, 2, &citytheme},
 {stage3road, 27, stage3objs, mountaintiles, 61, mountainmap, 1, 1, 2, &mountaintheme},
@@ -68,7 +68,7 @@ const Stage stages[] = {{stage1road, 17, stage1objs, deserttiles, 39, desertmap,
 {stage5road, 33, stage5objs, fortstiles, 104, fortsmap, 1, 0, 4, &tunneltheme},
 {stage6road, 39, stage6objs, fortsinttiles, 67, fortsintmap, 0, 0, 4, &tunneltheme}
 };
-    const Stage * crntstage = stages;    // Current stage pointer
+const Stage * crntstage = stages;    // Current stage pointer
 UINT8 stagenum;     // Current stage counter
 
 INT8 bullspx = 0, bullspy = 0;
@@ -86,12 +86,12 @@ const INT8 enprops[10][10] = {{1, 2, 0, 1, 13, 15, -3, 12, 0, 23},
 {0, 0, 0, 0, 16, 16, 0, 0, 120, 120}
 };
 
-// Projectiles order - 0 - bullet, 1 - bigbullet, 2 - horizontal laser, 3 - bomb, 4 - plasma, 5 - vertical laser
+// Projectiles order - 0 - bullet, 1 - bigbullet, 2 - horizontal laser, 3 - plasma, 4 - bomb, 5 - vertical laser
 const UINT8 projctlprops[6][4] = {{3, 3, 1, 17},
 {4, 4, 2, 18},
 {8, 3, 3, 19},
-{8, 8, 4, 20},
-{8, 8, 4, 21},
+{8, 8, 5, 20},
+{8, 8, 5, 21},
 {3, 8, 3, 22}};
 
 // Represents the screen, divided into 16x16px squares, each containing the slope
@@ -111,7 +111,6 @@ UINT8 roadbuildidx; // index for the stage road array
 UINT8 camtileidx, nextcamtileidx; // current tile index of the right camera border, index of area where 
 // the next part of the stage should be drawn
 UINT8 i, citr; // iterators for whenever
-INT8 sitr;  // signed iterator for whenever
 UINT8 roadposx, sceneryposx, cloudposx;
 const UINT8 roadscrspeed = 5; // Road scrolling speed
 UINT8 plspeed;
@@ -153,10 +152,10 @@ INT8 fractdiv; // Precision factor for caluculating coordinates
 INT8 slope;  // Used to calculate projectile trajectory when aimed at player
 INT16 gradient;  // Used to calculate projectile trajectory when aimed at player
 UINT8 hitanimtmr;  // Damage animation timer when boss is hit
-UINT8 plgun, numkills;
-UINT8 menuidx, gamemode, extrasflg;
+UINT8 plgun, defaultplgun, numkills;
+UINT8 menuidx, extrasflg, bossrushflg;
 UINT8 cycrulecheck; // Keeping track of cyles, used for optimization purposes
-const UINT8 numkillsthresh[3] = {10, 20, 20};   // Number of kills required to get a gun upgrade and an extra life
+const UINT8 numkillsthresh[4] = {10, 20, 20, 255};   // Number of kills required to get a gun upgrade and an extra life
 
 
 
@@ -258,12 +257,9 @@ void se_jump() NONBANKED;
 void se_pause() NONBANKED;
 void se_wpn_upgrd() NONBANKED;
 void se_charge_gun(UINT8 addfreq) NONBANKED;
-void get_menu_pl_input(UINT8 * entries, UINT8 numentries) BANKED;
-void init_common_menu_props() BANKED;
 void main_menu() BANKED;
+void game_over_menu() BANKED;
 void stage_intro_screen(UINT8 stnum) BANKED;
-void game_over_menu(UINT8 stnum) BANKED;
-UINT8 password_menu() BANKED;
 void play_stage() NONBANKED;
 void play_boss() NONBANKED;
 void init_boss(UINT8 stnum) NONBANKED;
@@ -275,7 +271,7 @@ void mute_song() NONBANKED;
 void unmute_song() NONBANKED;
 void play_song(const hUGESong_t * song) NONBANKED;
 void stop_song() NONBANKED;
-void init_mechboss(UINT8 x, UINT8 y) BANKED;
+void init_mechboss() BANKED;
 void mechboss_loop() BANKED;
 void init_jggrrboss() BANKED;
 void jggrrboss_loop() BANKED;
@@ -300,8 +296,11 @@ void ending_sequence_prep() BANKED;
 void ultgen_flash_sparks(INT8 coordsarr[][2], UINT8 arrlen) BANKED;
 void anim_airbase_destr(UBYTE moveplflg) BANKED;
 void scroll_textbox(UINT8 dialidx) BANKED;
-void display_epilogue() BANKED;
-void display_credits() BANKED;
+void play_epilogue() BANKED;
+void play_credits() BANKED;
+void play_prologue() BANKED;
+void boss_rush_results_screen() BANKED;
+
 
 
 UINT8 get_OAM_free_tile_idx() NONBANKED {
@@ -369,7 +368,7 @@ inline UINT8 get_tile_idx(UINT8 newidxnum) NONBANKED {   // Recalculate tile ind
 
 
 void reset_sprites(UINT8 fstsprite, UINT8 lastsprite) NONBANKED {
-    for(i = fstsprite; i != lastsprite; i++) {
+    for(i = fstsprite; i != lastsprite + 1; i++) {
         set_sprite_tile(i, 0);
         set_sprite_prop(i, 0);
         move_sprite(i, 0, 0);
@@ -381,11 +380,11 @@ void reset_sprites(UINT8 fstsprite, UINT8 lastsprite) NONBANKED {
 void init_stage_bkg(UINT8 stnum) NONBANKED {
     const Stage * stg = stages + stnum;
     SWITCH_ROM_MBC1(stg->stagebank);
-    set_bkg_data(93, stg->bkgtilesnum, stg->bkgtiles);
-    set_bkg_tiles(0, stnum == 2 && stageclearflg == 1 ? 4 : stg->hasclouds, 32, 10 - stg->hasclouds, stg->bkgmap);
+    set_bkg_data(94, stg->bkgtilesnum, stg->bkgtiles);
+    set_bkg_tiles(0, stnum == 2 && stageclearflg != 0 ? 4 : stg->hasclouds, 32, 10 - stg->hasclouds, stg->bkgmap);
     if(stg->hasclouds) {
         SWITCH_ROM_MBC1(2);
-        set_bkg_data(52, 13, cloudtiles);
+        set_bkg_data(53, 13, cloudtiles);
         set_bkg_tiles(0, 0, 32, 1, cloudmap);
         SWITCH_ROM_MBC1(stg->stagebank);
     }
@@ -395,7 +394,7 @@ void init_stage_bkg(UINT8 stnum) NONBANKED {
 void init_stage_road() NONBANKED { // Layout initial road tiles to start the stage
     prevbank = _current_bank;
     SWITCH_ROM_MBC1(2);
-    set_bkg_data(65, 28, roadtiles);
+    set_bkg_data(66, 28, roadtiles);
     SWITCH_ROM_MBC1(prevbank);
     for(roadbuildidx = 0; roadbuildidx != 7; roadbuildidx++) {
         set_bkg_tiles(roadbuildidx * 3, 10, 3, 7, goodroadmap);
@@ -1010,7 +1009,8 @@ void take_damage(Machine * mch, UINT8 dmgamt) NONBANKED {
         } else {    // Lost life
             lockmvmnt = 3;
             pllives--;
-            pl->shield = plgun = numkills = 0;  // Back to regular gun on death
+            pl->shield = numkills = 0;  // Back to regular gun on death
+            plgun = defaultplgun;
             hud_upd_lives();
         }
         hud_upd_shield();
@@ -1020,7 +1020,9 @@ void take_damage(Machine * mch, UINT8 dmgamt) NONBANKED {
         if(mch != pl) {
             numkills++;
             if(numkills == numkillsthresh[plgun]) {
-                plgun = pl->shield == 4 ? 2 : 1; // On 10 kills upgrade gun depending on health
+                if(defaultplgun != 3) { // Do not try to upgrade the best gun
+                    plgun = pl->shield == 4 ? 2 : 1; // On 10 kills upgrade gun depending on health
+                }
                 numkills = 0;
                 hud_draw_gun();
                 if(pllives != 9) {
@@ -1176,7 +1178,7 @@ void exec_turret_pattern(Machine * mch) NONBANKED {
 void exec_bomber_pattern(Machine * mch) NONBANKED {
     move_enemy(mch, -1, 0);
     if(pl->x > mch->x && pl->x < mch->x + 8 && mch->cyccount == 0) {
-        fire_projctl(mch, 3, 0, 2);
+        fire_projctl(mch, 4, 0, 2);
         mch->cyccount = 1;  // Preventing from continuously dropping bombs
     }
 }
@@ -1207,10 +1209,8 @@ UBYTE cooldown_enemy(Machine * mch, UINT8 period) NONBANKED { // Coolwon period 
 
 void hud_init() NONBANKED {
     prevbank = _current_bank;
-    SWITCH_ROM_MBC1(1);
-    set_bkg_data(9, 43, fonttiles);
     SWITCH_ROM_MBC1(2);
-    set_win_data(0, 9, hudtiles);
+    set_win_data(0, 10, hudtiles);
     set_win_tiles(0, 0, 18, 1, hudmap);
     hud_upd_shield();
     hud_upd_lives();
@@ -1232,7 +1232,7 @@ void hud_upd_shield() NONBANKED {
 
 
 inline void hud_upd_lives() {
-    set_win_tile_xy(17, 0, pllives + 9);  // Tile offset 9
+    set_win_tile_xy(17, 0, pllives + 10);  // Tile offset 9
 }
 
 
@@ -1254,15 +1254,18 @@ inline void hud_draw_gun() NONBANKED {
 
 void init_game() NONBANKED {
     plspeed = plgroundspeed;
-    pllives = 3;
-    pl = machines; // First element of the array is the player
+    if(bossrushflg == 0) {  // Already setup in boss rush mode
+        pllives = 3;
+    }
     pl->shield = 4;
-    plgun = 0;
+    plgun = defaultplgun;
     numkills = 0;
 }
 
 
 void init_stage(UINT8 stnum, UBYTE hasscroll) NONBANKED {
+    SWITCH_ROM_MBC1(1);
+    set_bkg_data(10, 43, fonttiles);
     roadposx = sceneryposx = cloudposx = iframeflg = 0;
     iframecnt = iframeflg = 0;
     oamidx = 0;
@@ -1286,7 +1289,7 @@ void init_stage(UINT8 stnum, UBYTE hasscroll) NONBANKED {
     if(hasscroll) {
         STAT_REG = 0x45;
         LYC_REG = 0x00;
-        if(stnum == 2 && stageclearflg == 1) {// Case for stage 3 boss
+        if(stnum == 2 && stageclearflg != 0) {// Case for stage 3 boss
             add_LCD(scroll_boss_bkg);
         } else {
             if((stages + stnum)->hasclouds) {
@@ -1379,7 +1382,6 @@ void clear_all_projectiles() NONBANKED {
 
 
 void anim_stage_start() NONBANKED {
-    anim_reverse_blackout();
     do {
         move_machine(pl, 1, 0);
         wait_vbl_done();
@@ -1390,6 +1392,7 @@ void anim_stage_start() NONBANKED {
 void anim_stage_end() NONBANKED {
     clear_all_projectiles();
     pl->cyccount = 0;
+    set_machine_sprite_tiles(pl, 1);
     while(1) {
         build_boss_road();
         incr_bkg_x_coords(5);
@@ -1409,13 +1412,13 @@ void anim_blackout() NONBANKED {  // Used as a standalone call
     for(UINT8 blkstep = 0; blkstep != 21; blkstep++) {
         switch(blkstep) {
             case 1:
-                BGP_REG = 0xF9;
+                BGP_REG = OBP0_REG = 0xF9;
                 break;
             case 10:
-                BGP_REG = 0xFE;
+                BGP_REG = OBP0_REG = 0xFE;
                 break;
             case 20:
-                BGP_REG = 0xFF;
+                BGP_REG = OBP0_REG = 0xFF;
                 break;
         }
         wait_vbl_done();
@@ -1427,13 +1430,13 @@ void anim_reverse_blackout() NONBANKED {  // Used as a standalone call
     for(UINT8 blkstep = 0; blkstep != 21; blkstep++) {
         switch(blkstep) {
             case 1:
-                BGP_REG = 0xFE;
+                BGP_REG = OBP0_REG = 0xFE;
                 break;
             case 10:
-                BGP_REG = 0xF9;
+                BGP_REG = OBP0_REG = 0xF9;
                 break;
             case 20:
-                BGP_REG = 0xE4;
+                BGP_REG = OBP0_REG = 0xE4;
                 break;
         }
         wait_vbl_done();
@@ -1582,16 +1585,17 @@ void se_charge_gun(UINT8 addfreq) NONBANKED {
 
 void play_stage() NONBANKED {
     init_stage(stagenum, 1);
+    anim_reverse_blackout();
     anim_stage_start();
     play_song(crntstage->theme);
     stage_loop();
-    if(stageclearflg == 1) {
+    if(stageclearflg != 0) {
         anim_stage_end();
     }
     stop_song();    // Stop current stage music
     anim_blackout();
     HIDE_WIN;
-    reset_sprites(0, 40);
+    reset_sprites(0, 39);
     disable_bkg_scroll(stagenum);
 }
 
@@ -1611,7 +1615,7 @@ void init_boss(UINT8 stnum) NONBANKED {
             init_scorpboss();
             break;
         case 1:
-            init_mechboss(167, 64);
+            init_mechboss();
             break;
         case 2:
             init_jggrrboss();
@@ -1726,7 +1730,7 @@ void boss_clear_sequence(UINT8 stnum) NONBANKED {
             anim_airbase_destr(0);
     }
     
-    if(stagenum != 6) {
+    if(stagenum != 6 && !bossrushflg) {
         prevbank = _current_bank;
         SWITCH_ROM_MBC1(2);
         play_song(&cleartheme);
@@ -1760,8 +1764,8 @@ void play_boss() NONBANKED {
         SWITCH_ROM_MBC1(5);
     }
     boss_loop(stagenum);
+    stop_song();
     if(bossclearflg == 1) {
-        stop_song();
         unmute_all_channels();
         set_machine_sprite_tiles(pl, 1);    // Resetting player sprite in case of blinking during iframes
         boss_clear_sequence(stagenum);
@@ -1776,7 +1780,7 @@ void play_boss() NONBANKED {
             disable_bkg_scroll(stagenum);
         }
     }
-    reset_sprites(0, 40);
+    reset_sprites(0, 39);
     move_bkg(0, 0);
 }
 
@@ -1823,36 +1827,30 @@ void main() NONBANKED {
     SHOW_SPRITES;
     unmute_all_channels();
     anim_blackout();
-    gamemode = extrasflg = 0;
-    stagenum = 0;
+    extrasflg = bossrushflg = stagenum = defaultplgun = 0;
+    pl = machines; // First element of the array is the player
+
+    SWITCH_ROM_MBC1(1); // Loading assets for prologue
+    set_bkg_data(1, 43, fonttiles);
+    SWITCH_ROM_MBC1(2);
+    set_sprite_data(1, 16, playerspritetiles);
+    play_prologue();
 
     while(1) {
         main_menu();
-        if(menuidx == 1) {
-            stagenum = password_menu();
-            if(stagenum == 6) {
-                wait_vbl_done();    // TODO: Menu to choose route (bad/good endings)
-            }
-            if(stagenum == 7) { // Unlock extras menu
-                extrasflg = 1;
-                stagenum = 0;
-                continue;
-            }
-        } /*else if(extrasflg && menuidx == 2) { // Under construction
-            extras_menu();
-        }*/
         crntstage = stages + stagenum;
         init_game();
-        stageclearflg = bossclearflg = 0;
+        stageclearflg = bossrushflg;
+        bossclearflg = 0;
 
         while(1) {  // Game loop
             unmute_all_channels();
             if(pllives == 0) {
-                game_over_menu(stagenum);
+                game_over_menu();
                 if(menuidx == 0) {  // Chosen continue
                     init_game();
                 } else {    // Chosen quit
-                    stagenum = 0;
+                    stagenum = defaultplgun = 0;
                     crntstage = stages;
                     break;
                 }
@@ -1867,31 +1865,40 @@ void main() NONBANKED {
                 }
             } else if(bossclearflg == 0) {
                 play_boss();
+            } else if(bossrushflg == 2) {   // Fight single boss mode has ended
+                stagenum = bossrushflg = stageclearflg = 0;
+                break;
             } else {    // Current stage and boss both cleared
                 stagenum++;
                 crntstage++;    // Next stage data
-                stageclearflg = bossclearflg = 0;
+                stageclearflg = bossrushflg;
+                bossclearflg = 0;
+                pl->shield = 4; // Max out player HP after boss defeat
                 if(stagenum == 7) { // Has passed currently available levels
-                    for(UINT8 areaidx = 5; areaidx != 2; areaidx--) {   // Ending sequence
-                        reset_sprites(0, 40);
-                        init_stage(areaidx, 1);
-                        HIDE_WIN;
-                        anim_reverse_blackout();
-                        anim_airbase_destr(1);
-                        disable_bkg_scroll(areaidx);
-                        anim_blackout();
-                    }
+                    if(!bossrushflg) {
+                        for(UINT8 areaidx = 5; areaidx != 2; areaidx--) {   // Ending sequence
+                            reset_sprites(0, 39);
+                            init_stage(areaidx, 1);
+                            HIDE_WIN;
+                            anim_reverse_blackout();
+                            anim_airbase_destr(1);
+                            disable_bkg_scroll(areaidx);
+                            anim_blackout();
+                        }
 
-                    SWITCH_ROM_MBC1(1);
-                    set_bkg_data(1, 43, fonttiles);
-                    display_epilogue();
-                    init_stage(2, 1);
-                    SWITCH_ROM_MBC1(1);
-                    set_bkg_data(73, 86, titlelogotiles);
-                    display_credits();
+                        SWITCH_ROM_MBC1(1);
+                        set_bkg_data(1, 43, fonttiles);
+                        play_epilogue();
+                        init_stage(2, 1);
+                        SWITCH_ROM_MBC1(1);
+                        set_bkg_data(74, 86, titlelogotiles);
+                        play_credits();
+                    } else if(bossrushflg == 1) {   // Boss rush completed
+                        boss_rush_results_screen();
+                        break;
+                    }
                 }
             }
         }
     }
 }
-

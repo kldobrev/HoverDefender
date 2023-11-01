@@ -6,6 +6,7 @@
 #include "tiles/overworldmaptiles.c"
 #include "tiles/mapframetiles.c"
 #include "tiles/airbasemaptiles.c"
+#include "tiles/medaltiles.c"
 #include "maps/titlelogomap.c"
 #include "maps/passwscreenmap.c"
 #include "maps/overworldmap.c"
@@ -13,10 +14,11 @@
 #include "hUGEDriver.h"
 
 
+
 extern const hUGESong_t titletheme;
 extern const hUGESong_t gameovertheme;
 extern const unsigned char blanktile[];
-extern UINT8 menuidx, gamemode, extrasflg, i, citr;
+extern UINT8 menuidx, i, citr, stagenum, extrasflg, bossrushflg, defaultplgun, stageclearflg, pllives;
 const unsigned char stagenames[][18] = {{0x0E, 0x0F, 0x1D, 0x0F, 0x1C, 0x1E, 0x00, 0x12, 0x13, 0x11, 0x12, 0x21, 0x0B, 0x23},
 {0x0D, 0x0B, 0x1A, 0x1E, 0x13, 0x20, 0x0F, 0x00, 0x0D, 0x13, 0x1E, 0x23}, {0x17, 0x19, 0x1F, 0x18, 0x1E, 0x0B, 0x13, 0x18, 0x00, 0x1A, 0x0B, 0x1D, 0x1D},
 {0x1D, 0x15, 0x23, 0x00, 0x1E, 0x1F, 0x18, 0x18, 0x0F, 0x16}, {0x10, 0x19, 0x1C, 0x1E, 0x00, 0x1D, 0x1E, 0x1C, 0x0B, 0x1E, 0x19, 0x1D},
@@ -24,16 +26,50 @@ const unsigned char stagenames[][18] = {{0x0E, 0x0F, 0x1D, 0x0F, 0x1C, 0x1E, 0x0
 const UINT8 stnamelengths[] = {14, 12, 13, 10, 12, 16, 11};
 
 
+
 // Global scope/menus vars
-const UINT8 gameoveroptsy[] = {96, 112, 130};
+const UINT8 gameoveroptsy[] = {96, 112};
 const UINT8 mainoptsy[] = {88, 104, 120};
 const UINT8 passconfoptsx[] = {19, 83};
+const UINT8 extrasoptsy[] = {48, 64, 112, 128, 144};
 const UINT8 passconfy = 128, blinkanimdur = 21;
 const UINT8 wrongpassind = 99;  // Incorrect password indicator
 const UINT8 introscrdurr = 200;
 const UINT8 passwords[][4] = {{11, 12, 13, 14}, {30, 11, 27, 23}, {33, 16, 24, 13}, {15, 25, 21, 28}, 
-{28, 32, 13, 36}, {32, 20, 14, 35}, {18, 33, 21, 27}};
+{28, 32, 13, 36}, {32, 20, 14, 35}, {18, 33, 21, 27}, {0x1F, 0x1C, 0x1E, 0x12}};
 const UINT8 mapcrsrcoords[7][2] = {{23, 115}, {76, 76}, {127, 106}, {17, 86}, {54, 84}, {71, 93}, {93, 95}};
+const unsigned char gamestsign[] = {0x1D, 0x1E, 0x0B, 0x1C, 0x1E, 0x00, 0x11, 0x0B, 0x17, 0x0F};
+const unsigned char passwsign[] = {0x1A, 0x0B, 0x1D, 0x1D, 0x21, 0x19, 0x1C, 0x0E};
+const unsigned char creatorsign[] = {0x03, 0x01, 0x03, 0x04, 0x00, 0x15, 0x18, 0x1D, 0x00, 0x0E, 0x19, 0x0C, 0x1C, 0x0F, 0x20};
+const unsigned char stagesign[] = {0x1D, 0x1E, 0x0B, 0x11, 0x0F};
+const unsigned char gmoversign[] = {0x11, 0x0B, 0x17, 0x0F, 0x00, 0x019, 0x20, 0x0F, 0x1C};
+const unsigned char contsign[] = {0x0D, 0x19, 0x18, 0x1E, 0x13, 0x18, 0x1F, 0x0F};
+const unsigned char quitsign[] = {0x1B, 0x1F, 0x13, 0x1E};
+const unsigned char gopasssign[] = {0x1A, 0x0B, 0x1D, 0x1D, 0x21, 0x19, 0x1C, 0x0E, 0x25};
+const unsigned char extrassign[] = {0x0F, 0x22, 0x1E, 0x1C, 0x0B, 0x1D};
+const unsigned char extrmenusign[] = {0x0F, 0x22, 0x1E, 0x1C, 0x0B, 0x1D, 0x00, 0x00, 0x17, 0x0F, 0x18, 0x1F};
+const unsigned char plasmasign[] = {0x1A, 0x16, 0x0B, 0x1D, 0x17, 0x0B, 0x00, 0x1C, 0x1F, 0x18};
+const unsigned char fightbosssign[] = {0x10, 0x13, 0x11, 0x12, 0x1E, 0x00, 0x0C, 0x19, 0x1D, 0x1D};
+const unsigned char bossrushsign[] = {0x0C, 0x19, 0x1D, 0x1D, 0x00, 0x00, 0x1C, 0x1F, 0x1D, 0x12, 0x00, 0x00, 0x17, 0x19, 0x0E, 0x0F};
+const unsigned char regularsign[] = {0x1C, 0x0F, 0x11, 0x1F, 0x16, 0x0B, 0x1C};
+const unsigned char glasscannonsign[] = {0x11, 0x16, 0x0B, 0x1D, 0x1D, 0x00, 0x0D, 0x0B, 0x18, 0x18, 0x19, 0x18};
+const unsigned char glassfeathersign[] = {0x11, 0x16, 0x0B, 0x1D, 0x1D, 0x00, 0x10, 0x0F, 0x0B, 0x1E, 0x12, 0x0F, 0x1C};
+const unsigned char rushrestitlesign[] = {0x0C, 0x19, 0x1D, 0x1D, 0x00, 0x1C, 0x1F, 0x1D, 0x12};   // 9
+const unsigned char rushresmodesign[] = {0x17, 0x19, 0x0E, 0x0F};   // 4
+const unsigned char rushresbossesdefsign[] = {0x0C, 0x19, 0x1D, 0x1D, 0x0F, 0x1D, 0x00, 0x0C, 0x0F, 0x0B, 0x1E, 0x0F, 0x18, 0x25};  // 14
+const unsigned char allsign[] = {0x0B, 0x16, 0x16};
+const unsigned char goodjobsign[] = {0x11, 0x19, 0x19, 0x0E, 0x00, 0x21, 0x19, 0x1C, 0x15, 0x27};   // 10
+const unsigned char greatjobsign[] = {0x11, 0x1C, 0x0F, 0x0B, 0x1E, 0x00, 0x21, 0x19, 0x1C, 0x15, 0x27}; // 11
+const unsigned char congratssign[] = {0x0D, 0x19, 0x18, 0x11, 0x1C, 0x0B, 0x1E, 0x1F, 0x16, 0x0B, 0x1E, 0x13, 0x19, 0x18, 0x1D, 0x27};  // 16
+const unsigned char awardedsign[] = {0x23, 0x19, 0x1F, 0x00, 0x21, 0x13, 0x18, 0x00, 0x1E, 0x12, 0x0F, 0x00, 0x17, 0x0F, 0x0E, 0x0B, 0x16}; // 17
+const unsigned char medaltypessign[][15] = {{0x00, 0x19, 0x10, 0x00, 0x0E, 0x0F, 0x0E, 0x13, 0x0D, 0x0B, 0x1E, 0x13, 0x19, 0x18, 0x00},
+{0x19, 0x10, 0x00, 0x1A, 0x0F, 0x1C, 0x1D, 0x0F, 0x20, 0x0F, 0x1C, 0x0B, 0x18, 0x0D, 0x0F},
+{0x00, 0x00, 0x00, 0x19, 0x10, 0x00, 0x20, 0x0B, 0x16, 0x19, 0x1C, 0x00, 0x00, 0x00, 0x00}};
+const unsigned char pushstartsign[] = {0x1A, 0x1F, 0x1D, 0x12, 0x00, 0x1D, 0x1E, 0x0B, 0x1C, 0x1E}; // 10
+const unsigned char medalssigns[][4] = {{0x35, 0x37, 0x36, 0x38}, {0x35, 0x37, 0x39, 0x3A}, {0x35, 0x37, 0x3B, 0x3C}};
+const UINT8 bossrushconfigs[][2] = {{0, 3}, {3, 1}, {0, 1}};
+const UINT8 medaltypeoffsx[] = {4, 3, 7};
+
 UINT8 passidx, passentry[4], menuanimcnt;
 
 typedef struct Passcursor {
@@ -49,14 +85,15 @@ void play_song(const hUGESong_t * song, UINT8 songbank) NONBANKED;
 void stop_song() NONBANKED;
 void anim_blackout() NONBANKED;
 void mute_music_pl_chnl(UINT8 chnum) NONBANKED;
+void init_game() NONBANKED;
+void reset_sprites(UINT8 fstsprite, UINT8 lastsprite) NONBANKED;
 void init_common_menu_props() BANKED;
 void main_menu() BANKED;
 void get_menu_pl_input(UINT8 * entries, UINT8 numentries) BANKED;
 void stage_intro_screen(UINT8 stnum) BANKED;
-void game_over_menu(UINT8 stnum) BANKED;
-UINT8 password_menu() BANKED;
-void init_game() NONBANKED;
-void reset_sprites(UINT8 fstsprite, UINT8 lastsprite) NONBANKED;
+void game_over_menu() BANKED;
+void password_menu() BANKED;
+void extras_menu() BANKED;
 void init_passcursor(Passcursor * cr, UINT8 x, UINT8 y) BANKED;
 void move_passcursor(Passcursor * cr, INT8 dirctx, INT8 dircty) BANKED;
 void update_pass_field() BANKED;
@@ -73,7 +110,8 @@ void se_move_cursor() BANKED;
 void se_wrong_password() BANKED;
 void se_add_character() BANKED;
 void se_drop_character() BANKED;
-
+UINT8 choose_boss() BANKED;
+void boss_rush_results_screen() BANKED;
 
 
 void init_common_menu_props() BANKED {
@@ -86,10 +124,8 @@ void init_common_menu_props() BANKED {
 
 
 void main_menu() BANKED {
+    reset_sprites(0, 3);
     init_common_menu_props();
-    const unsigned char gamestsign[] = {0x1D, 0x1E, 0x0B, 0x1C, 0x1E, 0x00, 0x11, 0x0B, 0x17, 0x0F};
-    const unsigned char passwsign[] = {0x1A, 0x0B, 0x1D, 0x1D, 0x21, 0x19, 0x1C, 0x0E};
-    const unsigned char creatorsign[] = {0x03, 0x01, 0x03, 0x04, 0x00, 0x15, 0x18, 0x1D, 0x00, 0x0E, 0x19, 0x0C, 0x1C, 0x0F, 0x20};
     set_bkg_data(35, 78, titlelogotiles);
     set_bkg_tiles(2, 1, 16, 6, titlelogomap);
     anim_reverse_blackout();
@@ -98,20 +134,28 @@ void main_menu() BANKED {
     if(extrasflg == 1) {    //  Extras menu has been unlocked
         set_bkg_tiles(6, 9, 10, 1, gamestsign);
         set_bkg_tiles(6, 11, 8, 1, passwsign);
-        const unsigned char extrassign[] = {0x0F, 0x22, 0x1E, 0x1C, 0x0B, 0x1D};
         set_bkg_tiles(6, 13, 6, 1, extrassign);
-        move_sprite(0, 44, 88);
+        move_sprite(0, 44, mainoptsy[0]);
         get_menu_pl_input(mainoptsy, 3);
     } else {
         set_bkg_tiles(6, 11, 10, 1, gamestsign);
         set_bkg_tiles(6, 13, 8, 1, passwsign);
-        move_sprite(0, 44, 104);
+        move_sprite(0, 44, mainoptsy[1]);
         get_menu_pl_input(mainoptsy + 1, 2);
     }
     stop_song();
     se_choose_entry();
-    reset_sprites(0, 40);
+    reset_sprites(0, 0);
     anim_blackout();
+
+    switch(menuidx) {
+        case 1:
+            password_menu();
+            break;
+        case 2:
+            extras_menu();
+            break;
+    }
 }
 
 
@@ -143,7 +187,6 @@ void stage_intro_screen(UINT8 stnum) BANKED {
     init_common_menu_props();
     set_sprite_tile(0, 4);
     set_bkg_data(43, 2, mapframetiles);
-    const unsigned char stagesign[] = {0x1D, 0x1E, 0x0B, 0x11, 0x0F};
     if(stnum < 3) {
         set_bkg_data(45, 98, overworldmaptiles);
         set_bkg_tiles(0, 3, 20, 11, overworldmap);
@@ -171,23 +214,26 @@ void stage_intro_screen(UINT8 stnum) BANKED {
 }
 
 
-void game_over_menu(UINT8 stnum) BANKED {
+void game_over_menu() BANKED {
     init_common_menu_props();
-    const unsigned char gmoversign[] = {0x11, 0x0B, 0x17, 0x0F, 0x00, 0x019, 0x20, 0x0F, 0x1C};
-    const unsigned char contsign[] = {0x0D, 0x19, 0x18, 0x1E, 0x13, 0x18, 0x1F, 0x0F};
-    const unsigned char quitsign[] = {0x1B, 0x1F, 0x13, 0x1E};
-    const unsigned char gopasssign[] = {0x1A, 0x0B, 0x1D, 0x1D, 0x21, 0x19, 0x1C, 0x0E, 0x25};
-    const unsigned char dummypass[] = {0x28, 0x28, 0x28, 0x28};
+    if(bossrushflg != 0) {  // Do not display game over screen in boss rush mode or when fighting a single boss
+        if(bossrushflg == 1) {  // Do not display boss rush results for a single boss fight
+            boss_rush_results_screen();
+        }
+        menuidx = 1;
+        stageclearflg = bossrushflg = 0;
+        return;
+    }
     set_bkg_tiles(5, 4, 9, 1, gmoversign);
     set_bkg_tiles(7, 10, 8, 1, contsign);
     set_bkg_tiles(7, 12, 4, 1, quitsign);
     set_bkg_tiles(3, 16, 9, 1, gopasssign);
-    set_bkg_tiles(12, 16, 4, 1, passwords[stnum]);
-    move_sprite(0, 52, 96);
+    set_bkg_tiles(12, 16, 4, 1, passwords[stagenum]);
+    move_sprite(0, 52, gameoveroptsy[0]);
     play_song(&gameovertheme, 1);
     anim_reverse_blackout();
     get_menu_pl_input(gameoveroptsy, 2);
-    reset_sprites(0, 40);
+    reset_sprites(0, 0);
     anim_blackout();
 }
 
@@ -223,6 +269,7 @@ void move_passcursor(Passcursor * cr, INT8 dirctx, INT8 dircty) BANKED {
         move_sprite(4, cr->x + 8, cr->y + 8);
     }
     se_move_cursor();
+    custom_delay(7);
 }
 
 
@@ -231,7 +278,7 @@ void update_pass_field() BANKED {
         set_bkg_tile_xy(6 + i * 2, 3, passentry[i]);
     }
     if(passidx != 4) {
-        move_sprite(6, 61 + passidx * 16, 40);
+        move_sprite(5, 61 + passidx * 16, 40);
     }
 }
 
@@ -265,7 +312,7 @@ void reset_password() BANKED {
 
 
 UINT8 get_stage_from_password() BANKED {
-    for(i = 0; i < 7; i++) {
+    for(i = 0; i != 8; i++) {
         if(compare_password(passwords[i])) {
             return i;   // Password array index matches stage number
         }
@@ -285,19 +332,19 @@ UBYTE compare_password(UINT8 * pass) BANKED {
 
 
 UBYTE confirm_password() BANKED {
-    set_sprite_tile(5, 1);
-    set_sprite_tile(6, 0);
-    move_sprite(5, passconfoptsx[1], passconfy);
+    set_sprite_tile(0, 1);
+    set_sprite_tile(5, 0);
+    move_sprite(0, passconfoptsx[1], passconfy);
     while(1) {
         wait_vbl_done();
         if(joypad() & (J_LEFT | J_RIGHT | J_SELECT)) {
-            move_sprite(5, passconfoptsx[shadow_OAM[5].x == passconfoptsx[0] ? 1 : 0], passconfy);
+            move_sprite(0, passconfoptsx[shadow_OAM[0].x == passconfoptsx[0] ? 1 : 0], passconfy);
             se_move_cursor();
             waitpadup();
         } else if(joypad() & (J_A |  J_START)) {
             waitpadup();
-            set_sprite_tile(5, 0);
-            return shadow_OAM[5].x == passconfoptsx[1];
+            set_sprite_tile(0, 0);
+            return shadow_OAM[0].x == passconfoptsx[1];
         }
         manage_sound_chnls();
     }
@@ -307,21 +354,21 @@ UBYTE confirm_password() BANKED {
 void anim_cursor_blink() BANKED {
     if(menuanimcnt == 0) {
         menuanimcnt = blinkanimdur;
-        set_sprite_tile(6, shadow_OAM[6].tile == 0 ? 3 : 0);
+        set_sprite_tile(5, shadow_OAM[5].tile == 0 ? 3 : 0);
     } else {
         menuanimcnt--;
     }
 }
 
 
-UINT8 password_menu() {
+void password_menu() {
     menuanimcnt = blinkanimdur;
     UINT8 matchedpassstage = wrongpassind;
     scroll_bkg(-5, 0);
     init_common_menu_props();
     set_bkg_data(42, 10, passwscreentiles);
     set_bkg_tiles(0, 0, 20, 18, passwscreenmap);
-    set_sprite_tile(0, 0);
+    set_sprite_tile(0, 1);
     init_passcursor(&crsr, 17, 76);
     reset_password();
     anim_reverse_blackout();
@@ -330,19 +377,15 @@ UINT8 password_menu() {
         switch(joypad()) {
             case J_LEFT:
                 move_passcursor(&crsr, -1, 0);
-                custom_delay(7);
                 break;
             case J_RIGHT:
                 move_passcursor(&crsr, 1, 0);
-                custom_delay(7);
                 break;
             case J_UP:
                 move_passcursor(&crsr, 0, -1);
-                custom_delay(7);
                 break;
             case J_DOWN:
                 move_passcursor(&crsr, 0, 1);
-                custom_delay(7);
                 break;
             case J_A:
                 if(crsr.row == 2 && crsr.col == 8) {
@@ -374,13 +417,111 @@ UINT8 password_menu() {
     }
 
     se_choose_entry();
-    reset_sprites(0, 40);
+    reset_sprites(0, 5);
     anim_blackout();
     move_bkg(0, 0);
-    return matchedpassstage;
+    if(matchedpassstage == 7)   {   // Entered extras password
+        extrasflg = 1;
+        extras_menu();
+    } else {    // Entered regular stage password
+        stagenum = matchedpassstage;
+    }
 }
 
 
+void extras_menu() BANKED {
+    init_common_menu_props();
+    set_bkg_tiles(4, 1, 12, 1, extrmenusign);
+    set_bkg_tiles(5, 4, 10, 1, plasmasign);
+    set_bkg_tiles(5, 6, 10, 1, fightbosssign);
+    set_bkg_tiles(2, 9, 16, 1, bossrushsign);
+    set_bkg_tiles(5, 12, 7, 1, regularsign);
+    set_bkg_tiles(5, 14, 12, 1, glasscannonsign);
+    set_bkg_tiles(5, 16, 13, 1, glassfeathersign);
+    move_sprite(0, 36, extrasoptsy[0]);
+    anim_reverse_blackout();
+    get_menu_pl_input(extrasoptsy, 5);
+    waitpadup();
+
+    if(menuidx == 0) { // Plasma run
+        defaultplgun = 3;
+    } else if(menuidx == 1) {    // Single boss fight
+        stagenum = choose_boss();
+        bossrushflg = 2;
+        defaultplgun = bossrushconfigs[0][0];
+        pllives = bossrushconfigs[0][1];
+    } else {    // Boss rush modes
+        bossrushflg = 1;
+        defaultplgun = bossrushconfigs[menuidx - 2][0];
+        pllives = bossrushconfigs[menuidx - 2][1];
+    }
+    anim_blackout();
+}
+
+
+UINT8 choose_boss() BANKED {
+    i = 0;
+    set_bkg_data(42, 7, misctiles);
+    set_bkg_tile_xy(16, 6, 47);
+    set_bkg_tile_xy(17, 6, 2);
+    set_bkg_tile_xy(18, 6, 48);
+    while(1) {
+        if(joypad() & J_LEFT) {
+            i = i == 0 ? 0 : i - 1;
+            set_bkg_tile_xy(17, 6, i + 2);
+            custom_delay(7);
+        } else if(joypad() & J_RIGHT) {
+            i = i == 6 ? 6 : i + 1;
+            set_bkg_tile_xy(17, 6, i + 2);
+            custom_delay(7);
+        } else if(joypad() & (J_A | J_START)) {
+            return i;
+        }
+    }
+}
+
+
+void boss_rush_results_screen() BANKED {
+    init_common_menu_props();
+    fill_bkg_rect(0, 0, 20, 18, 0);
+    set_bkg_tiles(5, 1, 9, 1, rushrestitlesign);
+
+    if(menuidx == 2) {
+        set_bkg_tiles(3, 3, 7, 1, regularsign);
+        set_bkg_tiles(12, 3, 4, 1, rushresmodesign);
+    } else if(menuidx == 3) {
+        set_bkg_tiles(1, 3, 12, 1, glasscannonsign);
+        set_bkg_tiles(14, 3, 4, 1, rushresmodesign);
+    } else {
+        set_bkg_tiles(1, 3, 13, 1, glassfeathersign);
+        set_bkg_tiles(15, 3, 4, 1, rushresmodesign);
+    }
+
+    if(stagenum == 7) {    // Beaten all bosses
+        set_bkg_data(53, 8, medaltiles);
+        set_bkg_tiles(1, 5, 14, 1, rushresbossesdefsign);
+        set_bkg_tiles(15, 5, 3, 1, allsign);
+        set_bkg_tiles(2, 7, 16, 1, congratssign);
+        set_bkg_tiles(1, 9, 17, 1, awardedsign);
+        set_bkg_tiles(2, 11, 15, 1, medaltypessign[menuidx - 2]);
+        set_bkg_tiles(9, 13, 2, 2, medalssigns[menuidx - 2]);
+        set_bkg_tiles(5, 16, 10, 1, pushstartsign);
+    } else {
+        set_bkg_tile_xy(17, 8, 1 + stagenum);
+        set_bkg_tiles(3, 8, 14, 1, rushresbossesdefsign);
+        set_bkg_tiles(5, 14, 10, 1, pushstartsign);
+        if(stagenum > 3) {
+            set_bkg_tiles(5, 10, 11, 1, greatjobsign);
+        } else if(stagenum > 0) {
+            set_bkg_tiles(5, 10, 10, 1, goodjobsign);
+        }
+    }
+
+    anim_reverse_blackout();
+    waitpad(J_START);
+    stagenum = defaultplgun = bossrushflg = 0;
+    anim_blackout();
+}
 
 
 void se_choose_entry() BANKED {

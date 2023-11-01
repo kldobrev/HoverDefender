@@ -51,26 +51,29 @@ void manage_sound_chnls() NONBANKED;
 void manage_player() NONBANKED;
 void init_stage(UBYTE hasscenery, UBYTE hasscroll) NONBANKED;
 void set_machine_sprite_tiles(Machine * mch, UINT8 fsttile) NONBANKED;
+void incr_oam_sprite_tile_idx(INT8 steps) NONBANKED;
+void move_machine(Machine * mch, INT8 speedx, INT8 speedy) NONBANKED;
+void incr_bkg_x_coords(UINT8 roadsp) NONBANKED;
+void build_boss_road() NONBANKED;
+void se_charge_gun(UINT8 addfreq) NONBANKED;
+void se_explode() NONBANKED;
+void incr_boss_bkg_x_coords(UINT8 roadsp, UINT8 jgrspeed) NONBANKED;
+void scroll_boss_bkg() NONBANKED;
+void anim_reverse_blackout() NONBANKED;
+Machine * create_explosion(UINT8 x, UINT8 y) NONBANKED;
 void init_scorpboss_gun(UINT8 x, UINT8 y) BANKED;
 void init_scorpboss() BANKED;
 void scorpboss_loop() BANKED;
 void scorpboss_hit_anim() BANKED;
 void flip_mech(Machine * mch) BANKED;
-void init_mechboss(UINT8 x, UINT8 y) BANKED;
+void init_mechboss() BANKED;
+void init_mech(UINT8 x, UINT8 y) BANKED;
 void mechboss_loop() BANKED;
 void move_mech(Machine * mech, INT8 x, INT8 y) BANKED;
-void incr_oam_sprite_tile_idx(INT8 steps) NONBANKED;
-void move_machine(Machine * mch, INT8 speedx, INT8 speedy) NONBANKED;
-void incr_bkg_x_coords(UINT8 roadsp) NONBANKED;
-void build_boss_road() NONBANKED;
-void charge_gun(Machine * mch, UINT8 phase) BANKED;
-void se_charge_gun(UINT8 addfreq) NONBANKED;
 void mech_clear_sequence() BANKED;
-void se_explode() NONBANKED;
 void mech_hit_anim() BANKED;
-void incr_boss_bkg_x_coords(UINT8 roadsp, UINT8 jgrspeed) NONBANKED;
+void charge_gun(Machine * mch, UINT8 phase) BANKED;
 void move_jggr_in_distance(UINT8 posx) BANKED;
-void scroll_boss_bkg() NONBANKED;
 void init_jggrrboss() BANKED;
 void jggrboss_hit_anim() BANKED;
 void open_hatch(UINT8 hatchnum) BANKED;
@@ -81,7 +84,6 @@ void jggrrboss_loop() BANKED;
 void init_mechbrosboss() BANKED;
 UINT8 explode_mech(Machine * mch, Machine ** prevexpl, UINT8 explleft) BANKED;
 void mechbrosboss_loop() BANKED;
-Machine * create_explosion(UINT8 x, UINT8 y) NONBANKED;
 void destroy_mech(Machine * mech) BANKED;
 
 
@@ -101,7 +103,7 @@ void init_scorpboss_gun(UINT8 x, UINT8 y) BANKED {
 
 void init_scorpboss() BANKED {
     //init_stage(1, 0);
-    set_bkg_data(132, 40, scorpbosstiles);
+    set_bkg_data(133, 40, scorpbosstiles);
     set_bkg_tiles(11, 10, 9, 6, scorpbossmap);
 
     // Initialize Stinger
@@ -116,6 +118,7 @@ void init_scorpboss() BANKED {
 
     // Initialize Left gun
     init_scorpboss_gun(96, 136);
+    anim_reverse_blackout();
 }
 
 
@@ -233,7 +236,7 @@ void move_mech(Machine * mech, INT8 x, INT8 y) BANKED {
 }
 
 
-void init_mechboss(UINT8 x, UINT8 y) BANKED {
+void init_mech(UINT8 x, UINT8 y) BANKED {
     for(i = 0; i < 6; i++) {    // Resetting sprite properties
         set_sprite_prop((crntenemy - 1)->oamtilenums[0] + i, 0);
     }
@@ -254,6 +257,18 @@ void flip_mech(Machine * mch) BANKED {
         set_sprite_prop(mch->oamtilenums[0] + i, sprdir);
         set_sprite_tile(mch->oamtilenums[0] + i, mch->oamtilenums[0] == 4 ? mechtiles[i] : mechtiles[i] + 19);
     }
+}
+
+
+void init_mechboss() BANKED {
+    init_mech(167, 64);
+    flip_mech(fsten);
+
+    anim_reverse_blackout();
+    do {    // Intro
+        move_mech(fsten, -1, 0);
+        wait_vbl_done();
+    } while(fsten->x != 143);
 }
 
 
@@ -286,11 +301,6 @@ void mech_hit_anim() BANKED {
 
 
 void mechboss_loop() BANKED {
-    flip_mech(fsten);
-    do {    // Intro
-        move_mech(fsten, -1, 0);
-        wait_vbl_done();
-    } while(fsten->x != 143);
 
     UINT8 ptrn = 0, mechdir = 1;  // mechdir: 0 - left, 1 - right
     INT8 mechspx = 0, mechspy = 0;
@@ -336,9 +346,9 @@ void mechboss_loop() BANKED {
             } else if(ptrn == 3 && cooldown_enemy(fsten, 20)) {
                 charge_gun(fsten, 3);
                 if(pl->x < 120) {
-                    fire_projctl_aimed(fsten, 4, 4);
+                    fire_projctl_aimed(fsten, 3, 4);
                 } else {
-                    fire_projctl_aimed(fsten, 4, 3);
+                    fire_projctl_aimed(fsten, 3, 3);
                 }
                 ptrn = 4;
             } else if(ptrn == 4 && cooldown_enemy(fsten, 50)) {
@@ -440,7 +450,7 @@ void init_jggrrboss() BANKED {
     jgrposx = 170;
     jgrbkgposx = 0;
     fill_bkg_rect(0, 1, 32, 4, 0);
-    set_bkg_data(148, 68, juggernautbosstiles);
+    set_bkg_data(149, 68, juggernautbosstiles);
     set_sprite_tile(4, 46);
     set_sprite_tile(5, 47);
     incr_oam_sprite_tile_idx(2);
@@ -448,6 +458,7 @@ void init_jggrrboss() BANKED {
 
     init_machine_props(255, 56, jgrgunprops);
     set_machine_tile(fsten, 0);
+    anim_reverse_blackout();
 }
 
 
@@ -458,7 +469,7 @@ void jggrboss_hit_anim() BANKED {
 
 void open_hatch(UINT8 hatchnum) BANKED {
     fsten->gunoffx = jgrxoffsets[hatchnum];
-    fire_projctl(fsten, 3, 0, 2);
+    fire_projctl(fsten, 4, 0, 2);
 }
 
 
@@ -468,7 +479,7 @@ void jggrr_open_hatch_above_player() BANKED {
         if(citr == 5) { // Do this inside a function
             fsten->gunoffx = jgrgunprops[6];
             fsten->gunoffy = jgrgunprops[7];
-            fire_projctl(fsten, 4, 0, 2);
+            fire_projctl(fsten, 3, 0, 2);
         } else {
             fsten->gunoffy = 4;
             open_hatch(citr);
@@ -549,13 +560,13 @@ void jggrrboss_loop() BANKED {
                     fsten->gunoffx = jgrgunprops[6];
                     fsten->gunoffy = jgrgunprops[7];
                     if(pl->x == 140 && pl->y == 127) {
-                        fire_projctl(fsten, 4, 4, 5);   // Edge case
+                        fire_projctl(fsten, 3, 4, 5);   // Edge case
                     } else {
-                        fire_projctl_aimed(fsten, 4, 5);
+                        fire_projctl_aimed(fsten, 3, 5);
                     }
                     fsten->gunoffx = jgrxoffsets[6];
                     fsten->gunoffy = 4;
-                    fire_projctl(fsten, 3, 0, 2);
+                    fire_projctl(fsten, 4, 0, 2);
                 } else {
                     fsten->gunoffy = 4;
                     exec_bombing_ptrn(attkcnt - 1);
@@ -625,10 +636,17 @@ void jggrrboss_loop() BANKED {
 
 
 void init_mechbrosboss() BANKED {
-    init_mechboss(249, 64);
-    init_mechboss(167, 64);
+    init_mech(249, 64);
+    init_mech(167, 64);
     fsten = machines + 1;
     flip_mech(machines + 2);
+
+    anim_reverse_blackout();
+    do {    // Intro
+        move_mech(fsten, 1, 0);
+        move_mech(machines + 2, -1, 0);
+        wait_vbl_done();
+    } while(fsten->x != 16 && (machines + 2)->x != 144);
 }
 
 
@@ -666,7 +684,7 @@ UINT8 fire_charged_aimed_shot(Machine * mech, UINT8 initnum, UINT8 crntpatnum) B
         charge_gun(mech, crntpatnum - initnum);
         return crntpatnum + 1;
     } else if(crntpatnum == (initnum + 4)) {
-        fire_projctl_aimed(mech, 4, 4);
+        fire_projctl_aimed(mech, 3, 4);
         return crntpatnum + 1;
     }
     return crntpatnum;
@@ -861,12 +879,6 @@ void mechbrosboss_loop() BANKED {
     Machine * sndmch  = machines + 2;
     UINT8 fstexplcnt = 4, sndexplcnt = 4;
     UINT8 pattrn = 0, swappattrns = 0;
-    
-    do {    // Intro
-        move_mech(fsten, 1, 0);
-        move_mech(sndmch, -1, 0);
-        wait_vbl_done();
-    } while(fsten->x != 16 && sndmch->x != 144);
 
     Machine * fstprevexpl = fsten, * sndprevexpl = sndmch;
     while(1) {
