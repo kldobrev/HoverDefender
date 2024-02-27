@@ -5,6 +5,7 @@ bank*lst
 bank*sym
 bank*adb
 bank*asm
+bank*
 main.sym
 main.lst
 hoverdefender.map
