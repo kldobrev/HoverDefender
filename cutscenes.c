@@ -1,5 +1,11 @@
 #include <gb/gb.h>
+#include "machine.c"
+#include "hUGEDriver.h"
 
+
+extern const hUGESong_t cutscenestheme;
+extern UINT8 i, camtileidx, bossrushflg, animitr;
+extern Machine * pl;
 
 const UINT8 names[7][11] = {
     {0x29, 0x1C, 0x21, 0x16, 0x18, 0x2E},	// Vince - 0xF7
@@ -12,6 +18,8 @@ const UINT8 names[7][11] = {
 };
 
 const UINT8 nameslengths[7] = {6, 6, 7, 7, 11, 7, 11};
+const UINT8 playcutscthemeidxs[] = {0, 2, 4, 6, 8, 10, 12, 15, 16, 18};
+const UINT8 playcutscthemeidxsnum = 10;
 
 const UINT8 dialoguearr[] = {
     // Boss 1 intro, idx: 0
@@ -49,7 +57,7 @@ const UINT8 dialoguearr[] = {
     0x1A, 0x22, 0x2F, 0x00, 0x27, 0x1B, 0x18, 0x00, 0x16, 0x1C, 0x27, 0x2C, 0x00, 0x2A, 0x1C, 0x1F, 0x1F, 0xFE,
     0x25, 0x18, 0x20, 0x14, 0x1C, 0x21, 0x00, 0x28, 0x21, 0x17, 0x18, 0x25, 0x00, 0x22, 0x28, 0x25, 0xFE,
     0x16, 0x22, 0x21, 0x27, 0x25, 0x22, 0x1F, 0x30, 0x00, 0x1F, 0x18, 0x27, 0x00, 0x20, 0x18, 0xFE,
-    0x26, 0x1B, 0x22, 0x2A, 0x00, 0x2C, 0x22, 0x28, 0x00, 0x2A, 0x1B, 0x2C, 0x30, 0xFE, 0xFF,
+    0x26, 0x1B, 0x22, 0x2A, 0x00, 0x2C, 0x22, 0x28, 0x00, 0x1B, 0x22, 0x2A, 0x30, 0xFE, 0xFF,
 	// After boss 2, idx: 401
 	0xF9, 0xFE,
     0x1B, 0x22, 0x2A, 0x00, 0x1C, 0x26, 0x00, 0x1B, 0x18, 0xFE,
@@ -170,7 +178,7 @@ const UINT8 dialoguearr[] = {
     // After boss 4, Radium defeated last, idx: 1771
     0xFA, 0xFE, 
     0x1B, 0x18, 0x00, 0x15, 0x18, 0x26, 0x27, 0x18, 0x17, 0x00, 0x15, 0x22, 0x27, 0x1B, 0x00, 0x22, 0x19, 0xFE,
-    0x28, 0x26, 0x30, 0x00, 0x20, 0x14, 0x2C, 0x15, 0x18, 0x00, 0x1B, 0x18, 0x00, 0x16, 0x22, 0x28, 0x1F, 0x17, 0xFE,
+    0x28, 0x26, 0x30, 0x00, 0x20, 0x14, 0x2C, 0x15, 0x18, 0x00, 0x1B, 0x18, 0x00, 0x16, 0x14, 0x21, 0xFE,
     0x18, 0x21, 0x17, 0x00, 0x27, 0x1B, 0x1C, 0x26, 0x2F, 0xFE, 0xFF,
     // After boss 5, part 1, idx: 1821
     0xFC, 0xFE,
@@ -278,5 +286,116 @@ const UINT8 dialoguearr[] = {
     0x18, 0x26, 0x16, 0x14, 0x23, 0x18, 0x2F, 0xFE, 0xFF
 };
 
-const UINT16 dialstartidx[] = {0, 140, 175, 401, 482, 705, 748, 99, 1045, 99, 1381, 99, 1553, 1726, 1771, 1821, 2222, 
-    2366, 2473, 2697, 2776, 3001};  // 99 indicates cutscene skip
+const UINT16 dialstartidx[] = {0, 140, 175, 401, 482, 705, 748, 99, 1045, 99, 1381, 99, 1553, 1726, 1771, 1819, 2220, 
+    2364, 2471, 2695, 2774, 2999};  // 99 indicates cutscene skip
+
+
+
+
+void custom_delay(UINT8 cycles) NONBANKED;
+void incr_oam_sprite_tile_idx(INT8 steps) NONBANKED;
+void reset_sprites(UINT8 fstsprite, UINT8 lastsprite) NONBANKED;
+void anim_blackout() NONBANKED;
+void anim_reverse_blackout() NONBANKED;
+void place_machine(Machine * mch, UINT8 x, UINT8 y) NONBANKED;
+void build_boss_road() NONBANKED;
+void disable_bkg_scroll(UINT8 stageidx) NONBANKED;
+inline UINT8 get_tile_idx(UINT8 newidxnum) NONBANKED;
+void build_road() NONBANKED;
+void move_machine(Machine * mch, INT8 speedx, INT8 speedy) NONBANKED;
+void init_player() NONBANKED;
+void toggle_mute_music(UINT8 toggleon) NONBANKED;
+UINT8 wait_player_input(UINT8 crsridx) BANKED;
+void scroll_textbox(UINT8 dialidx) BANKED;
+UBYTE should_play_theme(UINT8 cutscidx) BANKED;
+void se_advance_carriage() BANKED;
+
+
+
+
+
+
+UINT8 wait_player_input(UINT8 crsridx) BANKED {
+    animitr = 0;
+    while(1) {
+        if(animitr % 32 == 0) {
+            set_win_tile_xy(crsridx, 0, 0);
+        } else if(animitr % 16 == 0) {
+            set_win_tile_xy(crsridx, 0, 255);
+        }
+        animitr++;
+        wait_vbl_done();
+        if(joypad() & J_A) {
+            waitpadup();
+            return J_A;
+        } else if(joypad() & J_START) {
+            waitpadup();
+            return J_START;
+        }
+    }
+}
+
+
+void scroll_textbox(UINT8 dialidx) BANKED {
+    if(dialstartidx[dialidx] == 99 || bossrushflg) {
+        return;
+    }
+
+    const UINT8 textoffsx = 1;
+    // Character limit per line - 18
+    fill_win_rect(0, 0, 20, 1, 0x00);
+    move_win(11, 134);
+    set_sprite_tile(39, 75);
+    set_win_tile_xy(0, 0, 255);
+    if(should_play_theme(dialidx)) {
+        hUGE_init(&cutscenestheme);
+        add_VBL(hUGE_dosound);
+        toggle_mute_music(0);
+    }
+    const UINT8 * textpos = dialoguearr + dialstartidx[dialidx];
+    for(i = 0; *textpos != 0xFF; textpos++, i++) {  // Using 0xFF to indicate text end
+        if(*textpos == 0xFE) {  // Using 0xFE to indicate end of line
+            fill_win_rect(i + 1, 0, 21 - i, 1, 0x00);
+            if(wait_player_input(i) == J_A) {   // Print next line
+                i = 255;    // Will be reset to 0 before next iteration
+                fill_win_rect(0, 0, 20, 1, 0x00);
+                continue;
+            } else {    // Stop printing
+                break;
+            }
+        } else if(*textpos > 0xF6) {    // Line with character name
+            fill_win_rect(0, 0, 20, 1, 0x00);
+            i = *textpos - 0xF7;   // Character name array index
+            set_win_tiles(0, 0, nameslengths[i], 1, names[i]);
+            i = nameslengths[i] - 1;    // Setting iterator for blinking animation
+            continue;
+        }
+        set_win_tile_xy(i, 0, *textpos);
+        set_win_tile_xy(i + 1, 0, 255);
+        se_advance_carriage();
+        custom_delay(3);
+    }
+    move_win(15, 134);
+    if(should_play_theme(dialidx)) {
+        toggle_mute_music(1);
+        remove_VBL(hUGE_dosound);
+    }
+}
+
+
+UBYTE should_play_theme(UINT8 cutscidx) BANKED {
+     for(i = 0; i < playcutscthemeidxsnum; i++) {
+        if(cutscidx == playcutscthemeidxs[i]) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+
+void se_advance_carriage() BANKED {
+    NR21_REG = 0x01;
+    NR22_REG = 0xF1;
+    NR23_REG = 0xA4;
+    NR24_REG = 0x86;
+}

@@ -20,10 +20,13 @@ extern const hUGESong_t gameovertheme;
 extern const unsigned char blanktile[];
 extern UINT8 menuidx, i, citr, stagenum, extrasflg, bossrushflg, defaultplgun, stageclearflg, pllives;
 const unsigned char stagenames[][18] = {{0x0E, 0x0F, 0x1D, 0x0F, 0x1C, 0x1E, 0x00, 0x12, 0x13, 0x11, 0x12, 0x21, 0x0B, 0x23},
-{0x0D, 0x0B, 0x1A, 0x1E, 0x13, 0x20, 0x0F, 0x00, 0x0D, 0x13, 0x1E, 0x23}, {0x17, 0x19, 0x1F, 0x18, 0x1E, 0x0B, 0x13, 0x18, 0x00, 0x1A, 0x0B, 0x1D, 0x1D},
-{0x1D, 0x15, 0x23, 0x00, 0x1E, 0x1F, 0x18, 0x18, 0x0F, 0x16}, {0x10, 0x19, 0x1C, 0x1E, 0x00, 0x1D, 0x1E, 0x1C, 0x0B, 0x1E, 0x19, 0x1D},
-{0x10, 0x26, 0x1D, 0x26, 0x00, 0x1F, 0x18, 0x0E, 0x0F, 0x1C, 0x11, 0x1C, 0x19, 0x1F, 0x18, 0x0E}, {0x0F, 0x18, 0x0F, 0x1C, 0x11, 0x23, 0x00, 0x0D, 0x19, 0x1C, 0x0F}};
-const UINT8 stnamelengths[] = {14, 12, 13, 10, 12, 16, 11};
+{0x0D, 0x0B, 0x1A, 0x1E, 0x13, 0x20, 0x0F, 0x00, 0x0D, 0x13, 0x1E, 0x23}, 
+{0x17, 0x19, 0x1F, 0x18, 0x1E, 0x0B, 0x13, 0x18, 0x00, 0x1A, 0x0B, 0x1D, 0x1D},
+{0x1D, 0x15, 0x23, 0x00, 0x1E, 0x1F, 0x18, 0x18, 0x0F, 0x16}, 
+{0x10, 0x19, 0x1C, 0x1E, 0x00, 0x1D, 0x1E, 0x1C, 0x0B, 0x1E, 0x19, 0x1D},
+{0x1F, 0x18, 0x0E, 0x0F, 0x1C, 0x11, 0x1C, 0x19, 0x1F, 0x18, 0x0E, 0x00, 0x12, 0x0B, 0x16, 0x16, 0x1D}, 
+{0x0F, 0x18, 0x0F, 0x1C, 0x11, 0x23, 0x00, 0x0D, 0x19, 0x1C, 0x0F}};
+const UINT8 stnamelengths[] = {14, 12, 13, 10, 12, 17, 11};
 
 
 
@@ -40,7 +43,7 @@ const UINT8 passwords[][4] = {{11, 12, 13, 14}, {30, 11, 27, 23}, {33, 16, 24, 1
 const UINT8 mapcrsrcoords[7][2] = {{23, 115}, {76, 76}, {127, 106}, {17, 86}, {54, 84}, {71, 93}, {93, 95}};
 const unsigned char gamestsign[] = {0x1D, 0x1E, 0x0B, 0x1C, 0x1E, 0x00, 0x11, 0x0B, 0x17, 0x0F};
 const unsigned char passwsign[] = {0x1A, 0x0B, 0x1D, 0x1D, 0x21, 0x19, 0x1C, 0x0E};
-const unsigned char creatorsign[] = {0x03, 0x01, 0x03, 0x04, 0x00, 0x15, 0x18, 0x1D, 0x00, 0x0E, 0x19, 0x0C, 0x1C, 0x0F, 0x20};
+const unsigned char creatorsign[] = {0x03, 0x01, 0x03, 0x05, 0x00, 0x15, 0x18, 0x1D, 0x00, 0x0E, 0x19, 0x0C, 0x1C, 0x0F, 0x20};
 const unsigned char stagesign[] = {0x1D, 0x1E, 0x0B, 0x11, 0x0F};
 const unsigned char gmoversign[] = {0x11, 0x0B, 0x17, 0x0F, 0x00, 0x019, 0x20, 0x0F, 0x1C};
 const unsigned char contsign[] = {0x0D, 0x19, 0x18, 0x1E, 0x13, 0x18, 0x1F, 0x0F};
@@ -81,12 +84,11 @@ Passcursor crsr;
 
 void custom_delay(UINT8 cycles) NONBANKED;
 void anim_reverse_blackout() NONBANKED;
-void play_song(const hUGESong_t * song, UINT8 songbank) NONBANKED;
-void stop_song() NONBANKED;
 void anim_blackout() NONBANKED;
 void mute_music_pl_chnl(UINT8 chnum) NONBANKED;
 void init_game() NONBANKED;
 void reset_sprites(UINT8 fstsprite, UINT8 lastsprite) NONBANKED;
+void toggle_mute_music(UINT8 toggleon) NONBANKED;
 void init_common_menu_props() BANKED;
 void main_menu() BANKED;
 void get_menu_pl_input(UINT8 * entries, UINT8 numentries) BANKED;
@@ -105,13 +107,14 @@ UINT8 get_stage_from_password() BANKED;
 UBYTE compare_password(UINT8 * pass) BANKED;
 void manage_sound_chnls() NONBANKED;
 void anim_cursor_blink() BANKED;
+UINT8 choose_boss() BANKED;
+void boss_rush_results_screen() BANKED;
+void play_song(const hUGESong_t * song) BANKED;
 void se_choose_entry() BANKED;
 void se_move_cursor() BANKED;
 void se_wrong_password() BANKED;
 void se_add_character() BANKED;
 void se_drop_character() BANKED;
-UINT8 choose_boss() BANKED;
-void boss_rush_results_screen() BANKED;
 
 
 void init_common_menu_props() BANKED {
@@ -129,8 +132,9 @@ void main_menu() BANKED {
     set_bkg_data(35, 78, titlelogotiles);
     set_bkg_tiles(2, 1, 16, 6, titlelogomap);
     anim_reverse_blackout();
-    play_song(&titletheme, 1);
     set_bkg_tiles(2, 16, 15, 1, creatorsign);
+    play_song(&titletheme);
+    toggle_mute_music(0);
     if(extrasflg == 1) {    //  Extras menu has been unlocked
         set_bkg_tiles(6, 9, 10, 1, gamestsign);
         set_bkg_tiles(6, 11, 8, 1, passwsign);
@@ -143,8 +147,7 @@ void main_menu() BANKED {
         move_sprite(0, 44, mainoptsy[1]);
         get_menu_pl_input(mainoptsy + 1, 2);
     }
-    stop_song();
-    se_choose_entry();
+    remove_VBL(hUGE_dosound);
     reset_sprites(0, 0);
     anim_blackout();
 
@@ -173,13 +176,13 @@ void get_menu_pl_input(UINT8 * entries, UINT8 numentries) BANKED {
             se_move_cursor();
             waitpadup();
         } else if(joypad() & (J_START | J_A)) {
-            stop_song();
-            se_choose_entry();
             break;  // Player has made a choice
         }
         manage_sound_chnls();
         wait_vbl_done();
     }
+    toggle_mute_music(1);
+    se_choose_entry();
 }
 
 
@@ -230,9 +233,10 @@ void game_over_menu() BANKED {
     set_bkg_tiles(3, 16, 9, 1, gopasssign);
     set_bkg_tiles(12, 16, 4, 1, passwords[stagenum]);
     move_sprite(0, 52, gameoveroptsy[0]);
-    play_song(&gameovertheme, 1);
+    play_song(&gameovertheme);
     anim_reverse_blackout();
     get_menu_pl_input(gameoveroptsy, 2);
+    remove_VBL(hUGE_dosound);
     reset_sprites(0, 0);
     anim_blackout();
 }
@@ -371,6 +375,7 @@ void password_menu() {
     set_sprite_tile(0, 1);
     init_passcursor(&crsr, 17, 76);
     reset_password();
+    set_sprite_tile(5, 0);
     anim_reverse_blackout();
 
     while(matchedpassstage == wrongpassind) {
@@ -447,6 +452,7 @@ void extras_menu() BANKED {
         defaultplgun = 3;
     } else if(menuidx == 1) {    // Single boss fight
         stagenum = choose_boss();
+        se_choose_entry();
         bossrushflg = 2;
         defaultplgun = bossrushconfigs[0][0];
         pllives = bossrushconfigs[0][1];
@@ -469,10 +475,12 @@ UINT8 choose_boss() BANKED {
         if(joypad() & J_LEFT) {
             i = i == 0 ? 0 : i - 1;
             set_bkg_tile_xy(17, 6, i + 2);
+            se_add_character();
             custom_delay(7);
         } else if(joypad() & J_RIGHT) {
             i = i == 6 ? 6 : i + 1;
             set_bkg_tile_xy(17, 6, i + 2);
+            se_add_character();
             custom_delay(7);
         } else if(joypad() & (J_A | J_START)) {
             return i;
@@ -520,7 +528,16 @@ void boss_rush_results_screen() BANKED {
     anim_reverse_blackout();
     waitpad(J_START);
     stagenum = defaultplgun = bossrushflg = 0;
+    se_choose_entry();
     anim_blackout();
+}
+
+
+void play_song(const hUGESong_t * song) BANKED {
+    __critical {
+        hUGE_init(song);
+        add_VBL(hUGE_dosound);
+    }
 }
 
 
@@ -537,7 +554,7 @@ void se_choose_entry() BANKED {
 void se_move_cursor() BANKED {
     mute_music_pl_chnl(0);
     NR10_REG = 0x00;
-    NR11_REG = 0xCB;
+    NR11_REG = 0xC9;
     NR12_REG = 0xF2;
     NR13_REG = 0x9F;
     NR14_REG = 0x86;

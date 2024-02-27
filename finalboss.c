@@ -1,23 +1,20 @@
 #include <gb/gb.h>
-#include "machine.c"
-#include "tiles/encoretiles1.c"
-#include "tiles/encoretiles2.c"
-#include "tiles/finalbossspritetiles.c"
-#include "maps/encorebossbkgmap.c"
-#include "maps/encorebossmap.c"
 #include "maps/encorebossnobarriermap.c"
-#include "maps/encorepremap.c"
+#include "machine.c"
+#include "hUGEDriver.h"
 
 
-
+extern const hUGESong_t finbossph1theme;
+extern const hUGESong_t finbossph2theme;
 extern Machine machines[], * crntenemy, * pl, * hitmchptr, * fsten, * machptr;
 extern UINT8 pllives, bossclearflg, lockmvmnt, oamidx, i, citr, cloudposx, sceneryposx, roadposx, stagenum, hitanimtmr, ascendflg, plgroundspeed;
 extern UBYTE iframeflg;
 extern const UINT8 enlimit;
 extern const unsigned char goodroadmap[];
 
-const INT8 encoreemitterprops[] = {0, 9, -3, 0, 20, 9, 0, 0, 9, 23};
-const INT8 encoreprops[] = {0, 120, -5, -20, 40, 50, -64, -35, 9, 25};  // HP = 30
+const UINT8 encorefsttile = 25;
+const UINT8 emittertilenum = 23;
+const INT8 encoreshield = 120;  // HP = 30
 const INT8 arcptrnshotspeeds[8][2] = {{-3, 1}, {-3, 2}, {-2, 3}, {-1, 3}, {0, 3}, {1, 3}, {3, 3}, {4, 3}};
 const UINT8 emittersexpl[5][2] = {{132, 56}, {154, 120} ,{132, 120}, {154, 56}, {66, 38}};
 const INT8 ultgenprops[] = {0, 40, 0, 0, 16, 32, 18, 16, 9, 0};
@@ -62,7 +59,6 @@ void incr_oam_sprite_tile_idx(INT8 steps) NONBANKED;
 void move_machine(Machine * mch, INT8 speedx, INT8 speedy) NONBANKED;
 void incr_bkg_x_coords(UINT8 roadsp) NONBANKED;
 void build_boss_road() NONBANKED;
-void se_charge_gun(UINT8 addfreq) NONBANKED;
 void incr_boss_bkg_x_coords(UINT8 roadsp, UINT8 jgrspeed) NONBANKED;
 void scroll_boss_bkg() NONBANKED;
 Machine * create_explosion(UINT8 x, UINT8 y) NONBANKED;
@@ -75,6 +71,7 @@ void anim_explode_boss(const UINT8 explarr[][2], UINT8 numexpl, UINT8 hasscroll,
 void custom_delay(UINT8 cycles) NONBANKED;
 void set_machine_sprite_tiles(Machine * mch, UINT8 fsttile) NONBANKED;
 void explode_machine(Machine * mch) NONBANKED;
+void toggle_mute_music(UINT8 toggleon) NONBANKED;
 void preserve_boss_shield(Machine * boss) BANKED;
 void check_encore_boss_bkg_collision() BANKED;
 void play_pre_encore_cutscene() BANKED;
@@ -101,6 +98,8 @@ void se_spark() BANKED;
 void se_ultgen_hit_ground() BANKED;
 void se_ultgen_dash() BANKED;
 void se_ultgen_charge(UINT8 addfreq) BANKED;
+void se_core_damaged() BANKED;
+void init_final_boss_theme() BANKED;
 
 
 
@@ -124,46 +123,16 @@ void check_encore_boss_bkg_collision() BANKED {
 }
 
 
-// FINAL BOSS FUNCTIONS
-
-void play_pre_encore_cutscene() BANKED {
-    set_bkg_data(74, 64, encoretiles1);
-    for(i = 0; i != 32; i += 8) {
-        set_bkg_tiles(i, 0, 8, 10, encorepremap);
+void init_final_boss_theme() BANKED {
+    if(get_sprite_tile(8) == emittertilenum || get_sprite_tile(12) == emittertilenum) { // Emitter tiles
+        hUGE_init(&finbossph1theme);
+    } else {
+        hUGE_init(&finbossph2theme);
     }
-    HIDE_WIN;
-    anim_reverse_blackout();
-    anim_stage_end();
-    anim_blackout();
-    cloudposx = sceneryposx = roadposx = 0;
-    scroll_stage_bkg_ind();
-    remove_LCD(scroll_stage_bkg_ind);
-    move_machine(pl, 80, 0);
 }
 
 
-void init_emitters_boss() BANKED {
-    set_bkg_data(74, 64, encoretiles1);
-    set_bkg_data(138, 99, encoretiles2);
-    set_bkg_tiles(0, 0, 14, 17, encorebossbkgmap);
-    set_bkg_tiles(14, 0, 6, 17, encorebossmap);
-    set_sprite_data(23, 47, finalbossspritetiles);
-    init_machine_props(135, 86, encoreprops);
-    init_machine_props(120, 120, encoreemitterprops);
-    set_machine_tile(machines + 2, 0);
-    set_sprite_tile(8, 23);
-    init_machine_props(120, 56, encoreemitterprops);
-    set_machine_tile(machines + 3, 0);
-    set_sprite_tile(12, 23);
-    set_sprite_prop(12, 64);
-    set_sprite_tile(16, 23);
-    move_sprite(16, 157, 120);
-    set_sprite_tile(17, 23);
-    move_sprite(17, 157, 56);
-    set_sprite_prop(17, 64);
-    incr_oam_sprite_tile_idx(2);
-    anim_reverse_blackout();
-}
+// FINAL BOSS FUNCTIONS
 
 
 void emitter_hit_anim() BANKED {
@@ -175,6 +144,8 @@ void emitter_hit_anim() BANKED {
 
 void emitters_boss_loop() BANKED {
     UINT8 pattrn = 0, pattrnrep = 0;
+    init_final_boss_theme();
+    toggle_mute_music(0);
     while(1) {
 
         if((!is_alive(pl)) && pl->explcount == 0) {
@@ -194,7 +165,7 @@ void emitters_boss_loop() BANKED {
                 }
                 clear_all_projectiles();
                 set_machine_sprite_tiles(pl, 1);
-                return;  // Boss cleared
+                break;  // Boss cleared
             }
         }
 
@@ -239,10 +210,12 @@ void emitters_boss_loop() BANKED {
             emitter_hit_anim();
             update_hit_anim_counter();
         }
+        hUGE_dosound();
         manage_sound_chnls();
         manage_player();
         wait_vbl_done();
     }
+    toggle_mute_music(1);
 }
 
 
@@ -320,15 +293,11 @@ void init_ultgen_boss() BANKED {
     oamidx = 8;
     crntenemy = fsten = machines + 2;
     hitanimtmr = 11;
-    (machines + 1)->shield =  encoreprops[1];
+    (machines + 1)->shield =  encoreshield;
     init_machine_props(248, 33, ultgenprops);
     set_ultgen_tiles(0);
     turn_ultgen(0, 0);
     incr_oam_sprite_tile_idx(4);
-    set_sprite_tile(oamidx, 64);
-    move_sprite(oamidx, 170, 1);
-    incr_oam_sprite_tile_idx(1);
-
     custom_delay(40);
     while(fsten->x != 98) { // Move ultgen to x: 98, y: 33
         move_ultgen(1, 0);
@@ -343,7 +312,7 @@ void init_ultgen_boss() BANKED {
 void final_boss_hit_anim() BANKED {
     if(hitmchptr == machines + 1) {
         if(hitanimtmr == 0) {
-            set_machine_sprite_tiles(machines + 1, encoreprops[9]);
+            set_machine_sprite_tiles(machines + 1, encorefsttile);
             scroll_sprite(hitmchptr->oamtilenums[0], -2, -2);
             BGP_REG = 0xE4;
         } else if(hitanimtmr == 10) {
@@ -380,8 +349,11 @@ void ultgen_boss_loop() BANKED {
     (machines + 1)->width = (machines + 1)->height = 12;
     UINT8 pattrn = 0;
     INT8 pattrnrep = 0;
+    init_final_boss_theme();
+    toggle_mute_music(0);
     while(1) {
         if((!is_alive(pl)) && pl->explcount == 0) {
+            toggle_mute_music(1);
             break;  // Game over
         }
 
@@ -389,6 +361,7 @@ void ultgen_boss_loop() BANKED {
         if((machines + 1)->shield < 91) {
             if(get_sprite_tile((machines + 1)->oamtilenums[0]) != 66)  {
                 set_machine_sprite_tiles(machines + 1, 66); // Setting broken core sprite
+                se_core_damaged();
             }
             if(lockmvmnt == 2 & pattrn == 2) {    // Wait until the end of the jumping animation
                 anim_jump();
@@ -396,6 +369,7 @@ void ultgen_boss_loop() BANKED {
                 bossclearflg = 1;
                 clear_all_projectiles();
                 set_machine_sprite_tiles(pl, 1);
+                toggle_mute_music(1);
                 ultgen_spark_overload();
                 return;  // Boss cleared
             }
@@ -546,6 +520,7 @@ void ultgen_boss_loop() BANKED {
             final_boss_hit_anim();
             update_hit_anim_counter();
         }
+        hUGE_dosound();
         manage_sound_chnls();
         manage_player();
         wait_vbl_done();
@@ -674,7 +649,7 @@ void anim_airbase_destr(UBYTE moveplflg) BANKED {  // Animate ground shaking and
 void se_spark() BANKED {
     mute_music_pl_chnl(3);
     NR41_REG = 0x00;
-    NR42_REG = 0x86;
+    NR42_REG = 0xF6;
     NR43_REG = 0x06;
     NR44_REG = 0xC0;
 }
@@ -702,7 +677,16 @@ void se_ultgen_charge(UINT8 addfreq) BANKED {
     mute_music_pl_chnl(0);
     NR10_REG = 0x16;
     NR11_REG = 0xFF;
-    NR12_REG = 0xC8;
+    NR12_REG = 0xF8;
     NR13_REG = 127 + addfreq;
     NR14_REG = 0x84;
+}
+
+
+void se_core_damaged() BANKED {
+    mute_music_pl_chnl(3);
+    NR41_REG = 0x3F;
+    NR42_REG = 0xFF;
+    NR43_REG = 0x99;
+    NR44_REG = 0x80;
 }
